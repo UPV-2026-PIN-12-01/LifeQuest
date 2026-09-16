@@ -21,6 +21,7 @@ taskkill /PID <pid> /F
 
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
+
+First time (or after pulling dependency changes): `cd frontend && npm install`
