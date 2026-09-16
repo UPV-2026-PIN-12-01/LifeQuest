@@ -11,6 +11,12 @@ cd backend
 
 Windows: `mvnw.cmd spring-boot:run`
 
+If port 8080 is already in use:
+```bash
+netstat -ano | findstr ":8080"
+taskkill /PID <pid> /F
+```
+
 **Frontend** — http://localhost:5173
 
 ```bash
