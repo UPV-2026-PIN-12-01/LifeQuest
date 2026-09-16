@@ -1,4 +1,4 @@
-# Git Conventions (for commits)
+# Git Commit Conventions
 
 This is the format I usually follow when writing commits.
 
