@@ -14,4 +14,5 @@ PIN 2026 (UPV) group 12.01. Java Spring Boot backend + JavaScript React frontend
 - Do not commit unless the user says so explicitly.
 - If you commit, use the user's git author and committer, not the AI tool.
 - Do not add `Co-authored-by` for the AI.
-- Commit message format: `#WorkID type(scope): short summary` — see `ai/git-conventions.md`
+- Commit message format: `PIN-{Worki_ID} type(scope): short summary` — see `ai/git-conventions.md`
+- Use the ticket the user gives for that change. Do not persist a ticket id. If none is given, ask.

@@ -9,3 +9,4 @@ alwaysApply: true
 - Do not commit unless the user says so explicitly.
 - If you commit, use the user's git author and committer, not Cursor.
 - Do not add `Co-authored-by: Cursor`.
+- Commit format: `PIN-{ticket} type(scope): short summary`. Use the ticket the user gives for that change; do not persist it. If they do not give one, ask.

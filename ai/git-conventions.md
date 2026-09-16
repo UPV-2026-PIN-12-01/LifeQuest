@@ -2,8 +2,9 @@
 
 This is the format I usually follow when writing commits.
 
-Format -> `#Worki_ID type(scope): short summary`
+Format -> `PIN-{Worki_ID} type(scope): short summary`
 
+- **Worki_ID** — the ticket number for that change
 - **type** — required (`feat`, `fix`, etc.)
 - **scope** — optional, in parentheses. Says where it changed (`auth`, `api`, `ui`)
 - **summary** — one line, in imperative mood, no period at the end
@@ -11,8 +12,8 @@ Format -> `#Worki_ID type(scope): short summary`
 Examples:
 
 ```
-#41 feat: add login with Google
-#98 fix(api): handle empty user list
+PIN-41 feat: add login with Google
+PIN-98 fix(api): handle empty user list
 ```
 
 Most used types:
