@@ -4,6 +4,11 @@ Proyecto de la asignatura PIN 2026 (UPV) del grupo 12.01, con nombre provisional
 
 Java (Spring Boot) backend + JavaScript (React) frontend.
 
+## Deployments
+
+- Production (`main`): https://life-quest-project.vercel.app
+- Develop: https://life-quest-git-develop-trabajo-pin-2026-grupo1201.vercel.app
+
 ## Prerequisites
 
 - JDK 21
