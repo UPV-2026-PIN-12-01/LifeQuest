@@ -1,0 +1,14 @@
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+COPY . .
+RUN apk add --no-cache curl unzip \
+  && sed -i 's/\r$//' mvnw \
+  && chmod +x mvnw \
+  && ./mvnw -q -DskipTests package
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
+ENV PORT=80
+EXPOSE 80
+CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-80}"]
