@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
       <button type="button" onClick={loadHello} disabled={loading}>
         Call /api/hello
       </button>
+      <Analytics />
     </main>
   )
 }
