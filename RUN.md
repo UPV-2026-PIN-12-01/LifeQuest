@@ -2,7 +2,8 @@
 
 JDK 21, Node 20.19+
 
-**Backend** — http://localhost:8080
+**Backend** — http://localhost:8080  
+Swagger UI — http://localhost:8080/swagger.html
 
 ```bash
 cd backend

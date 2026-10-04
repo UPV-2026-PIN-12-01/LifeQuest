@@ -32,6 +32,7 @@ API: `http://localhost:8080`
 
 - `GET /api/health`
 - `GET /api/hello`
+- Swagger UI: `http://localhost:8080/swagger.html`
 
 ## Run the frontend
 
