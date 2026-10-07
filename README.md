@@ -41,7 +41,7 @@ cd frontend
 npm install
 npm run dev
 ```
-
+Character View
 UI: `http://localhost:5173`
 
 Vite proxies `/api` to the backend on port 8080. Saving frontend files updates the page automatically (HMR).
