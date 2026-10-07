@@ -1,3 +1,10 @@
+# Env / secrets
+.env
+.env.*
+!.env.example
+backend/.env
+**/application-local.properties
+
 # Maven
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
