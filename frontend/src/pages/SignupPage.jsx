@@ -1,7 +1,10 @@
 import { useEffect, useId, useState } from 'react'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
+import SignupSuccess from '../components/signup/SignupSuccess.jsx'
+import { signup } from '../services/auth.js'
 import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
+import { signupErrorMessage } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
 
@@ -17,6 +20,8 @@ export default function SignupPage() {
   const [playerName, setPlayerName] = useState('')
   const [userIcon, setUserIcon] = useState(classById(DEFAULT_PLAYER_CLASS).icon)
   const [errors, setErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -90,19 +95,46 @@ export default function SignupPage() {
   function handlePlayerNameChange(value) {
     setPlayerName(value)
     setErrors((current) => {
-      if (!current.playerName) return current
+      if (!current.playerName && !current.form) return current
       const next = { ...current }
       delete next.playerName
+      delete next.form
       return next
     })
   }
 
-  function handleCharacterStart() {
+  async function handleCharacterStart() {
+    if (submitting) {
+      return
+    }
     if (!playerName.trim()) {
       setErrors({ playerName: 'El nombre del personaje es obligatorio' })
       return
     }
     setErrors({})
+    setSubmitting(true)
+    try {
+      const formData = new FormData()
+      formData.append('username', username.trim())
+      formData.append('email', email.trim())
+      formData.append('password', password)
+      formData.append('playerClass', playerClass)
+      formData.append('playerName', playerName.trim())
+      if (userIcon !== classById(playerClass).icon) {
+        formData.append('userIcon', userIcon)
+      }
+      if (photoFile) {
+        formData.append('photo', photoFile)
+      }
+      await signup(formData)
+      setSuccess(true)
+    } catch (error) {
+      setErrors({
+        form: signupErrorMessage(error.status, error.payload),
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -251,6 +283,8 @@ export default function SignupPage() {
                   playerName={playerName}
                   userIcon={userIcon}
                   error={errors.playerName}
+                  formError={errors.form}
+                  submitting={submitting}
                   onClassChange={handleClassChange}
                   onPlayerNameChange={handlePlayerNameChange}
                   onIconChange={setUserIcon}
@@ -262,6 +296,7 @@ export default function SignupPage() {
           </div>
         </div>
       </section>
+      {success && <SignupSuccess onDismiss={() => setSuccess(false)} />}
     </div>
   )
 }

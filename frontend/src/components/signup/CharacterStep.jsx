@@ -11,6 +11,8 @@ export default function CharacterStep({
   playerName,
   userIcon,
   error,
+  formError,
+  submitting,
   onClassChange,
   onPlayerNameChange,
   onIconChange,
@@ -150,12 +152,23 @@ export default function CharacterStep({
         </div>
       </div>
 
+      {formError && (
+        <p className="signup-form-error" role="alert">
+          {formError}
+        </p>
+      )}
+
       <div className="signup-actions">
-        <button className="signup-secondary" type="button" onClick={onBack}>
+        <button
+          className="signup-secondary"
+          type="button"
+          onClick={onBack}
+          disabled={submitting}
+        >
           ← Volver
         </button>
-        <button className="signup-primary" type="submit">
-          ✨ Empezar aventura
+        <button className="signup-primary" type="submit" disabled={submitting}>
+          {submitting ? 'Creando…' : '✨ Empezar aventura'}
         </button>
       </div>
     </form>

@@ -738,6 +738,82 @@
   margin-top: 0;
 }
 
+.signup-form-error {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.signup-secondary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.signup-success {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(24, 12, 64, 0.48);
+  cursor: pointer;
+}
+
+.signup-confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.signup-confetti span {
+  position: absolute;
+  top: -16px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: signup-confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes signup-confetti-fall {
+  to {
+    transform: translateY(110vh) rotate(420deg);
+  }
+}
+
+.signup-success-card {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 360px);
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: #fff;
+  color: #111827;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(20, 10, 60, 0.35);
+  cursor: default;
+}
+
+.signup-success-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #5b3dcc;
+}
+
+.signup-success-card p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 900px) {
   .signup-page {
     flex-direction: column;
