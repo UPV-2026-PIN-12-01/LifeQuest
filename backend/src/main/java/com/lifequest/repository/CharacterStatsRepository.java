@@ -9,4 +9,6 @@ import com.lifequest.model.entity.CharacterStats;
 public interface CharacterStatsRepository extends JpaRepository<CharacterStats, Long> {
 
 	Optional<CharacterStats> findByUserId(Long userId);
+
+	boolean existsByPlayerName(String playerName);
 }

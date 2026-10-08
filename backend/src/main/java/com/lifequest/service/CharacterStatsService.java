@@ -16,6 +16,11 @@ public class CharacterStatsService {
 		this.characterStatsRepository = characterStatsRepository;
 	}
 
+	@Transactional(readOnly = true)
+	public boolean existsByPlayerName(String playerName) {
+		return characterStatsRepository.existsByPlayerName(playerName);
+	}
+
 	@Transactional
 	public CharacterStats createForUser(Long userId, String playerName, PlayerClass playerClass) {
 		CharacterStats characterStats = new CharacterStats();

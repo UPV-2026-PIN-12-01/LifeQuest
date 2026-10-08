@@ -25,9 +25,10 @@ import com.lifequest.model.entity.User;
 public class SignupService {
 
 	private static final Logger log = LoggerFactory.getLogger(SignupService.class);
+	// Keep MIN_PASSWORD_LENGTH and EMAIL_SHAPE in sync with frontend/src/utils/validation.js
 	private static final int MIN_PASSWORD_LENGTH = 6;
-	private static final long MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 	private static final String EMAIL_SHAPE = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+	private static final long MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 	private static final Map<String, String> PHOTO_EXTENSIONS = Map.of(
 			"image/jpeg", "jpg",
 			"image/jpg", "jpg",
@@ -60,8 +61,10 @@ public class SignupService {
 			String password,
 			String playerClass,
 			String userIcon,
+			String playerName,
 			MultipartFile photo) {
 		String trimmedUsername = requireText(username, "Username is required");
+		String resolvedPlayerName = StringUtils.hasText(playerName) ? playerName.trim() : trimmedUsername;
 		String normalizedEmail = requireText(email, "Email is required").toLowerCase();
 		if (!normalizedEmail.matches(EMAIL_SHAPE)) {
 			throw new InvalidSignupException("Invalid email");
@@ -74,8 +77,9 @@ public class SignupService {
 		String icon = StringUtils.hasText(userIcon) ? userIcon.trim() : resolvedClass.defaultIcon();
 		PhotoPayload photoPayload = resolvePhoto(photo);
 
-		if (userService.existsByUsername(trimmedUsername) || userService.existsByEmail(normalizedEmail)) {
-			throw new DuplicateUserException("Username or email already exists");
+		if (userService.existsByUsername(trimmedUsername) || userService.existsByEmail(normalizedEmail)
+				|| characterStatsService.existsByPlayerName(resolvedPlayerName)) {
+			throw new DuplicateUserException("Username, email, or player name already exists");
 		}
 
 		UUID authId = supabaseAuthService.createUser(normalizedEmail, password);
@@ -83,13 +87,13 @@ public class SignupService {
 		try {
 			created = transactionTemplate.execute(status -> {
 				User user = userService.create(trimmedUsername, normalizedEmail, authId, icon);
-				CharacterStats stats = characterStatsService.createForUser(user.getId(), trimmedUsername, resolvedClass);
+				CharacterStats stats = characterStatsService.createForUser(user.getId(), resolvedPlayerName, resolvedClass);
 				return userService.linkCharacter(user, stats);
 			});
 		} catch (RuntimeException ex) {
 			rollbackAuth(authId);
 			if (ex instanceof DataIntegrityViolationException) {
-				throw new DuplicateUserException("Username or email already exists");
+				throw new DuplicateUserException("Username, email, or player name already exists");
 			}
 			throw ex;
 		}
