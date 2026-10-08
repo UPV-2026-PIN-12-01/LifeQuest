@@ -18,6 +18,16 @@ public class UserService {
 		this.userRepository = userRepository;
 	}
 
+	@Transactional(readOnly = true)
+	public boolean existsByUsername(String username) {
+		return userRepository.existsByUsername(username);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean existsByEmail(String email) {
+		return userRepository.existsByEmail(email);
+	}
+
 	@Transactional
 	public User create(String username, String email, UUID innerId, String userIcon) {
 		User user = new User();
