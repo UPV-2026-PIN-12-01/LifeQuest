@@ -9,9 +9,17 @@ PIN 2026 (UPV) group 12.01. Java Spring Boot backend + JavaScript React frontend
 - `ai/` — dumps for prompts, briefs, notes, CONTEXT.
 - How to run: see `RUN.md`
 
+## Naming
+
+- Class names MUST be full English. GOOD: `UserService`. BAD: `UsuarioService`.
+
 ## Writing
 
 - If you write a context `.md` in any folder, follow this one rule: understandable one-liners, with just enough to be clearly understood — see `ai/writing-conventions.md`
+
+## Test data
+
+- Test rows in the DB: put `test-can-delete-later` (or similar) in a name or other significant field — see `ai/test-data-conventions.md`
 
 ## Git
 

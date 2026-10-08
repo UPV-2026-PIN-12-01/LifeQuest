@@ -6,7 +6,10 @@
     "backend": {
       "root": "backend/",
       "runtime": "container",
-      "entrypoint": "Dockerfile.vercel"
+      "entrypoint": "Dockerfile.vercel",
+      "functions": {
+        "Dockerfile.vercel": { "maxDuration": 120 }
+      }
     }
   },
   "rewrites": [
