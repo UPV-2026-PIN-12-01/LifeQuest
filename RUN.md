@@ -5,6 +5,8 @@ JDK 21, Node 20.19+
 **Backend** — http://localhost:8080  
 Swagger UI — http://localhost:8080/swagger.html
 
+Copy `.env.example` to `.env` at the repo root (Spring Boot loads it).
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
