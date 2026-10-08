@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import FieldError from './FieldError.jsx'
 
 export default function AccountStep({
   username,
@@ -15,6 +16,9 @@ export default function AccountStep({
   const emailId = useId()
   const passwordId = useId()
   const photoId = useId()
+  const tooltipField = ['photo', 'username', 'email', 'password'].find(
+    (field) => errors[field],
+  )
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -63,80 +67,88 @@ export default function AccountStep({
             onChange={handlePhotoChange}
             aria-labelledby={`${photoId}-label`}
             aria-invalid={Boolean(errors.photo)}
-            aria-describedby={errors.photo ? `${photoId}-error` : undefined}
+            aria-describedby={
+              tooltipField === 'photo' ? `${photoId}-error` : undefined
+            }
           />
+          <FieldError id={`${photoId}-error`}>
+            {tooltipField === 'photo' ? errors.photo : null}
+          </FieldError>
         </div>
-        {errors.photo && (
-          <p className="signup-error" id={`${photoId}-error`}>
-            {errors.photo}
-          </p>
-        )}
       </div>
 
       <div className="signup-field">
         <label className="signup-label" htmlFor={usernameId}>
           Nombre de usuario
         </label>
-        <input
-          id={usernameId}
-          name="username"
-          type="text"
-          autoComplete="username"
-          value={username}
-          onChange={(event) => onFieldChange('username', event.target.value)}
-          aria-invalid={Boolean(errors.username)}
-          aria-describedby={`${usernameId}-hint${errors.username ? ` ${usernameId}-error` : ''}`}
-        />
+        <div className="signup-control">
+          <input
+            id={usernameId}
+            name="username"
+            type="text"
+            autoComplete="username"
+            value={username}
+            onChange={(event) => onFieldChange('username', event.target.value)}
+            aria-invalid={Boolean(errors.username)}
+            aria-describedby={
+              tooltipField === 'username'
+                ? `${usernameId}-hint ${usernameId}-error`
+                : `${usernameId}-hint`
+            }
+          />
+          <FieldError id={`${usernameId}-error`}>
+            {tooltipField === 'username' ? errors.username : null}
+          </FieldError>
+        </div>
         <p className="signup-hint" id={`${usernameId}-hint`}>
           Este será tu nombre de cuenta visible para otros.
         </p>
-        {errors.username && (
-          <p className="signup-error" id={`${usernameId}-error`}>
-            {errors.username}
-          </p>
-        )}
       </div>
 
       <div className="signup-field">
         <label className="signup-label" htmlFor={emailId}>
           Email
         </label>
-        <input
-          id={emailId}
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => onFieldChange('email', event.target.value)}
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? `${emailId}-error` : undefined}
-        />
-        {errors.email && (
-          <p className="signup-error" id={`${emailId}-error`}>
-            {errors.email}
-          </p>
-        )}
+        <div className="signup-control">
+          <input
+            id={emailId}
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => onFieldChange('email', event.target.value)}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={
+              tooltipField === 'email' ? `${emailId}-error` : undefined
+            }
+          />
+          <FieldError id={`${emailId}-error`}>
+            {tooltipField === 'email' ? errors.email : null}
+          </FieldError>
+        </div>
       </div>
 
       <div className="signup-field">
         <label className="signup-label" htmlFor={passwordId}>
           Contraseña
         </label>
-        <input
-          id={passwordId}
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(event) => onFieldChange('password', event.target.value)}
-          aria-invalid={Boolean(errors.password)}
-          aria-describedby={errors.password ? `${passwordId}-error` : undefined}
-        />
-        {errors.password && (
-          <p className="signup-error" id={`${passwordId}-error`}>
-            {errors.password}
-          </p>
-        )}
+        <div className="signup-control">
+          <input
+            id={passwordId}
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => onFieldChange('password', event.target.value)}
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={
+              tooltipField === 'password' ? `${passwordId}-error` : undefined
+            }
+          />
+          <FieldError id={`${passwordId}-error`}>
+            {tooltipField === 'password' ? errors.password : null}
+          </FieldError>
+        </div>
       </div>
 
       <button className="signup-primary" type="submit">

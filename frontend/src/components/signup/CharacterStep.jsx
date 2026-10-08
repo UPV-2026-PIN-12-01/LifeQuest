@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import FieldError from './FieldError.jsx'
 import {
   CLASS_ICONS,
   PLAYER_CLASSES,
@@ -27,12 +28,13 @@ export default function CharacterStep({
 
   return (
     <form className="signup-character" onSubmit={handleSubmit} noValidate>
-      <header className="signup-card-header">
-        <h2>Crea tu personaje</h2>
-        <p>Elige tu clase y dale nombre a tu héroe</p>
-      </header>
+      <div className="signup-character-pane">
+        <header className="signup-card-header">
+          <h2>Crea tu personaje</h2>
+          <p>Elige tu clase y dale nombre a tu héroe</p>
+        </header>
 
-      <div className="signup-field">
+        <div className="signup-field signup-class-field">
         <span className="signup-label" id="signup-class-label">
           Clase
         </span>
@@ -71,7 +73,7 @@ export default function CharacterStep({
                       <span className="signup-class-badge">Seleccionado</span>
                     )}
                   </span>
-                  <span className="signup-class-description">
+                  <span className="signup-class-description" title={item.description}>
                     {item.description}
                   </span>
                   <span className="signup-class-stats">{item.stats}</span>
@@ -86,24 +88,23 @@ export default function CharacterStep({
         <label className="signup-label" htmlFor={nameId}>
           Nombre del personaje
         </label>
-        <input
-          id={nameId}
-          name="playerName"
-          type="text"
-          placeholder="Ej: Alejandro el Valiente"
-          value={playerName}
-          onChange={(event) => onPlayerNameChange(event.target.value)}
-          aria-invalid={Boolean(error)}
-          aria-describedby={`${nameId}-hint${error ? ` ${nameId}-error` : ''}`}
-        />
+        <div className="signup-control">
+          <input
+            id={nameId}
+            name="playerName"
+            type="text"
+            placeholder="Ej: Alejandro el Valiente"
+            value={playerName}
+            onChange={(event) => onPlayerNameChange(event.target.value)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={`${nameId}-hint${error ? ` ${nameId}-error` : ''}`}
+          />
+          <FieldError id={`${nameId}-error`}>{error}</FieldError>
+        </div>
         <p className="signup-hint" id={`${nameId}-hint`}>
           Este es el nombre de tu héroe dentro del juego.
         </p>
-        {error && (
-          <p className="signup-error" id={`${nameId}-error`}>
-            {error}
-          </p>
-        )}
+      </div>
       </div>
 
       <div className="signup-field signup-icon-field">

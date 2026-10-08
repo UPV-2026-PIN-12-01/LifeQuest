@@ -103,7 +103,7 @@
   flex-direction: column;
   flex: 0 0 auto;
   width: min(100%, 448px);
-  padding: 18px 20px 20px;
+  padding: 22px 22px 24px;
   border-radius: 22px;
   background: #fff;
   color: #111827;
@@ -149,6 +149,7 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
   padding-right: 12px;
+  container-type: size;
 }
 
 .signup-character-slot::-webkit-scrollbar {
@@ -194,7 +195,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  margin-bottom: 14px;
+  margin-bottom: 22px;
   padding: 4px;
   border-radius: 999px;
   background: #eef0f4;
@@ -222,7 +223,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 14px;
+  margin: 0 0 20px;
   padding: 0;
   list-style: none;
   color: #9aa3b2;
@@ -246,6 +247,16 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.signup-step-jump:focus {
+  outline: none;
+}
+
+.signup-step-jump:focus-visible {
+  outline: 2px solid #6d5efc;
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 .signup-stepper li:first-child {
@@ -307,20 +318,32 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: 12px;
+  gap: 16px;
 }
 
 .signup-character {
-  gap: 16px;
+  gap: 12px;
   padding-bottom: 4px;
 }
 
+.signup-character-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100cqb;
+}
+
+.signup-class-field {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .signup-character .signup-field {
-  gap: 8px;
+  gap: 6px;
 }
 
 .signup-icon-field {
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 .signup-field {
@@ -360,9 +383,70 @@
   font-size: 0.75rem;
 }
 
-.signup-error {
-  color: #dc2626;
-  font-size: 0.75rem;
+.signup-control {
+  position: relative;
+}
+
+.signup-control:has(.signup-error-tooltip),
+.signup-photo-row:has(.signup-error-tooltip) {
+  z-index: 4;
+}
+
+.signup-control:has(.signup-error-tooltip) input {
+  border-color: #f97316;
+}
+
+.signup-control:has(.signup-error-tooltip) input:focus {
+  outline-color: #f97316;
+}
+
+.signup-photo-row:has(.signup-error-tooltip) .signup-photo-upload,
+.signup-photo-row:has(.signup-error-tooltip) .signup-photo-preview {
+  border-color: #f97316;
+}
+
+.signup-error-tooltip {
+  position: absolute;
+  left: 14px;
+  top: calc(100% - 1px);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  margin: 0;
+  padding: 8px 12px 8px 8px;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+  pointer-events: none;
+}
+
+.signup-error-tooltip::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: -6px;
+  border: 6px solid transparent;
+  border-bottom-color: #fff;
+}
+
+.signup-error-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  background: #f97316;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .signup-photo-row {
@@ -424,7 +508,7 @@
 
 .signup-primary {
   width: 100%;
-  margin-top: 2px;
+  margin-top: 14px;
   padding: 11px 16px;
   border: 0;
   border-radius: 11px;
@@ -463,17 +547,21 @@
 .signup-class-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 6px;
 }
 
 .signup-class-card {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  flex: 1 1 0;
+  gap: 8px;
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
   color: inherit;
   font: inherit;
@@ -497,30 +585,31 @@
 }
 
 .signup-class-portrait {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
 .signup-class-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .signup-class-title {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
-  font-size: 0.92rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: #111827;
 }
 
 .signup-class-badge {
+  flex: 0 0 auto;
   padding: 2px 8px;
   border-radius: 999px;
   background: #e11d48;
@@ -531,13 +620,13 @@
 
 .signup-class-description {
   color: #4b5563;
-  font-size: 0.78rem;
-  line-height: 1.35;
+  font-size: 0.72rem;
+  line-height: 1.25;
 }
 
 .signup-class-stats {
   color: #9aa3b2;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
 }
 

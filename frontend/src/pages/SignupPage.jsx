@@ -65,6 +65,13 @@ export default function SignupPage() {
     const nextErrors = validateAccount({ username, email, password })
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      requestAnimationFrame(() => {
+        document
+          .querySelector(
+            '.signup-account input[aria-invalid="true"]:not([type="file"])',
+          )
+          ?.focus()
+      })
       return
     }
     setErrors({})
