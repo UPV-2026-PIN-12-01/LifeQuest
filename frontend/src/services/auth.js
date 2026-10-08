@@ -1,8 +1,16 @@
 export async function signup(formData) {
-  const response = await fetch('/api/auth/signup', {
-    method: 'POST',
-    body: formData,
-  })
+  let response
+  try {
+    response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      body: formData,
+    })
+  } catch {
+    const error = new Error('Network error')
+    error.status = 0
+    error.payload = { error: 'Network error' }
+    throw error
+  }
   let payload = null
   try {
     payload = await response.json()

@@ -26,6 +26,9 @@ export function signupErrorMessage(status, payload) {
   if (english && english.startsWith('Unknown player class')) {
     return 'La clase no es válida'
   }
+  if (!status) {
+    return 'No se pudo conectar con el servidor. Inténtalo de nuevo.'
+  }
   if (status === 409) {
     return 'Ese usuario ya existe'
   }
