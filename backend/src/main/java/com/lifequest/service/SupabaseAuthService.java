@@ -43,7 +43,7 @@ public class SupabaseAuthService {
 			int status = ex.getStatusCode().value();
 			String body = ex.getResponseBodyAsString();
 			if (status == 409 || status == 422 || (body != null && body.toLowerCase().contains("already"))) {
-				throw new DuplicateUserException("Username or email already exists");
+				throw new DuplicateUserException("Email already exists");
 			}
 			log.warn("Auth create failed with status {}", status);
 			throw new IllegalStateException("Could not create auth user");

@@ -4,7 +4,7 @@ import CharacterStep from '../components/signup/CharacterStep.jsx'
 import SignupSuccess from '../components/signup/SignupSuccess.jsx'
 import { signup } from '../services/auth.js'
 import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
-import { signupErrorMessage } from '../utils/signupErrors.js'
+import { signupErrorFields } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
 
@@ -129,9 +129,11 @@ export default function SignupPage() {
       await signup(formData)
       setSuccess(true)
     } catch (error) {
-      setErrors({
-        form: signupErrorMessage(error.status, error.payload),
-      })
+      const nextErrors = signupErrorFields(error.status, error.payload)
+      if (nextErrors.username || nextErrors.email) {
+        setStep(1)
+      }
+      setErrors(nextErrors)
     } finally {
       setSubmitting(false)
     }

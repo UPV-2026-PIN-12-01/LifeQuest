@@ -77,10 +77,7 @@ public class SignupService {
 		String icon = StringUtils.hasText(userIcon) ? userIcon.trim() : resolvedClass.defaultIcon();
 		PhotoPayload photoPayload = resolvePhoto(photo);
 
-		if (userService.existsByUsername(trimmedUsername) || userService.existsByEmail(normalizedEmail)
-				|| characterStatsService.existsByPlayerName(resolvedPlayerName)) {
-			throw new DuplicateUserException("Username, email, or player name already exists");
-		}
+		rejectIfTaken(trimmedUsername, normalizedEmail, resolvedPlayerName);
 
 		UUID authId = supabaseAuthService.createUser(normalizedEmail, password);
 		User created;
@@ -93,7 +90,8 @@ public class SignupService {
 		} catch (RuntimeException ex) {
 			rollbackAuth(authId);
 			if (ex instanceof DataIntegrityViolationException) {
-				throw new DuplicateUserException("Username, email, or player name already exists");
+				rejectIfTaken(trimmedUsername, normalizedEmail, resolvedPlayerName);
+				throw duplicateFromIntegrity((DataIntegrityViolationException) ex);
 			}
 			throw ex;
 		}
@@ -103,6 +101,32 @@ public class SignupService {
 		}
 
 		return new ProfileDto(trimmedUsername);
+	}
+
+	private void rejectIfTaken(String username, String email, String playerName) {
+		if (userService.existsByUsername(username)) {
+			throw new DuplicateUserException("Username already exists");
+		}
+		if (userService.existsByEmail(email)) {
+			throw new DuplicateUserException("Email already exists");
+		}
+		if (characterStatsService.existsByPlayerName(playerName)) {
+			throw new DuplicateUserException("Player name already exists");
+		}
+	}
+
+	private static DuplicateUserException duplicateFromIntegrity(DataIntegrityViolationException ex) {
+		String text = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase(Locale.ROOT);
+		if (text.contains("usuarios_username_key") || text.contains("(username)")) {
+			return new DuplicateUserException("Username already exists");
+		}
+		if (text.contains("users_email_key") || text.contains("(email)")) {
+			return new DuplicateUserException("Email already exists");
+		}
+		if (text.contains("playername")) {
+			return new DuplicateUserException("Player name already exists");
+		}
+		return new DuplicateUserException("Username already exists");
 	}
 
 	private static String requireText(String value, String message) {

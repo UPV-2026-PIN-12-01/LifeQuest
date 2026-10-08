@@ -4,13 +4,18 @@ const SIGNUP_ERRORS = {
   'Invalid email': 'El email no es válido',
   'Password must be at least 6 characters':
     'La contraseña debe tener al menos 6 caracteres',
-  'Username or email already exists':
-    'El nombre de usuario o el email ya existe',
-  'Username, email, or player name already exists':
-    'El nombre de usuario, el email o el nombre del personaje ya existe',
+  'Username already exists': 'El nombre de usuario ya existe',
+  'Email already exists': 'El email ya existe',
+  'Player name already exists': 'El nombre del personaje ya existe',
   'Photo must be jpeg, png, webp, or gif and 2MB or smaller':
     'La foto debe ser jpeg, png, webp o gif y pesar 2 MB o menos',
   'Invalid photo': 'La foto no es válida',
+}
+
+const ERROR_FIELDS = {
+  'Username already exists': 'username',
+  'Email already exists': 'email',
+  'Player name already exists': 'playerName',
 }
 
 export function signupErrorMessage(status, payload) {
@@ -28,4 +33,10 @@ export function signupErrorMessage(status, payload) {
     return 'Error del servidor. Inténtalo de nuevo.'
   }
   return 'No se pudo crear la cuenta. Inténtalo de nuevo.'
+}
+
+export function signupErrorFields(status, payload) {
+  const message = signupErrorMessage(status, payload)
+  const field = ERROR_FIELDS[payload?.error] || 'form'
+  return { [field]: message }
 }

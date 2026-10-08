@@ -133,16 +133,17 @@ try {
   await page.locator('input[name="playerName"]').fill(`${photoHero}-dup`)
   const dupStart = signupCalls.length
   await page.getByRole('button', { name: '✨ Empezar aventura' }).click()
-  await page.locator('.signup-form-error').waitFor({ timeout: 30000 })
-  const dupError = await page.locator('.signup-form-error').innerText()
+  await page.getByRole('heading', { name: 'Crea tu cuenta' }).waitFor({ timeout: 30000 })
+  const dupError = await page.locator('.signup-error-tooltip').innerText()
   const confettiAfterDup = await page.locator('.signup-success').count()
   const dupCall = signupCalls[dupStart]
   check(
     'duplicate 409 no confetti',
     dupCall?.status === 409 &&
+      dupCall?.body?.error === 'Username already exists' &&
       confettiAfterDup === 0 &&
-      /ya existe/i.test(dupError),
-    `status=${dupCall?.status} error="${dupError}" confetti=${confettiAfterDup}`,
+      /nombre de usuario ya existe/i.test(dupError),
+    `status=${dupCall?.status} body=${JSON.stringify(dupCall?.body)} error="${dupError}" confetti=${confettiAfterDup}`,
   )
 } catch (error) {
   check('script', false, error.stack || String(error))
