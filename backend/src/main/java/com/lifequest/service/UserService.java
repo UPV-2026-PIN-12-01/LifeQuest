@@ -44,4 +44,11 @@ public class UserService {
 		user.setPlayerId(characterStats.getId());
 		return userRepository.save(user);
 	}
+
+	@Transactional
+	public void updateProfileUrl(Long userId, String profileUrl) {
+		User user = userRepository.findById(userId).orElseThrow();
+		user.setProfileUrl(profileUrl);
+		userRepository.save(user);
+	}
 }

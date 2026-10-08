@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +26,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DuplicateUserException.class)
 	public ResponseEntity<Map<String, String>> duplicateUser(DuplicateUserException ex) {
 		return error(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<Map<String, String>> photoTooLarge(MaxUploadSizeExceededException ex) {
+		return error(HttpStatus.BAD_REQUEST, "Photo must be jpeg, png, webp, or gif and 2MB or smaller");
+	}
+
+	@ExceptionHandler(MultipartException.class)
+	public ResponseEntity<Map<String, String>> badMultipart(MultipartException ex) {
+		return error(HttpStatus.BAD_REQUEST, "Invalid photo");
 	}
 
 	private static ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {

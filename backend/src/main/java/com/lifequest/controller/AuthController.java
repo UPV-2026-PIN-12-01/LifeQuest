@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.lifequest.model.dto.ProfileDto;
 import com.lifequest.service.SignupService;
@@ -26,8 +27,9 @@ public class AuthController {
 			@RequestParam String email,
 			@RequestParam String password,
 			@RequestParam(required = false) String playerClass,
-			@RequestParam(required = false) String userIcon) {
+			@RequestParam(required = false) String userIcon,
+			@RequestParam(required = false) MultipartFile photo) {
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(signupService.signup(username, email, password, playerClass, userIcon));
+				.body(signupService.signup(username, email, password, playerClass, userIcon, photo));
 	}
 }
