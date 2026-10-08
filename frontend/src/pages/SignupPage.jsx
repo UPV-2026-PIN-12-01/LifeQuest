@@ -172,7 +172,7 @@ export default function SignupPage() {
                 {step === 2 ? (
                   <button
                     type="button"
-                    className="signup-step-back"
+                    className="signup-step-jump"
                     onClick={() => setStep(1)}
                   >
                     <span className="signup-step-index" aria-hidden="true">
@@ -190,10 +190,25 @@ export default function SignupPage() {
                 )}
               </li>
               <li className={step === 2 ? 'is-current' : undefined}>
-                <span className="signup-step-index" aria-hidden="true">
-                  2
-                </span>
-                Personaje
+                {step === 1 ? (
+                  <button
+                    type="button"
+                    className="signup-step-jump"
+                    onClick={handleAccountNext}
+                  >
+                    <span className="signup-step-index" aria-hidden="true">
+                      2
+                    </span>
+                    Personaje
+                  </button>
+                ) : (
+                  <>
+                    <span className="signup-step-index" aria-hidden="true">
+                      2
+                    </span>
+                    Personaje
+                  </>
+                )}
               </li>
             </ol>
 
