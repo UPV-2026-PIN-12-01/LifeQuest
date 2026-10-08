@@ -4,15 +4,16 @@ Layered React (JavaScript) app built with Vite (`frontend/src`).
 
 ## Folders
 
-- `main.jsx` — 
-- `App.jsx` — 
-- `pages/` — 
-- `components/` — 
-- `services/` — 
-- `hooks/` — 
-- `styles/` — 
-- `routes/` — 
-- `assets/` — 
+- `main.jsx` — Vite/React entry; mounts `App`.
+- `App.jsx` — Root shell: layout and routing, not page logic.
+- `pages/` — One screen per route (`SignupPage`, later Home, etc.).
+- `components/` — Reusable UI used by pages; not a whole route.
+- `services/` — HTTP to `/api`; no React, no JSX.
+- `hooks/` — Shared React hooks (auth, forms) used by more than one page.
+- `styles/` — Global CSS (`index.css`) and shared layout styles.
+- `routes/` — Route table / path constants (when you add a router).
+- `assets/` — Images, fonts, static files imported by the app.
+- `utils/` — Pure helpers and constants; no React, no fetch.
 
 ## Flow
 
