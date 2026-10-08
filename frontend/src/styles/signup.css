@@ -102,7 +102,7 @@
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
-  width: min(100%, 420px);
+  width: min(100%, 448px);
   padding: 18px 20px 20px;
   border-radius: 22px;
   background: #fff;
@@ -129,14 +129,57 @@
 }
 
 .signup-step-panels {
+  position: relative;
   display: grid;
   flex: 1 1 auto;
+  min-height: 0;
 }
 
 .signup-step-panels > * {
   display: flex;
   flex-direction: column;
   grid-area: 1 / 1;
+  min-height: 0;
+}
+
+.signup-character-slot {
+  position: absolute;
+  inset: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-right: 12px;
+}
+
+.signup-character-slot::-webkit-scrollbar {
+  width: 6px;
+}
+
+.signup-character-slot::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.signup-character-slot::-webkit-scrollbar-track {
+  margin: 10px 0;
+  background: transparent;
+}
+
+.signup-character-slot::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c4c9d4;
+}
+
+.signup-character-slot::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@supports (-moz-appearance: none) {
+  .signup-character-slot {
+    scrollbar-width: thin;
+    scrollbar-color: #c4c9d4 transparent;
+  }
 }
 
 .signup-card h2 {
@@ -259,12 +302,25 @@
 }
 
 .signup-account,
-.signup-character-placeholder,
+.signup-character,
 .signup-login-stub {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   gap: 12px;
+}
+
+.signup-character {
+  gap: 16px;
+  padding-bottom: 4px;
+}
+
+.signup-character .signup-field {
+  gap: 8px;
+}
+
+.signup-icon-field {
+  margin-top: 12px;
 }
 
 .signup-field {
@@ -404,8 +460,193 @@
   margin-top: auto;
 }
 
-.signup-character-placeholder {
+.signup-class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signup-class-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.signup-class-card.is-selected.is-guerrero {
+  border-color: #f87171;
+  background: #fff1f2;
+}
+
+.signup-class-card.is-selected.is-arquero {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.signup-class-card.is-selected.is-mago {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+
+.signup-class-portrait {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.signup-class-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.signup-class-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.signup-class-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e11d48;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.signup-class-description {
+  color: #4b5563;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.signup-class-stats {
+  color: #9aa3b2;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.signup-class-card.is-selected.is-guerrero .signup-class-badge {
+  background: #e11d48;
+}
+
+.signup-class-card.is-selected.is-guerrero .signup-class-stats {
+  color: #e11d48;
+}
+
+.signup-class-card.is-selected.is-arquero .signup-class-badge {
+  background: #d97706;
+}
+
+.signup-class-card.is-selected.is-arquero .signup-class-stats {
+  color: #d97706;
+}
+
+.signup-class-card.is-selected.is-mago .signup-class-badge {
+  background: #2563eb;
+}
+
+.signup-class-card.is-selected.is-mago .signup-class-stats {
+  color: #2563eb;
+}
+
+.signup-icon-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 8px;
+}
+
+.signup-icon-preview > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signup-icon-preview strong {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.signup-icon-current {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: #f3f4f6;
+  font-size: 1.2rem;
+  flex: 0 0 auto;
+}
+
+.signup-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+}
+
+.signup-emoji {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.signup-emoji.is-selected {
+  border-color: #6d5efc;
+  background: #f5f3ff;
+}
+
+.signup-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 4px;
+}
+
+.signup-secondary {
+  flex: 0 0 auto;
+  padding: 11px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 11px;
+  background: #fff;
+  color: #374151;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.signup-secondary:hover {
+  background: #f9fafb;
+}
+
+.signup-actions .signup-primary {
   flex: 1 1 auto;
+  margin-top: 0;
 }
 
 @media (max-width: 900px) {

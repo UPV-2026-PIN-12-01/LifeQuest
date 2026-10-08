@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import AccountStep from '../components/signup/AccountStep.jsx'
+import CharacterStep from '../components/signup/CharacterStep.jsx'
+import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
 
@@ -11,6 +13,9 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState('')
+  const [playerClass, setPlayerClass] = useState(DEFAULT_PLAYER_CLASS)
+  const [playerName, setPlayerName] = useState('')
+  const [userIcon, setUserIcon] = useState(classById(DEFAULT_PLAYER_CLASS).icon)
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
@@ -64,6 +69,33 @@ export default function SignupPage() {
     }
     setErrors({})
     setStep(2)
+  }
+
+  function handleClassChange(nextClass) {
+    const previous = classById(playerClass)
+    const next = classById(nextClass)
+    setPlayerClass(nextClass)
+    if (userIcon === previous.icon) {
+      setUserIcon(next.icon)
+    }
+  }
+
+  function handlePlayerNameChange(value) {
+    setPlayerName(value)
+    setErrors((current) => {
+      if (!current.playerName) return current
+      const next = { ...current }
+      delete next.playerName
+      return next
+    })
+  }
+
+  function handleCharacterStart() {
+    if (!playerName.trim()) {
+      setErrors({ playerName: 'El nombre del personaje es obligatorio' })
+      return
+    }
+    setErrors({})
   }
 
   return (
@@ -184,13 +216,25 @@ export default function SignupPage() {
                 />
               </div>
               <div
-                className={step === 2 ? undefined : 'signup-panel-inactive'}
+                className={
+                  step === 2
+                    ? 'signup-character-slot'
+                    : 'signup-character-slot signup-panel-inactive'
+                }
                 aria-hidden={step !== 2}
                 inert={step !== 2}
               >
-                <div className="signup-character-placeholder">
-                  <h2>Crea tu personaje</h2>
-                </div>
+                <CharacterStep
+                  playerClass={playerClass}
+                  playerName={playerName}
+                  userIcon={userIcon}
+                  error={errors.playerName}
+                  onClassChange={handleClassChange}
+                  onPlayerNameChange={handlePlayerNameChange}
+                  onIconChange={setUserIcon}
+                  onBack={() => setStep(1)}
+                  onSubmit={handleCharacterStart}
+                />
               </div>
             </div>
           </div>
