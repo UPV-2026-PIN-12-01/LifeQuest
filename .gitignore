@@ -5,6 +5,9 @@
 backend/.env
 **/application-local.properties
 
+# Vercel
+.vercel
+
 # Maven
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
