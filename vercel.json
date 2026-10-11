@@ -8,7 +8,7 @@
       "runtime": "container",
       "entrypoint": "Dockerfile.vercel",
       "functions": {
-        "Dockerfile.vercel": { "maxDuration": 120 }
+        "Dockerfile.vercel": { "maxDuration": 300 }
       }
     }
   },
