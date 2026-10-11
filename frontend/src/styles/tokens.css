@@ -7,17 +7,42 @@
   --lq-violet-500: #6d5efc;
   --lq-violet-200: #c4b5fd;
   --lq-violet-100: #ede9fe;
-  --lq-violet-50: #f6f4ff;
+  --lq-violet-50: #f4f2fb;
 
-  --lq-gold: #fbbf24;
-  --lq-gold-soft: #fef3c7;
+  /* Gold means reward: XP, level, streak. */
+  --lq-gold: #f5b82e;
+  --lq-gold-light: #fcd34d;
+  --lq-gold-ink: #8a5a00;
+  --lq-gold-soft: #fff4d6;
 
-  --lq-ink: #1e1b2e;
-  --lq-ink-muted: #5b5670;
-  --lq-line: #e4e0f2;
+  --lq-success: #16a34a;
+  --lq-success-ink: #15803d;
+  --lq-success-soft: #dcfce7;
+  --lq-danger: #dc2626;
+  --lq-danger-soft: #fee2e2;
+
+  --lq-ink: #1c1633;
+  --lq-ink-muted: #6b6485;
+  --lq-ink-faint: #a8a2bd;
+  --lq-line: #e6e1f5;
   --lq-surface: #fff;
+  --lq-surface-muted: #faf9ff;
+
+  /* Task colors: solid for the bar, soft for the card background. */
+  --lq-task-purple: #6d5efc;
+  --lq-task-purple-soft: #efedff;
+  --lq-task-yellow: #f59e0b;
+  --lq-task-yellow-soft: #fff3dc;
+  --lq-task-red: #f0533c;
+  --lq-task-red-soft: #ffece8;
+  --lq-task-blue: #0ea5e9;
+  --lq-task-blue-soft: #e3f5fd;
+  --lq-task-green: #10b981;
+  --lq-task-green-soft: #dff7ee;
+  --lq-task-orange: #f97316;
+  --lq-task-orange-soft: #ffedd5;
 
   --lq-hero-gradient:
-    radial-gradient(120% 140% at 85% 20%, var(--lq-violet-600) 0%, transparent 55%),
-    linear-gradient(135deg, var(--lq-violet-900) 0%, var(--lq-violet-800) 50%, var(--lq-violet-700) 100%);
+    radial-gradient(90% 160% at 100% 0%, rgba(109, 94, 252, 0.55) 0%, transparent 60%),
+    linear-gradient(120deg, var(--lq-violet-900) 0%, var(--lq-violet-700) 100%);
 }
