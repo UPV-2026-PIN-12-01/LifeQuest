@@ -17,6 +17,15 @@ public enum PlayerClass {
 		};
 	}
 
+	// Matches the class ids in frontend/src/utils/playerClasses.js
+	public String displayName() {
+		return switch (this) {
+			case knight -> "Guerrero";
+			case archer -> "Arquero";
+			case magician -> "Mago";
+		};
+	}
+
 	public String defaultIcon() {
 		return switch (this) {
 			case knight -> "⚔️";

@@ -30,6 +30,13 @@ public class CharacterStats {
 	@Column(name = "class", nullable = false)
 	private PlayerClass playerClass = PlayerClass.knight;
 
+	// Read-only here: the DB fills the defaults and its CHECK guards the XP rules.
+	@Column(insertable = false, updatable = false)
+	private Integer level;
+
+	@Column(name = "xpCurrent", insertable = false, updatable = false)
+	private Long xpCurrent;
+
 	public Long getId() {
 		return id;
 	}
@@ -56,5 +63,13 @@ public class CharacterStats {
 
 	public void setPlayerClass(PlayerClass playerClass) {
 		this.playerClass = playerClass;
+	}
+
+	public Integer getLevel() {
+		return level;
+	}
+
+	public Long getXpCurrent() {
+		return xpCurrent;
 	}
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.User;
 import com.lifequest.repository.UserRepository;
@@ -16,6 +17,12 @@ public class UserService {
 
 	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
+	}
+
+	@Transactional(readOnly = true)
+	public User getById(Long userId) {
+		return userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 
 	@Transactional(readOnly = true)
