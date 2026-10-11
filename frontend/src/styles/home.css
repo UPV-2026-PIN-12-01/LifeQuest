@@ -699,3 +699,11 @@
     transform: none;
   }
 }
+
+.home-error {
+  padding: 12px 16px;
+  border: 1px solid var(--lq-line);
+  border-radius: 12px;
+  background: var(--lq-surface);
+  color: var(--lq-ink);
+}

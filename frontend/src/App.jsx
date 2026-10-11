@@ -4,7 +4,7 @@ import SignupPage from './pages/SignupPage.jsx'
 
 // Temporary hash switch until the app adds a router.
 function currentPage() {
-  return window.location.hash === '#/home' ? 'home' : 'signup'
+  return window.location.hash.startsWith('#/home') ? 'home' : 'signup'
 }
 
 function App() {

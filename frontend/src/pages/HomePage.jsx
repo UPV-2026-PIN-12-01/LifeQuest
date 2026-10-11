@@ -23,6 +23,7 @@ export default function HomePage() {
   const [tasks, setTasks] = useState([])
   const [player, setPlayer] = useState(EMPTY_PLAYER)
   const [quests, setQuests] = useState([])
+  const [loadError, setLoadError] = useState(null)
 
   const weekStart = addDays(startOfWeek(new Date()), weekOffset * 7)
   const weekKey = weekStart.getTime()
@@ -40,6 +41,8 @@ export default function HomePage() {
       if (cancelled) return
       setPlayer(profile)
       setQuests(dailyQuests)
+    }).catch((error) => {
+      if (!cancelled) setLoadError(error)
     })
     return () => {
       cancelled = true
@@ -50,6 +53,8 @@ export default function HomePage() {
     let cancelled = false
     getTasksForWeek(new Date(weekKey)).then((weekTasks) => {
       if (!cancelled) setTasks(weekTasks)
+    }).catch((error) => {
+      if (!cancelled) setLoadError(error)
     })
     return () => {
       cancelled = true
@@ -58,6 +63,11 @@ export default function HomePage() {
 
   return (
     <main className="home-page">
+      {loadError && (
+        <p className="home-error" role="alert">
+          {loadErrorMessage(loadError)}
+        </p>
+      )}
       <PlayerHero player={player} weekStats={weekStats} />
       <section className="week-panel">
         <WeekHeader
@@ -71,4 +81,10 @@ export default function HomePage() {
       {quests.length > 0 && <DailyQuests quests={quests} />}
     </main>
   )
+}
+
+function loadErrorMessage(error) {
+  if (error.status === 401) return 'No hay ningún usuario seleccionado. Mientras no exista el login, abre #/home?userId=TU_ID.'
+  if (error.status === 404) return 'No existe ese usuario o no tiene personaje.'
+  return 'No se pudieron cargar tus datos. Inténtalo de nuevo más tarde.'
 }

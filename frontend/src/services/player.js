@@ -1,23 +1,17 @@
-// Mock data until the backend exposes player endpoints. Keep the signatures when switching to fetch.
-const MOCK_PLAYER = {
-  username: 'Aventurero',
-  playerClass: 'Mago',
-  level: 4,
-  xp: 650,
-  xpForNextLevel: 1000,
-  streakDays: 4,
-}
-
-const MOCK_DAILY_QUESTS = [
-  { id: 'login', title: 'Entra en LifeQuest', icon: '🌅', color: 'green', progress: 1, goal: 1, xp: 10 },
-  { id: 'study', title: 'Completa 2 tareas de estudio', icon: '📚', color: 'purple', progress: 0, goal: 2, xp: 30 },
-  { id: 'streak', title: 'Mantén la racha (5 días)', icon: '🔥', color: 'orange', progress: 4, goal: 5, xp: 25 },
-]
+import { getJson, playerUrl } from './http.js'
 
 export async function getPlayerProfile() {
-  return MOCK_PLAYER
+  const profile = await getJson(playerUrl())
+  return {
+    username: profile.playerName || profile.username,
+    playerClass: profile.playerClass,
+    level: profile.level,
+    xp: profile.xp,
+    xpForNextLevel: profile.xpForNextLevel,
+    streakDays: profile.streakDays,
+  }
 }
 
 export async function getDailyQuests() {
-  return MOCK_DAILY_QUESTS
+  return getJson(playerUrl('/daily-quests'))
 }
