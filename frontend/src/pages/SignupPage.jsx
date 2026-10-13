@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
 import SignupSuccess from '../components/signup/SignupSuccess.jsx'
-import { signup } from '../services/auth.js'
+import { login, signup } from '../services/auth.js'
 import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { signupErrorFields } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
@@ -22,6 +22,10 @@ export default function SignupPage() {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginSubmitting, setLoginSubmitting] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -31,11 +35,45 @@ export default function SignupPage() {
 
   function showLogin() {
     setTab('login')
+    setLoginError('')
   }
 
   function showSignup() {
     setTab('signup')
     setStep(1)
+  }
+
+  function handleLoginFieldChange(setter) {
+    return (event) => {
+      setter(event.target.value)
+      setLoginError('')
+    }
+  }
+
+  async function handleLoginSubmit(event) {
+    event.preventDefault()
+    if (loginSubmitting) return
+    if (!loginEmail.trim() || !loginPassword) {
+      setLoginError('Introduce tu email y contraseña')
+      return
+    }
+    setLoginSubmitting(true)
+    setLoginError('')
+    try {
+      const session = await login(loginEmail, loginPassword)
+      sessionStorage.setItem('lifequest.session', JSON.stringify(session))
+      setSuccess(true)
+    } catch (error) {
+      if (error.status === 401) {
+        setLoginError('El email o la contraseña no son correctos')
+      } else if (error.status === 0) {
+        setLoginError('No se pudo conectar con el servidor. Inténtalo de nuevo.')
+      } else {
+        setLoginError('Error del servidor. Inténtalo de nuevo.')
+      }
+    } finally {
+      setLoginSubmitting(false)
+    }
   }
 
   function handleFieldChange(field, value) {
@@ -201,7 +239,15 @@ export default function SignupPage() {
             aria-hidden={tab !== 'login'}
             inert={tab !== 'login'}
           >
-            <LoginStub />
+            <LoginForm
+              email={loginEmail}
+              password={loginPassword}
+              error={loginError}
+              submitting={loginSubmitting}
+              onEmailChange={handleLoginFieldChange(setLoginEmail)}
+              onPasswordChange={handleLoginFieldChange(setLoginPassword)}
+              onSubmit={handleLoginSubmit}
+            />
           </div>
           <div
             className={tab === 'signup' ? undefined : 'signup-panel-inactive'}
@@ -303,19 +349,23 @@ export default function SignupPage() {
   )
 }
 
-function LoginStub() {
+function LoginForm({
+  email,
+  password,
+  error,
+  submitting,
+  onEmailChange,
+  onPasswordChange,
+  onSubmit,
+}) {
   const emailId = useId()
   const passwordId = useId()
 
-  function handleSubmit(event) {
-    event.preventDefault()
-  }
-
   return (
-    <form className="signup-login-stub" onSubmit={handleSubmit}>
+    <form className="signup-login-stub" onSubmit={onSubmit} noValidate>
       <header className="signup-card-header">
         <h2>Iniciar sesión</h2>
-        <p>Próximamente</p>
+        <p>Continúa tu aventura</p>
       </header>
       <div className="signup-field">
         <label className="signup-label" htmlFor={emailId}>
@@ -326,7 +376,9 @@ function LoginStub() {
           name="login-email"
           type="email"
           autoComplete="username"
-          disabled
+          value={email}
+          onChange={onEmailChange}
+          disabled={submitting}
         />
       </div>
       <div className="signup-field">
@@ -338,11 +390,18 @@ function LoginStub() {
           name="login-password"
           type="password"
           autoComplete="current-password"
-          disabled
+          value={password}
+          onChange={onPasswordChange}
+          disabled={submitting}
         />
       </div>
-      <button className="signup-primary" type="submit" disabled>
-        Iniciar sesión
+      {error && (
+        <p className="signup-form-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button className="signup-primary" type="submit" disabled={submitting}>
+        {submitting ? 'Entrando…' : 'Iniciar sesión'}
       </button>
     </form>
   )
