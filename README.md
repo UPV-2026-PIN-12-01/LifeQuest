@@ -8,6 +8,7 @@ Java (Spring Boot) backend + JavaScript (React) frontend.
 
 - **Develop:** https://life-quest-project.vercel.app
   - Temporarily promoted to the production URL
+  - [Swagger UI](https://life-quest-project.vercel.app/swagger.html)
 - **Production (`main`):** none yet
   - For showruns we’ll demote develop and put `main` on production
 
@@ -34,7 +35,7 @@ API: `http://localhost:8080`
 
 - `GET /api/health`
 - `GET /api/hello`
-- Swagger UI: `http://localhost:8080/swagger.html`
+- [Swagger UI](http://localhost:8080/swagger.html)
 
 ## Run the frontend
 
