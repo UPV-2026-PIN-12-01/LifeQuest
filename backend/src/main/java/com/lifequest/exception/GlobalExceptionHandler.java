@@ -28,6 +28,11 @@ public class GlobalExceptionHandler {
 		return error(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
+	@ExceptionHandler(InvalidLoginException.class)
+	public ResponseEntity<Map<String, String>> invalidLogin(InvalidLoginException ex) {
+		return error(HttpStatus.UNAUTHORIZED, ex.getMessage());
+	}
+
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public ResponseEntity<Map<String, String>> photoTooLarge(MaxUploadSizeExceededException ex) {
 		return error(HttpStatus.BAD_REQUEST, "Photo must be jpeg, png, webp, or gif and 2MB or smaller");

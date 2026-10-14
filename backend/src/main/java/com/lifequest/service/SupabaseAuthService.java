@@ -12,6 +12,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.lifequest.exception.DuplicateUserException;
+import com.lifequest.exception.InvalidLoginException;
+import com.lifequest.model.dto.LoginDto;
 
 @Service
 public class SupabaseAuthService {
@@ -50,6 +52,36 @@ public class SupabaseAuthService {
 		}
 	}
 
+	public LoginDto login(String email, String password) {
+		try {
+			AuthSession session = restClient.post()
+					.uri(uriBuilder -> uriBuilder
+							.path("/auth/v1/token")
+							.queryParam("grant_type", "password")
+							.build())
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(Map.of(
+							"email", email,
+							"password", password))
+					.retrieve()
+					.body(AuthSession.class);
+			if (session == null || session.accessToken() == null || session.accessToken().isBlank()) {
+				throw new InvalidLoginException("Invalid email or password");
+			}
+			return new LoginDto(
+					session.accessToken(),
+					session.refreshToken(),
+					session.expiresIn(),
+					session.tokenType());
+		} catch (RestClientResponseException ex) {
+			if (ex.getStatusCode().value() == 400 || ex.getStatusCode().value() == 401) {
+				throw new InvalidLoginException("Invalid email or password");
+			}
+			log.warn("Auth login failed with status {}", ex.getStatusCode().value());
+			throw new IllegalStateException("Could not log in");
+		}
+	}
+
 	public void deleteUser(UUID authId) {
 		try {
 			restClient.delete()
@@ -66,5 +98,12 @@ public class SupabaseAuthService {
 	}
 
 	private record AuthUser(String id) {
+	}
+
+	private record AuthSession(
+			@com.fasterxml.jackson.annotation.JsonProperty("access_token") String accessToken,
+			@com.fasterxml.jackson.annotation.JsonProperty("refresh_token") String refreshToken,
+			@com.fasterxml.jackson.annotation.JsonProperty("expires_in") long expiresIn,
+			@com.fasterxml.jackson.annotation.JsonProperty("token_type") String tokenType) {
 	}
 }
