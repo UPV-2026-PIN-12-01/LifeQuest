@@ -1,37 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import './styles/App.css'
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  const loadHello = useCallback(() => {
-    setLoading(true)
-    setError('')
-    fetch('/api/hello')
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((data) => {
-        setMessage(data.message)
-      })
-      .catch((err) => {
-        setMessage('')
-        setError(err.message)
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }, [])
-
-  useEffect(() => {
-    loadHello()
-  }, [loadHello])
-
   return (
     <main className="page">
       <h1>LifeQuest</h1>
