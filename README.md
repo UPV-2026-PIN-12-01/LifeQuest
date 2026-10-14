@@ -6,8 +6,10 @@ Java (Spring Boot) backend + JavaScript (React) frontend.
 
 ## Deployments
 
-- Production (`main`): https://life-quest-project.vercel.app
-- Develop: https://life-quest-git-develop-trabajo-pin-2026-grupo1201.vercel.app
+- **Develop:** https://life-quest-project.vercel.app
+  - Temporarily promoted to the production URL
+- **Production (`main`):** none yet
+  - For showruns we’ll demote develop and put `main` on production
 
 ## Prerequisites
 
