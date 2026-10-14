@@ -9,7 +9,7 @@ Layered Spring Boot app under `com.lifequest` (`backend/src/main/java/com/lifequ
 - `controller/` — REST endpoints; handle HTTP and call services, no business logic.
 - `service/` — Business logic; calls repositories and maps entities to DTOs.
 - `repository/` — Data access (Spring Data interfaces), one per entity.
-- `model/entity/` — Persistent domain classes (`Usuario`, `Grupo`, `Personaje`, `Equipo`, `Skin`, `Objetivo`, `Tarea`, `Desafio`, `Recompensa`).
+- `model/entity/` — Persistent domain classes (`User`, `Group`, `CharacterStats`, `Equipment`, `Skin`, `Goal`, `Task`, `Challenge`, `Reward`). Class names are full English.
 - `model/dto/` — Request/response objects exposed by the API; never return entities.
 - `exception/` — Custom exceptions and the global error handler.
 
@@ -28,13 +28,13 @@ Layered Spring Boot app under `com.lifequest` (`backend/src/main/java/com/lifequ
 
 ### About the rule "A service uses only its own repository; for other entities it calls their service."
 
-- `TareaService` may use `TareaRepository`, never `RecompensaRepository`.
-- Need a reward? `TareaService` calls `RecompensaService`, which uses `RecompensaRepository`.
-- Same for reads: to check a `Grupo` exists, call `GrupoService`, not `GrupoRepository`.
+- `TaskService` may use `TaskRepository`, never `RewardRepository`.
+- Need a reward? `TaskService` calls `RewardService`, which uses `RewardRepository`.
+- Same for reads: to check a `Group` exists, call `GroupService`, not `GroupRepository`.
 - Services may pass entities to each other, since both are in the service layer.
 - The owner service holds that entity's rules (validation, "not found" errors, cascades).
 
 ```
-OK:   TareaService -> RecompensaService -> RecompensaRepository
-BAD:  TareaService -> RecompensaRepository
+OK:   TaskService -> RewardService -> RewardRepository
+BAD:  TaskService -> RewardRepository
 ```
