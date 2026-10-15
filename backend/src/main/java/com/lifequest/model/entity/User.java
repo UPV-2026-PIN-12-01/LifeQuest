@@ -45,6 +45,9 @@ public class User {
 	@Column(name = "player_id")
 	private Long playerId;
 
+	@Column(name = "task_streak", insertable = false, updatable = false)
+	private Integer taskStreak;
+
 	public Long getId() {
 		return id;
 	}
@@ -107,5 +110,9 @@ public class User {
 
 	public void setPlayerId(Long playerId) {
 		this.playerId = playerId;
+	}
+
+	public Integer getTaskStreak() {
+		return taskStreak;
 	}
 }

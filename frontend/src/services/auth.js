@@ -1,3 +1,5 @@
+import { clearSession, readSession } from './session.js'
+
 export async function signup(formData) {
   let response
   try {
@@ -68,20 +70,11 @@ export async function getCurrentUser() {
     },
   })
   if (response.status === 401) {
-    sessionStorage.removeItem('lifequest.session')
+    clearSession()
     return null
   }
   if (!response.ok) {
     throw new Error('Could not load the current user')
   }
   return response.json()
-}
-
-function readSession() {
-  try {
-    return JSON.parse(sessionStorage.getItem('lifequest.session') || 'null')
-  } catch {
-    sessionStorage.removeItem('lifequest.session')
-    return null
-  }
 }

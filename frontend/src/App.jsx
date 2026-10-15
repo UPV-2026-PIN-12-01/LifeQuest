@@ -1,13 +1,7 @@
-import SignupPage from './pages/SignupPage.jsx'
+import AppRoutes from './routes/AppRoutes.jsx'
 
 function App() {
-  return <SignupPage />
-import AppRoutes from './routes/AppRoutes'
-
-function App() {
-  return (
-    <AppRoutes />
-  )
+  return <AppRoutes />
 }
 
 export default App
