@@ -52,7 +52,7 @@ class TaskServiceTest {
 
 	@Test
 	void mapsTaskToCalendarShapeInLocalTime() {
-		Task task = task("pending", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
+		Task task = task("PENDING", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
 		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
 				eq(7L), any(), any()))
 				.thenReturn(List.of(task));
@@ -66,17 +66,29 @@ class TaskServiceTest {
 		assertThat(dto.startTime()).isEqualTo("00:30");
 		assertThat(dto.endTime()).isEqualTo("01:00");
 		assertThat(dto.status()).isEqualTo("pending");
+		assertThat(dto.priority()).isEqualTo("medium");
 		assertThat(dto.xp()).isEqualTo(50L);
 	}
 
 	@Test
 	void pendingStatusFollowsTheClock() {
-		assertThat(TaskService.displayStatus(task("pending", "2026-10-10T09:00:00Z", "2026-10-10T11:00:00Z", null), NOW))
+		assertThat(TaskService.displayStatus(task("PENDING", "2026-10-10T09:00:00Z", "2026-10-10T11:00:00Z", null), NOW))
 				.isEqualTo("in_progress");
-		assertThat(TaskService.displayStatus(task("pending", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
+		assertThat(TaskService.displayStatus(task("IN_PROGRESS", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
 				.isEqualTo("finished");
-		assertThat(TaskService.displayStatus(task("completed", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
+		assertThat(TaskService.displayStatus(task("DONE", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
 				.isEqualTo("completed");
+		assertThat(TaskService.displayStatus(task("NOT_DONE", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
+				.isEqualTo("not_completed");
+	}
+
+	@Test
+	void prioritiesCollapseToThreeLevels() {
+		assertThat(TaskService.displayPriority("MAX")).isEqualTo("high");
+		assertThat(TaskService.displayPriority("HIGH")).isEqualTo("high");
+		assertThat(TaskService.displayPriority("MID")).isEqualTo("medium");
+		assertThat(TaskService.displayPriority("LOW")).isEqualTo("low");
+		assertThat(TaskService.displayPriority("NULL")).isEqualTo("low");
 	}
 
 	@Test
@@ -93,7 +105,7 @@ class TaskServiceTest {
 		task.setDescription("test-can-delete-later");
 		task.setIcon("📘");
 		task.setStatus(status);
-		task.setPriority("medium");
+		task.setPriority("MID");
 		task.setColor("purple");
 		task.setStartTime(Instant.parse(start));
 		task.setEndTime(Instant.parse(end));

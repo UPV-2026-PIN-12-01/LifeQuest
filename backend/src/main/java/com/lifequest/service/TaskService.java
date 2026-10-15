@@ -23,8 +23,9 @@ import com.lifequest.repository.TaskRepository;
 public class TaskService {
 
 	static final long MAX_RANGE_DAYS = 62;
-	static final String STATUS_PENDING = "pending";
-	static final String STATUS_COMPLETED = "completed";
+	// Values of the Supabase enums public.task_status and public.task_priority.
+	static final String DB_STATUS_DONE = "DONE";
+	static final String DB_STATUS_NOT_DONE = "NOT_DONE";
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
 	private final TaskRepository taskRepository;
@@ -61,7 +62,7 @@ public class TaskService {
 	public long countCompletedToday(Long userId) {
 		LocalDate today = LocalDate.now(clock);
 		return findTasks(userId, today, today).stream()
-				.filter(task -> STATUS_COMPLETED.equals(task.getStatus()))
+				.filter(task -> DB_STATUS_DONE.equals(task.getStatus()))
 				.count();
 	}
 
@@ -87,19 +88,30 @@ public class TaskService {
 				start.format(TIME),
 				end.format(TIME),
 				displayStatus(task, now),
-				task.getPriority(),
+				displayPriority(task.getPriority()),
 				xp);
 	}
 
-	// Only pending / completed / not_completed are stored; a pending task shows as in progress or
+	// DONE / NOT_DONE are the user's outcome; any other stored value shows as pending, in progress or
 	// finished depending on the clock, so the card can ask "¿La completaste?".
 	static String displayStatus(Task task, Instant now) {
-		if (!STATUS_PENDING.equals(task.getStatus())) {
-			return task.getStatus();
+		if (DB_STATUS_DONE.equals(task.getStatus())) {
+			return "completed";
+		}
+		if (DB_STATUS_NOT_DONE.equals(task.getStatus())) {
+			return "not_completed";
 		}
 		if (now.isBefore(task.getStartTime())) {
-			return STATUS_PENDING;
+			return "pending";
 		}
 		return now.isBefore(task.getEndTime()) ? "in_progress" : "finished";
+	}
+
+	// The home shows three levels: MAX and HIGH are high, MID is medium, LOW and NULL are low.
+	static String displayPriority(String priority) {
+		if ("MAX".equals(priority) || "HIGH".equals(priority)) {
+			return "high";
+		}
+		return "MID".equals(priority) ? "medium" : "low";
 	}
 }
