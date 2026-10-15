@@ -25,6 +25,20 @@ public class UserService {
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 
+	// The Supabase JWT subject is the auth user UUID stored in users.inner_id.
+	@Transactional(readOnly = true)
+	public Long getIdByAuthSubject(String subject) {
+		UUID innerId;
+		try {
+			innerId = UUID.fromString(subject);
+		} catch (IllegalArgumentException | NullPointerException ex) {
+			throw new ResourceNotFoundException("User not found");
+		}
+		return userRepository.findByInnerId(innerId)
+				.map(User::getId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
+
 	@Transactional(readOnly = true)
 	public boolean existsByUsername(String username) {
 		return userRepository.existsByUsername(username);
