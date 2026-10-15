@@ -2,23 +2,43 @@ package com.lifequest.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
+import com.lifequest.model.dto.AuthenticatedUserDto;
+import com.lifequest.model.dto.LoginDto;
 import com.lifequest.model.dto.ProfileDto;
 import com.lifequest.service.SignupService;
+import com.lifequest.service.SupabaseAuthService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
 	private final SignupService signupService;
+	private final SupabaseAuthService supabaseAuthService;
 
-	public AuthController(SignupService signupService) {
+	public AuthController(SignupService signupService, SupabaseAuthService supabaseAuthService) {
 		this.signupService = signupService;
+		this.supabaseAuthService = supabaseAuthService;
+	}
+
+	@PostMapping("/login")
+	public LoginDto login(
+			@RequestParam String email,
+			@RequestParam String password) {
+		return supabaseAuthService.login(email.trim().toLowerCase(), password);
+	}
+
+	@GetMapping("/me")
+	public AuthenticatedUserDto currentUser(@AuthenticationPrincipal Jwt jwt) {
+		return new AuthenticatedUserDto(jwt.getSubject(), jwt.getClaimAsString("email"));
 	}
 
 	@PostMapping("/signup")

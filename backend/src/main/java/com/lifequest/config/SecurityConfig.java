@@ -16,7 +16,17 @@ public class SecurityConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable)
 				.cors(Customizer.withDefaults())
-				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(
+								"/api/health",
+								"/api/hello",
+								"/api/auth/login",
+								"/api/auth/signup",
+								"/swagger.html",
+								"/swagger-ui/**",
+								"/v3/api-docs/**").permitAll()
+						.anyRequest().authenticated())
+				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 		return http.build();
 	}
 }
