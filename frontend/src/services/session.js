@@ -1,20 +1,35 @@
-// Temporary until login exists: the current user comes from #/home?userId=N and is remembered in localStorage.
-const STORAGE_KEY = 'lifequest.userId'
+// Supabase session returned by /api/auth/login, kept for this browser tab.
+const STORAGE_KEY = 'lifequest.session'
 
-export function getCurrentUserId() {
-  const query = window.location.hash.split('?')[1] ?? ''
-  const fromUrl = new URLSearchParams(query).get('userId')
-  if (fromUrl) {
-    try {
-      localStorage.setItem(STORAGE_KEY, fromUrl)
-    } catch {
-      // Storage can be blocked; the URL still works for this visit.
-    }
-    return fromUrl
-  }
+export function saveSession(session) {
   try {
-    return localStorage.getItem(STORAGE_KEY)
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
   } catch {
+    // Storage can be blocked; the user will be asked to log in again.
+  }
+}
+
+export function readSession() {
+  try {
+    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null')
+  } catch {
+    clearSession()
     return null
   }
+}
+
+export function clearSession() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Nothing stored.
+  }
+}
+
+export function getAccessToken() {
+  return readSession()?.access_token ?? null
+}
+
+export function hasSession() {
+  return Boolean(getAccessToken())
 }

@@ -1,14 +1,17 @@
 import { useEffect, useId, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
 import SignupSuccess from '../components/signup/SignupSuccess.jsx'
 import { login, signup } from '../services/auth.js'
+import { saveSession } from '../services/session.js'
 import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { signupErrorFields } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
 
 export default function SignupPage() {
+  const navigate = useNavigate()
   const [tab, setTab] = useState('signup')
   const [step, setStep] = useState(1)
   const [username, setUsername] = useState('')
@@ -61,8 +64,8 @@ export default function SignupPage() {
     setLoginError('')
     try {
       const session = await login(loginEmail, loginPassword)
-      sessionStorage.setItem('lifequest.session', JSON.stringify(session))
-      setSuccess(true)
+      saveSession(session)
+      navigate('/home', { replace: true })
     } catch (error) {
       if (error.status === 401) {
         setLoginError('El email o la contraseña no son correctos')

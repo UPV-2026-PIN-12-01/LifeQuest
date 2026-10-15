@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
@@ -19,11 +20,17 @@ const EMPTY_PLAYER = {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const [weekOffset, setWeekOffset] = useState(0)
   const [tasks, setTasks] = useState([])
   const [player, setPlayer] = useState(EMPTY_PLAYER)
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
+
+  // An expired or missing session sends the user back to log in.
+  useEffect(() => {
+    if (loadError?.status === 401) navigate('/login', { replace: true })
+  }, [loadError, navigate])
 
   const weekStart = addDays(startOfWeek(new Date()), weekOffset * 7)
   const weekKey = weekStart.getTime()
@@ -84,7 +91,7 @@ export default function HomePage() {
 }
 
 function loadErrorMessage(error) {
-  if (error.status === 401) return 'No hay ningún usuario seleccionado. Mientras no exista el login, abre #/home?userId=TU_ID.'
-  if (error.status === 404) return 'No existe ese usuario o no tiene personaje.'
+  if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
+  if (error.status === 404) return 'Tu usuario no tiene personaje todavía.'
   return 'No se pudieron cargar tus datos. Inténtalo de nuevo más tarde.'
 }

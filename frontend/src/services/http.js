@@ -1,13 +1,24 @@
-import { getCurrentUserId } from './session.js'
+import { clearSession, getAccessToken } from './session.js'
 
 export async function getJson(url) {
+  const token = getAccessToken()
+  if (!token) {
+    const error = new Error('Not logged in')
+    error.status = 401
+    throw error
+  }
   let response
   try {
-    response = await fetch(url)
+    response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
   } catch {
     const error = new Error('Network error')
     error.status = 0
     throw error
+  }
+  if (response.status === 401) {
+    clearSession()
   }
   let payload = null
   try {
@@ -24,11 +35,5 @@ export async function getJson(url) {
 }
 
 export function playerUrl(path = '') {
-  const userId = getCurrentUserId()
-  if (!userId) {
-    const error = new Error('No user selected')
-    error.status = 401
-    throw error
-  }
-  return `/api/players/${encodeURIComponent(userId)}${path}`
+  return `/api/players/me${path}`
 }
