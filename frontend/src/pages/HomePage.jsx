@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
+import TaskFormModal from '../components/home/TaskFormModal.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import { getDailyQuests, getPlayerProfile } from '../services/player.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
-import { addDays, startOfWeek, weekRangeLabel } from '../utils/week.js'
+import { addDays, startOfWeek, toIsoDate, weekRangeLabel } from '../utils/week.js'
 import '../styles/home.css'
 
 const EMPTY_PLAYER = {
@@ -26,6 +27,9 @@ export default function HomePage() {
   const [player, setPlayer] = useState(EMPTY_PLAYER)
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
+  // null when closed, { task: null } to create, { task } to edit.
+  const [editor, setEditor] = useState(null)
+  const [tasksVersion, setTasksVersion] = useState(0)
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [weekKey])
+  }, [weekKey, tasksVersion])
 
   return (
     <main className="home-page">
@@ -82,10 +86,22 @@ export default function HomePage() {
           rangeLabel={weekRangeLabel(weekStart)}
           onPrevious={() => setWeekOffset((offset) => offset - 1)}
           onNext={() => setWeekOffset((offset) => offset + 1)}
+          onAddTask={() => setEditor({ task: null })}
         />
-        <WeekGrid weekStart={weekStart} tasks={tasks} />
+        <WeekGrid weekStart={weekStart} tasks={tasks} onSelectTask={(task) => setEditor({ task })} />
       </section>
       {quests.length > 0 && <DailyQuests quests={quests} />}
+      {editor && (
+        <TaskFormModal
+          task={editor.task}
+          defaultDate={toIsoDate(new Date())}
+          onClose={() => setEditor(null)}
+          onSaved={() => {
+            setEditor(null)
+            setTasksVersion((version) => version + 1)
+          }}
+        />
+      )}
     </main>
   )
 }

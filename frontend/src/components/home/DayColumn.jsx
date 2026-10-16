@@ -1,6 +1,6 @@
 import TaskCard from './TaskCard.jsx'
 
-export default function DayColumn({ day, tasks, isToday }) {
+export default function DayColumn({ day, tasks, isToday, onSelectTask }) {
   const done = tasks.filter((task) => task.status === 'completed')
   const earnedXp = done.reduce((sum, task) => sum + task.xp, 0)
   const openXp = tasks
@@ -46,7 +46,7 @@ export default function DayColumn({ day, tasks, isToday }) {
             Día de descanso
           </p>
         ) : (
-          tasks.map((task) => <TaskCard key={task.id} task={task} />)
+          tasks.map((task) => <TaskCard key={task.id} task={task} onSelect={onSelectTask} />)
         )}
       </div>
     </section>

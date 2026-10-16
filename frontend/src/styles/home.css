@@ -707,3 +707,222 @@
   background: var(--lq-surface);
   color: var(--lq-ink);
 }
+
+.task-card[role='button'] {
+  cursor: pointer;
+}
+
+/* Task form modal */
+
+.task-modal {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100svh - 32px);
+  /* The global reset removes the dialog's default centering. */
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: 18px;
+  background: var(--lq-surface);
+  color: var(--lq-ink);
+  box-shadow: 0 24px 60px rgba(28, 22, 51, 0.3);
+}
+
+.task-modal::backdrop {
+  background: rgba(28, 22, 51, 0.45);
+}
+
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px 22px;
+}
+
+.task-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-form-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.home-page .task-form-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: var(--lq-violet-50);
+  color: var(--lq-ink-muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.task-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lq-ink-muted);
+}
+
+.task-field legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.task-field input[type='text'],
+.task-field input[type='date'],
+.task-field input[type='time'],
+.task-field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  background: var(--lq-surface-muted);
+  color: var(--lq-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.task-field textarea {
+  resize: vertical;
+}
+
+.task-field-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+}
+
+.task-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-choice {
+  position: relative;
+  cursor: pointer;
+}
+
+.task-choice input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.task-choice span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  background: var(--lq-surface-muted);
+  color: var(--lq-ink);
+  font-weight: 600;
+}
+
+.task-choice small {
+  color: var(--lq-gold-ink);
+  font-weight: 700;
+}
+
+.task-choice input:checked + span {
+  border-color: var(--lq-violet-500);
+  background: var(--lq-violet-100);
+  box-shadow: 0 0 0 1px var(--lq-violet-500);
+}
+
+.task-choice input:focus-visible + span {
+  outline: 3px solid var(--lq-violet-500);
+  outline-offset: 2px;
+}
+
+.task-choice-icon span {
+  padding: 6px 9px;
+  font-size: 18px;
+}
+
+.task-choice-color span {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 3px solid var(--lq-surface);
+  border-radius: 50%;
+  background: var(--task-color);
+  box-shadow: 0 0 0 1px var(--lq-line);
+}
+
+.task-choice-color input:checked + span {
+  background: var(--task-color);
+  box-shadow: 0 0 0 2px var(--task-color);
+}
+
+.task-form-error {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--lq-danger-soft);
+  color: var(--lq-danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.home-page .task-form-actions button {
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-page .task-form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.home-page .task-form-delete {
+  margin-right: auto;
+  border: 1px solid var(--lq-danger-soft);
+  background: var(--lq-surface);
+  color: var(--lq-danger);
+}
+
+.home-page .task-form-cancel {
+  border: 1px solid var(--lq-line);
+  background: var(--lq-surface);
+  color: var(--lq-ink);
+}
+
+.home-page .task-form-save {
+  border: none;
+  background: linear-gradient(135deg, var(--lq-violet-600), #7c5cff);
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .task-field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .task-field-row .task-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
