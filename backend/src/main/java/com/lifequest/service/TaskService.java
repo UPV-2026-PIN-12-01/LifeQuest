@@ -3,19 +3,24 @@ package com.lifequest.service;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lifequest.exception.InvalidRequestException;
+import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.TaskDto;
+import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
 import com.lifequest.repository.TaskRepository;
 
@@ -26,6 +31,14 @@ public class TaskService {
 	// Values of the Supabase enums public.task_status and public.task_priority.
 	static final String DB_STATUS_DONE = "DONE";
 	static final String DB_STATUS_NOT_DONE = "NOT_DONE";
+	static final String DB_STATUS_PENDING = "PENDING";
+	static final int MAX_TITLE_LENGTH = 80;
+	static final String DEFAULT_ICON = "📆";
+	// Same values as the chk_task_color constraint.
+	static final Set<String> COLORS = Set.of("purple", "red", "blue", "yellow", "green");
+	// XP of the reward created with each task, by form priority.
+	static final Map<String, Long> XP_BY_PRIORITY = Map.of("low", 10L, "medium", 20L, "high", 30L);
+	static final Map<String, String> DB_PRIORITY_BY_FORM = Map.of("low", "LOW", "medium", "MID", "high", "HIGH");
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
 	private final TaskRepository taskRepository;
@@ -66,6 +79,93 @@ public class TaskService {
 				.count();
 	}
 
+	@Transactional
+	public TaskDto create(Long userId, TaskRequestDto request) {
+		userService.getById(userId);
+		Task task = new Task();
+		task.setUserId(userId);
+		task.setStatus(DB_STATUS_PENDING);
+		apply(task, request);
+		long xp = XP_BY_PRIORITY.get(request.priority());
+		task.setRewardId(rewardService.create(userId, xp));
+		return toDto(taskRepository.save(task), xp);
+	}
+
+	// Status is not part of the form, so editing keeps it; the reward XP follows the new priority.
+	@Transactional
+	public TaskDto update(Long userId, Long taskId, TaskRequestDto request) {
+		Task task = findOwned(userId, taskId);
+		apply(task, request);
+		long xp = XP_BY_PRIORITY.get(request.priority());
+		if (task.getRewardId() == null) {
+			task.setRewardId(rewardService.create(userId, xp));
+		} else {
+			rewardService.updateXp(task.getRewardId(), xp);
+		}
+		return toDto(taskRepository.save(task), xp);
+	}
+
+	// Deletes the row for real, and its reward unless another task still points to it.
+	@Transactional
+	public void delete(Long userId, Long taskId) {
+		Task task = findOwned(userId, taskId);
+		Long rewardId = task.getRewardId();
+		taskRepository.delete(task);
+		taskRepository.flush();
+		if (rewardId != null && !taskRepository.existsByRewardId(rewardId)) {
+			rewardService.delete(rewardId);
+		}
+	}
+
+	private Task findOwned(Long userId, Long taskId) {
+		return taskRepository.findByIdAndUserId(taskId, userId)
+				.orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+	}
+
+	private void apply(Task task, TaskRequestDto request) {
+		if (request == null) {
+			throw new InvalidRequestException("Task is required");
+		}
+		String title = request.title() == null ? "" : request.title().trim();
+		if (title.isEmpty() || title.length() > MAX_TITLE_LENGTH) {
+			throw new InvalidRequestException("title must be 1 to " + MAX_TITLE_LENGTH + " characters");
+		}
+		if (request.color() == null || !COLORS.contains(request.color())) {
+			throw new InvalidRequestException("color must be one of " + COLORS);
+		}
+		if (request.priority() == null || !DB_PRIORITY_BY_FORM.containsKey(request.priority())) {
+			throw new InvalidRequestException("priority must be low, medium or high");
+		}
+		if (request.date() == null || request.startTime() == null || request.endTime() == null) {
+			throw new InvalidRequestException("date, startTime and endTime are required");
+		}
+		if (!request.endTime().isAfter(request.startTime())) {
+			throw new InvalidRequestException("endTime must be after startTime");
+		}
+		Instant start = toInstant(request.date(), request.startTime());
+		Instant end = toInstant(request.date(), request.endTime());
+		// The day_task_check constraint compares the day of month in UTC, not in the app time zone.
+		if (start.atOffset(ZoneOffset.UTC).getDayOfMonth() != end.atOffset(ZoneOffset.UTC).getDayOfMonth()) {
+			throw new InvalidRequestException("Task cannot cross midnight UTC");
+		}
+		String icon = request.icon() == null ? "" : request.icon().trim();
+		task.setName(title);
+		task.setDescription(request.description() == null ? "" : request.description().trim());
+		task.setIcon(icon.isEmpty() ? DEFAULT_ICON : icon);
+		task.setColor(request.color());
+		task.setPriority(DB_PRIORITY_BY_FORM.get(request.priority()));
+		task.setStartTime(start);
+		task.setEndTime(end);
+	}
+
+	private Instant toInstant(LocalDate date, LocalTime time) {
+		return date.atTime(time).atZone(clock.getZone()).toInstant();
+	}
+
+	private TaskDto toDto(Task task, long xp) {
+		return toDto(task, task.getRewardId() == null ? Map.of() : Map.of(task.getRewardId(), xp), clock.instant());
+	}
+
 	private List<Task> findTasks(Long userId, LocalDate from, LocalDate to) {
 		ZoneId zone = clock.getZone();
 		Instant start = from.atStartOfDay(zone).toInstant();
@@ -82,6 +182,7 @@ public class TaskService {
 		return new TaskDto(
 				task.getId(),
 				task.getName(),
+				task.getDescription(),
 				task.getIcon(),
 				task.getColor(),
 				start.toLocalDate().toString(),
