@@ -11,7 +11,7 @@ Java (Spring Boot) backend + JavaScript (React) frontend.
 
 ## Prerequisites
 
-- JDK 21
+- JDK 25
 - Node.js 20.19+ (or 22.12+)
 
 ## Run the backend

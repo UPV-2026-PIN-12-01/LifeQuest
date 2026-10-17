@@ -26,6 +26,33 @@ public class CharacterStats {
 	@Column(name = "user_id")
 	private Long userId;
 
+	@Column(name = "hp", nullable = false)
+	private Long hp;
+
+	@Column(name = "strength", nullable = false)
+	private Integer strength;
+
+	@Column(name = "speed", nullable = false)
+	private Integer speed;
+
+	@Column(name = "stamina", nullable = false)
+	private Integer stamina;
+
+	@Column(name = "wisdom", nullable = false)
+	private Integer wisdom;
+
+	@Column(name = "level", nullable = false)
+	private Integer level;
+
+	@Column(name = "xpTotal", nullable = false)
+	private Long xpTotal;
+
+	@Column(name = "xpCurrent", nullable = false)
+	private Long xpCurrent;
+
+	@Column(name = "gold", nullable = false)
+	private Long gold;
+
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(name = "class", nullable = false)
 	private PlayerClass playerClass = PlayerClass.knight;
@@ -48,6 +75,42 @@ public class CharacterStats {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	public Long getHp() {
+		return hp;
+	}
+
+	public Integer getStrength() {
+		return strength;
+	}
+
+	public Integer getSpeed() {
+		return speed;
+	}
+
+	public Integer getStamina() {
+		return stamina;
+	}
+
+	public Integer getWisdom() {
+		return wisdom;
+	}
+
+	public Integer getLevel() {
+		return level;
+	}
+
+	public Long getXpTotal() {
+		return xpTotal;
+	}
+
+	public Long getXpCurrent() {
+		return xpCurrent;
+	}
+
+	public Long getGold() {
+		return gold;
 	}
 
 	public PlayerClass getPlayerClass() {

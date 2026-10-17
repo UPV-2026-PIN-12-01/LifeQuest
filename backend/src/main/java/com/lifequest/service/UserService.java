@@ -2,8 +2,10 @@ package com.lifequest.service;
 
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.User;
@@ -26,6 +28,13 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public boolean existsByEmail(String email) {
 		return userRepository.existsByEmail(email);
+	}
+
+	@Transactional(readOnly = true)
+	public User getByInnerId(UUID innerId) {
+		return userRepository.findByInnerId(innerId)
+				.orElseThrow(() -> new ResponseStatusException(
+						HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	@Transactional
