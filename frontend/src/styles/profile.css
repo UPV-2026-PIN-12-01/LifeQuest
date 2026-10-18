@@ -47,6 +47,10 @@
 
 .profile-back {
   align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  background: var(--lq-surface);
   color: var(--lq-violet-700);
   font-size: 14px;
   font-weight: 700;
@@ -54,8 +58,8 @@
 }
 
 .profile-back:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border-color: var(--lq-violet-600);
+  color: var(--lq-violet-600);
 }
 
 .profile-card {
@@ -64,10 +68,10 @@
   gap: 22px;
   width: 100%;
   padding: 28px 28px 26px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 28px;
+  border: 1px solid var(--lq-line);
+  border-radius: 24px;
   background: var(--lq-surface);
-  box-shadow: 0 18px 50px rgba(42, 24, 104, 0.1);
+  box-shadow: 0 18px 50px rgba(42, 24, 104, 0.08);
 }
 
 .profile-card h1 {
@@ -202,7 +206,7 @@
   place-items: center;
   aspect-ratio: 1;
   padding: 0;
-  border: 1px solid transparent;
+  border: 1px solid var(--lq-line);
   border-radius: 14px;
   background: var(--lq-surface-muted);
   color: inherit;
@@ -217,9 +221,21 @@
 }
 
 .profile-page .profile-emoji.is-selected {
-  border-color: var(--lq-violet-500);
-  background: var(--lq-violet-100);
-  box-shadow: inset 0 0 0 1px var(--lq-violet-500);
+  border: 2px solid var(--lq-violet-600);
+  background: #efeaff;
+  box-shadow: 0 8px 22px rgba(91, 61, 204, 0.18);
+}
+
+.profile-password {
+  gap: 10px;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--lq-line);
+  border-radius: 16px;
+  background: var(--lq-surface-muted);
+}
+
+.profile-password .profile-sublabel {
+  margin-top: 2px;
 }
 
 .profile-sublabel {
@@ -266,16 +282,16 @@
   padding: 15px 18px;
   border: 0;
   border-radius: 14px;
-  background: var(--lq-violet-500);
+  background: linear-gradient(135deg, var(--lq-violet-600), #7c5cff);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
-  box-shadow: 0 10px 22px rgba(109, 94, 252, 0.28);
+  box-shadow: 0 6px 14px rgba(91, 61, 204, 0.3);
 }
 
 .profile-save:hover {
   border-color: transparent;
-  background: var(--lq-violet-600);
+  background: linear-gradient(135deg, var(--lq-violet-700), var(--lq-violet-600));
 }
 
 .profile-saved {

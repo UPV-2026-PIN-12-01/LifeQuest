@@ -257,7 +257,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="profile-field">
+            <div className="profile-field profile-password">
               <span className="profile-label">Contraseña</span>
               <p className="profile-hint" id={passwordHintId}>
                 Déjala en blanco si no quieres cambiarla.
