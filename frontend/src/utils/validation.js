@@ -12,6 +12,29 @@ const PHOTO_TYPES = new Set([
   'image/gif',
 ])
 
+// Password is optional: leave both fields empty to keep the current one.
+export function validateProfile({ name, email, password, confirmPassword }) {
+  const errors = {}
+  if (!name.trim()) {
+    errors.name = 'El nombre es obligatorio'
+  }
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) {
+    errors.email = 'El correo es obligatorio'
+  } else if (!EMAIL_SHAPE.test(normalizedEmail)) {
+    errors.email = 'El correo no es válido'
+  }
+  const changingPassword = password.length > 0 || confirmPassword.length > 0
+  if (changingPassword) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden'
+    }
+  }
+  return errors
+}
+
 export function validateAccount({ username, email, password }) {
   const errors = {}
   if (!username.trim()) {

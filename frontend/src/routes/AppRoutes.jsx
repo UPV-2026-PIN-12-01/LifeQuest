@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CharacterView from '../pages/CharacterView.jsx';
 import HomePage from '../pages/HomePage.jsx';
+import ProfilePage from '../pages/ProfilePage.jsx';
 import SignupPage from '../pages/SignupPage.jsx';
 import { hasSession } from '../services/session.js';
 
@@ -14,6 +15,7 @@ export default function AppRoutes() {
         <Route path="/character" element={<CharacterView />} />
         <Route path="/login" element={<SignupPage />} />
         <Route path="/home" element={<RequireSession><HomePage /></RequireSession>} />
+        <Route path="/profile" element={<RequireSession><ProfilePage /></RequireSession>} />
       </Routes>
     </BrowserRouter>
   );

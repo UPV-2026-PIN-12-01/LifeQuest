@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { classById } from '../../utils/playerClasses.js'
 
 export default function PlayerHero({ player, weekStats }) {
@@ -22,6 +23,9 @@ export default function PlayerHero({ player, weekStats }) {
         <p className="player-class">
           {playerClass.name} · {playerClass.stats}
         </p>
+        <Link className="player-profile-link" to="/profile">
+          Tu perfil
+        </Link>
       </div>
 
       <div className="player-xp">

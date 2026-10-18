@@ -1,0 +1,310 @@
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { getCurrentUser } from '../services/auth.js'
+import { getJson, playerUrl } from '../services/http.js'
+import { validatePhoto, validateProfile } from '../utils/validation.js'
+import '../styles/profile.css'
+
+export default function ProfilePage() {
+  const navigate = useNavigate()
+  const photoId = useId()
+  const nameId = useId()
+  const emailId = useId()
+  const passwordId = useId()
+  const confirmId = useId()
+  const passwordHintId = useId()
+  const previewRef = useRef('')
+
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [errors, setErrors] = useState({})
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (loadError?.status === 401) navigate('/login', { replace: true })
+  }, [loadError, navigate])
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([getCurrentUser(), getJson(playerUrl())])
+      .then(([account, profile]) => {
+        if (cancelled) return
+        if (!account) {
+          setLoadError({ status: 401 })
+          return
+        }
+        setName(profile.username ?? '')
+        setEmail(account.email ?? '')
+      })
+      .catch((error) => {
+        if (!cancelled) setLoadError(error)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    }
+  }, [])
+
+  function forgetSaved() {
+    setSaved(false)
+  }
+
+  function clearError(field) {
+    setErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    const photoError = validatePhoto(file)
+    forgetSaved()
+    if (photoError) {
+      setErrors((current) => ({ ...current, photo: photoError }))
+      return
+    }
+    const nextUrl = URL.createObjectURL(file)
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+    previewRef.current = nextUrl
+    setPhotoPreview(nextUrl)
+    clearError('photo')
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    const nextErrors = validateProfile({ name, email, password, confirmPassword })
+    if (errors.photo) nextErrors.photo = errors.photo
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors)
+      setSaved(false)
+      requestAnimationFrame(() => {
+        document.querySelector('.profile-card [aria-invalid="true"]')?.focus()
+      })
+      return
+    }
+    // Frontend only until the profile update endpoint exists.
+    setName(name.trim())
+    setEmail(email.trim().toLowerCase())
+    setPassword('')
+    setConfirmPassword('')
+    setErrors({})
+    setSaved(true)
+  }
+
+  return (
+    <main className="profile-page">
+      <div className="profile-wrap">
+        <Link className="profile-back" to="/home">
+          ← Inicio
+        </Link>
+
+        {loading ? (
+          <section className="profile-card" aria-busy="true">
+            <h1>Tu perfil</h1>
+            <p className="profile-hint">Cargando tu perfil…</p>
+          </section>
+        ) : loadError ? (
+          <section className="profile-card">
+            <h1>Tu perfil</h1>
+            <p className="profile-error" role="alert">
+              {loadErrorMessage(loadError)}
+            </p>
+          </section>
+        ) : (
+          <form className="profile-card" onSubmit={handleSubmit} noValidate>
+            <h1>Tu perfil</h1>
+
+            <div className="profile-photo-block">
+              <div className="profile-photo-row">
+                <div className="profile-photo">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Foto de perfil" />
+                  ) : (
+                    <UserSilhouette />
+                  )}
+                </div>
+                <div className="profile-photo-copy">
+                  <span className="profile-label" id={`${photoId}-label`}>
+                    Foto de perfil
+                  </span>
+                  <label className="profile-upload" htmlFor={photoId}>
+                    Subir imagen
+                  </label>
+                </div>
+              </div>
+              <input
+                id={photoId}
+                className="profile-file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                onChange={handlePhotoChange}
+                aria-labelledby={`${photoId}-label`}
+                aria-invalid={Boolean(errors.photo)}
+                aria-describedby={errors.photo ? `${photoId}-error` : undefined}
+              />
+              {errors.photo && (
+                <p className="profile-error" id={`${photoId}-error`} role="alert">
+                  {errors.photo}
+                </p>
+              )}
+            </div>
+
+            <div className="profile-field">
+              <label className="profile-label" htmlFor={nameId}>
+                Nombre
+              </label>
+              <input
+                id={nameId}
+                name="username"
+                type="text"
+                autoComplete="username"
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value)
+                  forgetSaved()
+                  clearError('name')
+                }}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? `${nameId}-error` : undefined}
+              />
+              {errors.name && (
+                <p className="profile-error" id={`${nameId}-error`} role="alert">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            <div className="profile-field">
+              <label className="profile-label" htmlFor={emailId}>
+                Correo
+              </label>
+              <input
+                id={emailId}
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  forgetSaved()
+                  clearError('email')
+                }}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? `${emailId}-error` : undefined}
+              />
+              {errors.email && (
+                <p className="profile-error" id={`${emailId}-error`} role="alert">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div className="profile-field">
+              <span className="profile-label">Contraseña</span>
+              <p className="profile-hint" id={passwordHintId}>
+                Déjala en blanco si no quieres cambiarla.
+              </p>
+              <label className="profile-sublabel" htmlFor={passwordId}>
+                Nueva contraseña
+              </label>
+              <input
+                id={passwordId}
+                name="new-password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value)
+                  forgetSaved()
+                  clearError('password')
+                }}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={
+                  errors.password ? `${passwordId}-error ${passwordHintId}` : passwordHintId
+                }
+              />
+              {errors.password && (
+                <p className="profile-error" id={`${passwordId}-error`} role="alert">
+                  {errors.password}
+                </p>
+              )}
+              <label className="profile-sublabel" htmlFor={confirmId}>
+                Repetir contraseña
+              </label>
+              <input
+                id={confirmId}
+                name="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value)
+                  forgetSaved()
+                  clearError('confirmPassword')
+                }}
+                aria-invalid={Boolean(errors.confirmPassword)}
+                aria-describedby={
+                  errors.confirmPassword ? `${confirmId}-error` : undefined
+                }
+              />
+              {errors.confirmPassword && (
+                <p className="profile-error" id={`${confirmId}-error`} role="alert">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            <button className="profile-save" type="submit">
+              Guardar cambios
+            </button>
+            {saved && (
+              <p className="profile-saved" role="status">
+                Cambios guardados en esta página. El servidor todavía no los recibe.
+              </p>
+            )}
+          </form>
+        )}
+      </div>
+    </main>
+  )
+}
+
+function loadErrorMessage(error) {
+  if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
+  if (error.status === 404) return 'No encontramos tu usuario.'
+  if (error.status === 0) return 'No se pudo conectar con el servidor.'
+  return 'No se pudo cargar tu perfil. Inténtalo de nuevo más tarde.'
+}
+
+function UserSilhouette() {
+  return (
+    <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" fill="currentColor" />
+      <path
+        d="M4 20c1.6-4 4.4-6 8-6s6.4 2 8 6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
