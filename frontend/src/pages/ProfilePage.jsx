@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/auth.js'
 import { getJson, playerUrl } from '../services/http.js'
+import { CLASS_ICONS, classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
 import '../styles/profile.css'
 
@@ -13,6 +14,7 @@ export default function ProfilePage() {
   const passwordId = useId()
   const confirmId = useId()
   const passwordHintId = useId()
+  const iconLabelId = useId()
   const previewRef = useRef('')
 
   const [loading, setLoading] = useState(true)
@@ -22,6 +24,7 @@ export default function ProfilePage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
+  const [icon, setIcon] = useState('')
   const [errors, setErrors] = useState({})
   const [saved, setSaved] = useState(false)
 
@@ -40,6 +43,7 @@ export default function ProfilePage() {
         }
         setName(profile.username ?? '')
         setEmail(account.email ?? '')
+        setIcon(classById(profile.playerClass).icon)
       })
       .catch((error) => {
         if (!cancelled) setLoadError(error)
@@ -135,14 +139,23 @@ export default function ProfilePage() {
             <div className="profile-photo-block">
               <div className="profile-photo-row">
                 <div className="profile-photo">
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Foto de perfil" />
-                  ) : (
-                    <UserSilhouette />
+                  <div className="profile-photo-face">
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Foto de perfil" />
+                    ) : (
+                      <span className="profile-photo-emoji" aria-hidden="true">
+                        {icon}
+                      </span>
+                    )}
+                  </div>
+                  {photoPreview && icon && (
+                    <span className="profile-photo-badge" aria-hidden="true">
+                      {icon}
+                    </span>
                   )}
                 </div>
                 <div className="profile-photo-copy">
-                  <span className="profile-label" id={`${photoId}-label`}>
+                  <span className="profile-photo-title" id={`${photoId}-label`}>
                     Foto de perfil
                   </span>
                   <label className="profile-upload" htmlFor={photoId}>
@@ -165,6 +178,33 @@ export default function ProfilePage() {
                   {errors.photo}
                 </p>
               )}
+            </div>
+
+            <div className="profile-field">
+              <span className="profile-label" id={iconLabelId}>
+                O elige un emoji
+              </span>
+              <div
+                className="profile-emoji-grid"
+                role="listbox"
+                aria-labelledby={iconLabelId}
+              >
+                {CLASS_ICONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    role="option"
+                    aria-selected={icon === emoji}
+                    className={icon === emoji ? 'profile-emoji is-selected' : 'profile-emoji'}
+                    onClick={() => {
+                      setIcon(emoji)
+                      forgetSaved()
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="profile-field">
@@ -292,19 +332,4 @@ function loadErrorMessage(error) {
   if (error.status === 404) return 'No encontramos tu usuario.'
   if (error.status === 0) return 'No se pudo conectar con el servidor.'
   return 'No se pudo cargar tu perfil. Inténtalo de nuevo más tarde.'
-}
-
-function UserSilhouette() {
-  return (
-    <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" fill="currentColor" />
-      <path
-        d="M4 20c1.6-4 4.4-6 8-6s6.4 2 8 6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  )
 }
