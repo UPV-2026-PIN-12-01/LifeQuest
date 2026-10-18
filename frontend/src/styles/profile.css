@@ -1,0 +1,328 @@
+.profile-page {
+  color-scheme: light;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 64px;
+  background:
+    radial-gradient(70% 32% at 50% 0%, rgba(109, 94, 252, 0.16), transparent 70%),
+    var(--lq-violet-50);
+  color: var(--lq-ink);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+:root:has(.profile-page) {
+  background: var(--lq-violet-50);
+}
+
+.profile-page *,
+.profile-page *::before,
+.profile-page *::after {
+  box-sizing: border-box;
+}
+
+.profile-page p {
+  margin: 0;
+}
+
+.profile-page button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.profile-page :focus-visible {
+  outline: 3px solid var(--lq-violet-500);
+  outline-offset: 2px;
+}
+
+.profile-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(100%, 640px);
+}
+
+.profile-back {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  background: var(--lq-surface);
+  color: var(--lq-violet-700);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.profile-back:hover {
+  border-color: var(--lq-violet-600);
+  color: var(--lq-violet-600);
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  padding: 28px 28px 26px;
+  border: 1px solid var(--lq-line);
+  border-radius: 24px;
+  background: var(--lq-surface);
+  box-shadow: 0 18px 50px rgba(42, 24, 104, 0.08);
+}
+
+.profile-card h1 {
+  margin: 0;
+  color: var(--lq-ink);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-photo-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-photo {
+  position: relative;
+  flex: none;
+  width: 88px;
+  height: 88px;
+}
+
+.profile-photo-face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--lq-violet-900);
+  box-shadow: 0 10px 22px rgba(42, 24, 104, 0.22);
+  font-size: 40px;
+  line-height: 1;
+}
+
+.profile-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-photo-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--lq-violet-500);
+  font-size: 16px;
+  line-height: 1;
+  box-shadow: 0 4px 10px rgba(42, 24, 104, 0.2);
+}
+
+.profile-photo-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.profile-photo-title {
+  color: var(--lq-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.profile-label {
+  color: var(--lq-ink-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-upload {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid var(--lq-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--lq-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(42, 24, 104, 0.04);
+}
+
+.profile-upload:hover {
+  background: var(--lq-surface-muted);
+}
+
+.profile-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+}
+
+.profile-page .profile-emoji {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--lq-line);
+  border-radius: 14px;
+  background: var(--lq-surface-muted);
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.profile-page .profile-emoji:hover {
+  border-color: var(--lq-violet-200);
+  background: var(--lq-violet-100);
+}
+
+.profile-page .profile-emoji.is-selected {
+  border: 2px solid var(--lq-violet-600);
+  background: #efeaff;
+  box-shadow: 0 8px 22px rgba(91, 61, 204, 0.18);
+}
+
+.profile-password {
+  gap: 10px;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--lq-line);
+  border-radius: 16px;
+  background: var(--lq-surface-muted);
+}
+
+.profile-password .profile-sublabel {
+  margin-top: 2px;
+}
+
+.profile-sublabel {
+  margin-top: 4px;
+  color: var(--lq-ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-field input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--lq-line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--lq-ink);
+  font: inherit;
+  font-size: 15px;
+}
+
+.profile-field input:focus {
+  outline: 2px solid var(--lq-violet-500);
+  outline-offset: 1px;
+}
+
+.profile-field input[aria-invalid='true'] {
+  border-color: var(--lq-danger);
+}
+
+.profile-hint {
+  color: var(--lq-ink-faint);
+  font-size: 13px;
+}
+
+.profile-error {
+  color: var(--lq-danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-save {
+  width: 100%;
+  margin-top: 4px;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--lq-violet-600), #7c5cff);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(91, 61, 204, 0.3);
+}
+
+.profile-save:hover {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--lq-violet-700), var(--lq-violet-600));
+}
+
+.profile-saved {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--lq-success-soft);
+  color: var(--lq-success-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .profile-page {
+    padding: 20px 16px 40px;
+  }
+
+  .profile-card {
+    padding: 22px 18px 18px;
+    border-radius: 22px;
+  }
+
+  .profile-emoji-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .profile-photo {
+    width: 76px;
+    height: 76px;
+  }
+
+  .profile-photo-face {
+    font-size: 34px;
+  }
+}

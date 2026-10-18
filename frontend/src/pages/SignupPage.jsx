@@ -12,7 +12,7 @@ import '../styles/signup.css'
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState('signup')
+  const [tab, setTab] = useState('login')
   const [step, setStep] = useState(1)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
