@@ -8,8 +8,7 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirige la raíz '/' automáticamente a '/character' */}
-        <Route path="/" element={<Navigate to="/character" replace />} />
+        <Route path="/" element={<Navigate to={hasSession() ? '/home' : '/login'} replace />} />
         
         {/* Tus rutas */}
         <Route path="/character" element={<CharacterView />} />
