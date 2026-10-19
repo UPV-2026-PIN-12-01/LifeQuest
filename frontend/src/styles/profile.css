@@ -294,6 +294,10 @@
   background: linear-gradient(135deg, var(--lq-violet-700), var(--lq-violet-600));
 }
 
+.profile-save:disabled {
+  opacity: 0.7;
+}
+
 .profile-saved {
   padding: 10px 12px;
   border-radius: 12px;

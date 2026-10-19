@@ -1,8 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getCurrentUser } from '../services/auth.js'
-import { getJson, playerUrl } from '../services/http.js'
-import { CLASS_ICONS, classById } from '../utils/playerClasses.js'
+import { getJson, patchJson } from '../services/http.js'
+import { CLASS_ICONS } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
 import '../styles/profile.css'
 
@@ -26,6 +25,8 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState('')
   const [icon, setIcon] = useState('')
   const [errors, setErrors] = useState({})
+  const [formError, setFormError] = useState(null)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
@@ -34,16 +35,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getCurrentUser(), getJson(playerUrl())])
-      .then(([account, profile]) => {
+    getJson('/api/users/me')
+      .then((payload) => {
         if (cancelled) return
-        if (!account) {
-          setLoadError({ status: 401 })
+        const user = payload?.user
+        if (!user) {
+          setLoadError({ status: 404 })
           return
         }
-        setName(profile.username ?? '')
-        setEmail(account.email ?? '')
-        setIcon(classById(profile.playerClass).icon)
+        setName(user.username ?? '')
+        setEmail(user.email ?? '')
+        setIcon(user.userIcon ?? '')
       })
       .catch((error) => {
         if (!cancelled) setLoadError(error)
@@ -64,6 +66,7 @@ export default function ProfilePage() {
 
   function forgetSaved() {
     setSaved(false)
+    setFormError(null)
   }
 
   function clearError(field) {
@@ -92,25 +95,55 @@ export default function ProfilePage() {
     clearError('photo')
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     const nextErrors = validateProfile({ name, email, password, confirmPassword })
     if (errors.photo) nextErrors.photo = errors.photo
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
+      setFormError(null)
       setSaved(false)
       requestAnimationFrame(() => {
         document.querySelector('.profile-card [aria-invalid="true"]')?.focus()
       })
       return
     }
-    // Frontend only until the profile update endpoint exists.
-    setName(name.trim())
-    setEmail(email.trim().toLowerCase())
-    setPassword('')
-    setConfirmPassword('')
-    setErrors({})
-    setSaved(true)
+    const body = {
+      username: name.trim(),
+      email: email.trim().toLowerCase(),
+      userIcon: icon,
+    }
+    if (password) body.password = password
+    setSaving(true)
+    setSaved(false)
+    setFormError(null)
+    try {
+      const payload = await patchJson('/api/users/me', body)
+      const user = payload.user
+      setName(user.username ?? '')
+      setEmail(user.email ?? '')
+      setIcon(user.userIcon ?? '')
+      setPassword('')
+      setConfirmPassword('')
+      setErrors({})
+      setSaved(true)
+    } catch (error) {
+      if (error.status === 401) {
+        navigate('/login', { replace: true })
+        return
+      }
+      const fieldErrors = fieldErrorsFromSave(error)
+      if (fieldErrors) {
+        setErrors(fieldErrors)
+        requestAnimationFrame(() => {
+          document.querySelector('.profile-card [aria-invalid="true"]')?.focus()
+        })
+      } else {
+        setFormError(saveErrorMessage(error))
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -312,12 +345,17 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <button className="profile-save" type="submit">
-              Guardar cambios
+            <button className="profile-save" type="submit" disabled={saving}>
+              {saving ? 'Guardando…' : 'Guardar cambios'}
             </button>
+            {formError && (
+              <p className="profile-error" role="alert">
+                {formError}
+              </p>
+            )}
             {saved && (
               <p className="profile-saved" role="status">
-                Cambios guardados en esta página. El servidor todavía no los recibe.
+                Cambios guardados.
               </p>
             )}
           </form>
@@ -325,6 +363,24 @@ export default function ProfilePage() {
       </div>
     </main>
   )
+}
+
+function fieldErrorsFromSave(error) {
+  if (error.message === 'Username already exists') return { name: 'El nombre ya existe' }
+  if (error.message === 'Email already exists') return { email: 'El correo ya existe' }
+  if (error.message === 'Invalid email' || error.message === 'Email is required') {
+    return { email: 'El correo no es válido' }
+  }
+  if (error.message === 'Password must be at least 6 characters') {
+    return { password: 'La contraseña debe tener al menos 6 caracteres' }
+  }
+  return null
+}
+
+function saveErrorMessage(error) {
+  if (error.status === 0) return 'No se pudo conectar con el servidor.'
+  if (error.status >= 500) return 'No se pudieron guardar los cambios. Inténtalo de nuevo.'
+  return 'No se pudieron guardar los cambios.'
 }
 
 function loadErrorMessage(error) {
