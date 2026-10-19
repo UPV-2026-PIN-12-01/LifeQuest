@@ -14,10 +14,9 @@ cd backend
 
 Windows: `mvnw.cmd spring-boot:run`
 
-If port 8080 is already in use:
+If port 8080 is already in use (cmd):
 ```bash
-netstat -ano | findstr ":8080"
-taskkill /PID <pid> /F
+for /f "tokens=5" %p in ('netstat -ano ^| findstr ":8080" ^| findstr "LISTENING"') do taskkill /PID %p /F
 ```
 
 **Frontend** — http://localhost:5173
