@@ -45,23 +45,6 @@
   width: min(100%, 640px);
 }
 
-.profile-back {
-  align-self: flex-start;
-  padding: 6px 12px;
-  border: 1px solid var(--lq-line);
-  border-radius: 10px;
-  background: var(--lq-surface);
-  color: var(--lq-violet-700);
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.profile-back:hover {
-  border-color: var(--lq-violet-600);
-  color: var(--lq-violet-600);
-}
-
 .profile-card {
   display: flex;
   flex-direction: column;

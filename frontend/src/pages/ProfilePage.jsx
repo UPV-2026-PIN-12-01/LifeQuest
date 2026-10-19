@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getJson, patchJson } from '../services/http.js'
 import { classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
@@ -151,9 +151,6 @@ export default function ProfilePage() {
   return (
     <main className="profile-page">
       <div className="profile-wrap">
-        <Link className="profile-back" to="/home">
-          ← Inicio
-        </Link>
         <h1 className="settings-title">Ajustes</h1>
 
         {loading ? (
