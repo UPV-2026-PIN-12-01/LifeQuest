@@ -17,9 +17,11 @@ import com.lifequest.repository.UserRepository;
 public class UserService {
 
 	private final UserRepository userRepository;
+	private final CharacterStatsService characterStatsService;
 
-	public UserService(UserRepository userRepository) {
+	public UserService(UserRepository userRepository, CharacterStatsService characterStatsService) {
 		this.userRepository = userRepository;
+		this.characterStatsService = characterStatsService;
 	}
 
 	@Transactional(readOnly = true)
@@ -47,29 +49,22 @@ public class UserService {
 	}
 
 	@Transactional(readOnly = true)
-	public void ensureUsernameAvailable(String username, Long userId) {
-		if (userRepository.existsByUsernameAndIdNot(username, userId)) {
-			throw new DuplicateUserException("Username already exists");
-		}
-	}
-
-	@Transactional(readOnly = true)
 	public void ensureEmailAvailable(String email, Long userId) {
 		if (userRepository.existsByEmailAndIdNot(email, userId)) {
 			throw new DuplicateUserException("Email already exists");
 		}
 	}
 
-	// Null username, userIcon, or email means leave that field as it is.
+	// Null userIcon, email, or playerName means leave that field as it is. Username is never written.
 	@Transactional
-	public User updateAccount(String subject, String username, String userIcon, String email) {
+	public User updateAccount(String subject, String userIcon, String email, String playerName) {
 		User user = getByAuthSubject(subject);
-		if (username == null && userIcon == null && email == null) {
+		if (userIcon == null && email == null && playerName == null) {
 			return user;
 		}
-		if (username != null) {
-			ensureUsernameAvailable(username, user.getId());
-			user.setUsername(username);
+		if (playerName != null) {
+			characterStatsService.renameForUser(user.getId(), playerName);
+			user.setPlayerName(playerName);
 		}
 		if (email != null) {
 			ensureEmailAvailable(email, user.getId());
@@ -87,6 +82,9 @@ public class UserService {
 
 	private static DuplicateUserException duplicateFromIntegrity(DataIntegrityViolationException ex) {
 		String text = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase(Locale.ROOT);
+		if (text.contains("playername")) {
+			return new DuplicateUserException("Player name already exists");
+		}
 		if (text.contains("users_email_key") || text.contains("(email)")) {
 			return new DuplicateUserException("Email already exists");
 		}

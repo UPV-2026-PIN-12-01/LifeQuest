@@ -11,6 +11,7 @@ import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.model.dto.UpdateUserRequest;
 import com.lifequest.model.dto.UserAccountDto;
 import com.lifequest.model.dto.UserAccountResponse;
+import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.User;
 
 @Service
@@ -22,26 +23,32 @@ public class UserProfileService {
 	private static final String EMAIL_SHAPE = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
 
 	private final UserService userService;
+	private final CharacterStatsService characterStatsService;
 	private final SupabaseAuthService supabaseAuthService;
 
-	public UserProfileService(UserService userService, SupabaseAuthService supabaseAuthService) {
+	public UserProfileService(
+			UserService userService,
+			CharacterStatsService characterStatsService,
+			SupabaseAuthService supabaseAuthService) {
 		this.userService = userService;
+		this.characterStatsService = characterStatsService;
 		this.supabaseAuthService = supabaseAuthService;
 	}
 
 	public UserAccountResponse currentUser(String subject) {
-		return toResponse(userService.getByAuthSubject(subject));
+		User user = userService.getByAuthSubject(subject);
+		return toResponse(user, characterStatsService.getByUserId(user.getId()));
 	}
 
 	public UserAccountResponse update(String subject, UpdateUserRequest request) {
-		String username = requiredWhenPresent(request.username(), "Username is required");
+		String playerName = requiredWhenPresent(request.playerName(), "Player name is required");
 		String userIcon = requiredWhenPresent(request.userIcon(), "User icon is required");
 		String email = normalizeEmail(request.email());
 		String password = passwordChange(request.password());
 
 		User user = userService.getByAuthSubject(subject);
-		if (username != null) {
-			userService.ensureUsernameAvailable(username, user.getId());
+		if (playerName != null) {
+			characterStatsService.ensurePlayerNameAvailable(user.getId(), playerName);
 		}
 		boolean emailChanged = email != null && !email.equals(user.getEmail());
 		if (emailChanged) {
@@ -51,7 +58,7 @@ public class UserProfileService {
 
 		User updated;
 		try {
-			updated = userService.updateAccount(subject, username, userIcon, emailChanged ? email : null);
+			updated = userService.updateAccount(subject, userIcon, emailChanged ? email : null, playerName);
 		} catch (RuntimeException ex) {
 			if (emailChanged) {
 				restoreAuthEmail(user.getInnerId(), user.getEmail());
@@ -62,7 +69,7 @@ public class UserProfileService {
 		if (password != null) {
 			supabaseAuthService.updatePassword(user.getInnerId(), password);
 		}
-		return toResponse(updated);
+		return toResponse(updated, characterStatsService.getByUserId(updated.getId()));
 	}
 
 	private void restoreAuthEmail(UUID authId, String previousEmail) {
@@ -108,11 +115,13 @@ public class UserProfileService {
 		return password;
 	}
 
-	private static UserAccountResponse toResponse(User user) {
+	private static UserAccountResponse toResponse(User user, CharacterStats stats) {
 		return new UserAccountResponse(new UserAccountDto(
 				user.getId(),
 				user.getUsername(),
 				user.getEmail(),
-				user.getUserIcon()));
+				user.getUserIcon(),
+				stats.getPlayerName(),
+				stats.getPlayerClass().displayName()));
 	}
 }

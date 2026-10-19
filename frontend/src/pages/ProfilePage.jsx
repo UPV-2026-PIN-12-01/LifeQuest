@@ -37,17 +37,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getJson('/api/users/me'), getJson('/api/players/me')])
-      .then(([account, player]) => {
+    getJson('/api/users/me')
+      .then((account) => {
         if (cancelled) return
         const user = account?.user
         if (!user) {
           setLoadError({ status: 404 })
           return
         }
-        setName(player.playerName ?? '')
+        setName(user.playerName ?? '')
         setAccountName(user.username ?? '')
-        setPlayerClass(player.playerClass ?? '')
+        setPlayerClass(user.playerClass ?? '')
         setEmail(user.email ?? '')
       })
       .catch((error) => {
@@ -111,13 +111,17 @@ export default function ProfilePage() {
       })
       return
     }
-    const body = { email: email.trim().toLowerCase() }
+    const body = {
+      playerName: name.trim(),
+      email: email.trim().toLowerCase(),
+    }
     if (password) body.password = password
     setSaving(true)
     setSaved(false)
     setFormError(null)
     try {
       const payload = await patchJson('/api/users/me', body)
+      setName(payload.user?.playerName ?? body.playerName)
       setEmail(payload.user?.email ?? body.email)
       setPassword('')
       setConfirmPassword('')
@@ -341,6 +345,10 @@ export default function ProfilePage() {
 }
 
 function fieldErrorsFromSave(error) {
+  if (error.message === 'Player name already exists') {
+    return { name: 'El nombre del personaje ya existe' }
+  }
+  if (error.message === 'Player name is required') return { name: 'El nombre es obligatorio' }
   if (error.message === 'Email already exists') return { email: 'El correo ya existe' }
   if (error.message === 'Invalid email' || error.message === 'Email is required') {
     return { email: 'El correo no es válido' }
