@@ -4,6 +4,7 @@ package com.lifequest.model.dto;
 public record TaskDto(
 		Long id,
 		String title,
+		String description,
 		String icon,
 		String color,
 		String date,

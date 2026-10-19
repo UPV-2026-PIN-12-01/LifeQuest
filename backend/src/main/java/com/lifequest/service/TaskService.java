@@ -82,6 +82,7 @@ public class TaskService {
 		return new TaskDto(
 				task.getId(),
 				task.getName(),
+				task.getDescription(),
 				task.getIcon(),
 				task.getColor(),
 				start.toLocalDate().toString(),
