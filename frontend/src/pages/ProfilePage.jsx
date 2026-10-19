@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJson, patchJson } from '../services/http.js'
+import { getJson, patchForm, patchJson } from '../services/http.js'
 import { classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
 import '../styles/profile.css'
@@ -25,6 +25,8 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [profileUrl, setProfileUrl] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState('')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
@@ -49,6 +51,7 @@ export default function ProfilePage() {
         setAccountName(user.username ?? '')
         setPlayerClass(user.playerClass ?? '')
         setEmail(user.email ?? '')
+        setProfileUrl(user.profileUrl ?? '')
       })
       .catch((error) => {
         if (!cancelled) setLoadError(error)
@@ -94,6 +97,7 @@ export default function ProfilePage() {
     const nextUrl = URL.createObjectURL(file)
     if (previewRef.current) URL.revokeObjectURL(previewRef.current)
     previewRef.current = nextUrl
+    setPhotoFile(file)
     setPhotoPreview(nextUrl)
     clearError('photo')
   }
@@ -123,8 +127,32 @@ export default function ProfilePage() {
       const payload = await patchJson('/api/users/me', body)
       setName(payload.user?.playerName ?? body.playerName)
       setEmail(payload.user?.email ?? body.email)
+      setProfileUrl(payload.user?.profileUrl ?? '')
       setPassword('')
       setConfirmPassword('')
+      if (photoFile) {
+        const formData = new FormData()
+        formData.append('photo', photoFile)
+        try {
+          const photoPayload = await patchForm('/api/users/me/photo', formData)
+          setProfileUrl(photoPayload.user?.profileUrl ?? '')
+          setPhotoFile(null)
+          if (previewRef.current) URL.revokeObjectURL(previewRef.current)
+          previewRef.current = ''
+          setPhotoPreview('')
+        } catch (error) {
+          if (error.status === 401) {
+            navigate('/login', { replace: true })
+            return
+          }
+          setErrors({ photo: photoErrorFromSave(error) })
+          setSaved(false)
+          requestAnimationFrame(() => {
+            document.querySelector('.settings-form [aria-invalid="true"]')?.focus()
+          })
+          return
+        }
+      }
       setErrors({})
       setSaved(true)
     } catch (error) {
@@ -147,6 +175,7 @@ export default function ProfilePage() {
   }
 
   const classIcon = classById(playerClass).icon
+  const faceUrl = photoPreview || profileUrl
 
   return (
     <main className="profile-page">
@@ -171,8 +200,8 @@ export default function ProfilePage() {
                 <div className="settings-hero-body">
                   <div className="profile-photo">
                     <div className="profile-photo-face">
-                      {photoPreview ? (
-                        <img src={photoPreview} alt="Foto del personaje" />
+                      {faceUrl ? (
+                        <img src={faceUrl} alt="Foto del personaje" />
                       ) : (
                         <span className="profile-photo-emoji" aria-hidden="true">
                           {classIcon}
@@ -339,6 +368,16 @@ export default function ProfilePage() {
       </div>
     </main>
   )
+}
+
+function photoErrorFromSave(error) {
+  if (error.message === 'Photo must be jpeg, png, webp, or gif and 2MB or smaller') {
+    return 'La foto debe ser jpeg, png, webp o gif y pesar 2 MB o menos'
+  }
+  if (error.message === 'Photo is required' || error.message === 'Invalid photo') {
+    return 'La foto no es válida'
+  }
+  return 'No se pudo guardar la foto.'
 }
 
 function fieldErrorsFromSave(error) {

@@ -6,5 +6,6 @@ public record UserAccountDto(
 		String email,
 		String userIcon,
 		String playerName,
-		String playerClass) {
+		String playerClass,
+		String profileUrl) {
 }

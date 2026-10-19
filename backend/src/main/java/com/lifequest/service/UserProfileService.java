@@ -1,11 +1,15 @@
 package com.lifequest.service;
 
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.model.dto.UpdateUserRequest;
@@ -21,18 +25,29 @@ public class UserProfileService {
 	// Keep MIN_PASSWORD_LENGTH and EMAIL_SHAPE in sync with SignupService.java
 	private static final int MIN_PASSWORD_LENGTH = 6;
 	private static final String EMAIL_SHAPE = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+	// Keep MAX_PHOTO_BYTES and photo types in sync with SignupService.java
+	private static final long MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+	private static final Map<String, String> PHOTO_EXTENSIONS = Map.of(
+			"image/jpeg", "jpg",
+			"image/jpg", "jpg",
+			"image/png", "png",
+			"image/webp", "webp",
+			"image/gif", "gif");
 
 	private final UserService userService;
 	private final CharacterStatsService characterStatsService;
 	private final SupabaseAuthService supabaseAuthService;
+	private final SupabaseStorageService supabaseStorageService;
 
 	public UserProfileService(
 			UserService userService,
 			CharacterStatsService characterStatsService,
-			SupabaseAuthService supabaseAuthService) {
+			SupabaseAuthService supabaseAuthService,
+			SupabaseStorageService supabaseStorageService) {
 		this.userService = userService;
 		this.characterStatsService = characterStatsService;
 		this.supabaseAuthService = supabaseAuthService;
+		this.supabaseStorageService = supabaseStorageService;
 	}
 
 	public UserAccountResponse currentUser(String subject) {
@@ -70,6 +85,17 @@ public class UserProfileService {
 			supabaseAuthService.updatePassword(user.getInnerId(), password);
 		}
 		return toResponse(updated, characterStatsService.getByUserId(updated.getId()));
+	}
+
+	public UserAccountResponse updatePhoto(String subject, MultipartFile photo) {
+		PhotoPayload payload = resolvePhoto(photo);
+		User user = userService.getByAuthSubject(subject);
+		String profileUrl = supabaseStorageService.uploadAvatar(
+				user.getInnerId(), payload.bytes(), payload.contentType(), payload.objectName());
+		String versionedUrl = profileUrl + "?v=" + System.currentTimeMillis();
+		userService.updateProfileUrl(user.getId(), versionedUrl);
+		user.setProfileUrl(versionedUrl);
+		return toResponse(user, characterStatsService.getByUserId(user.getId()));
 	}
 
 	private void restoreAuthEmail(UUID authId, String previousEmail) {
@@ -122,6 +148,76 @@ public class UserProfileService {
 				user.getEmail(),
 				user.getUserIcon(),
 				stats.getPlayerName(),
-				stats.getPlayerClass().displayName()));
+				stats.getPlayerClass().displayName(),
+				user.getProfileUrl()));
+	}
+
+	private static PhotoPayload resolvePhoto(MultipartFile photo) {
+		if (photo == null || photo.isEmpty()) {
+			throw new InvalidRequestException("Photo is required");
+		}
+		if (photo.getSize() > MAX_PHOTO_BYTES) {
+			throw new InvalidRequestException("Photo must be jpeg, png, webp, or gif and 2MB or smaller");
+		}
+		String contentType = resolveContentType(photo);
+		if (contentType == null) {
+			throw new InvalidRequestException("Photo must be jpeg, png, webp, or gif and 2MB or smaller");
+		}
+		byte[] bytes;
+		try {
+			bytes = photo.getBytes();
+		} catch (IOException ex) {
+			throw new InvalidRequestException("Invalid photo");
+		}
+		if (bytes.length > MAX_PHOTO_BYTES) {
+			throw new InvalidRequestException("Photo must be jpeg, png, webp, or gif and 2MB or smaller");
+		}
+		return new PhotoPayload(bytes, contentType, "avatar." + PHOTO_EXTENSIONS.get(contentType));
+	}
+
+	private static String resolveContentType(MultipartFile photo) {
+		String contentType = canonicalContentType(photo.getContentType());
+		if (contentType != null) {
+			return contentType;
+		}
+		return canonicalContentType(inferContentType(photo.getOriginalFilename()));
+	}
+
+	private static String canonicalContentType(String raw) {
+		if (!StringUtils.hasText(raw)) {
+			return null;
+		}
+		String type = raw.trim().toLowerCase(Locale.ROOT);
+		int separator = type.indexOf(';');
+		if (separator >= 0) {
+			type = type.substring(0, separator).trim();
+		}
+		if ("image/jpg".equals(type)) {
+			type = "image/jpeg";
+		}
+		return PHOTO_EXTENSIONS.containsKey(type) ? type : null;
+	}
+
+	private static String inferContentType(String filename) {
+		if (!StringUtils.hasText(filename)) {
+			return null;
+		}
+		String lower = filename.trim().toLowerCase(Locale.ROOT);
+		if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+			return "image/jpeg";
+		}
+		if (lower.endsWith(".png")) {
+			return "image/png";
+		}
+		if (lower.endsWith(".webp")) {
+			return "image/webp";
+		}
+		if (lower.endsWith(".gif")) {
+			return "image/gif";
+		}
+		return null;
+	}
+
+	private record PhotoPayload(byte[] bytes, String contentType, String objectName) {
 	}
 }

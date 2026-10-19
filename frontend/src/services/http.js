@@ -73,6 +73,42 @@ export async function patchJson(url, body) {
   return payload
 }
 
+export async function patchForm(url, formData) {
+  const token = getAccessToken()
+  if (!token) {
+    const error = new Error('Not logged in')
+    error.status = 401
+    throw error
+  }
+  let response
+  try {
+    response = await fetch(url, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+  } catch {
+    const error = new Error('Network error')
+    error.status = 0
+    throw error
+  }
+  if (response.status === 401) {
+    clearSession()
+  }
+  let payload = null
+  try {
+    payload = await response.json()
+  } catch {
+    payload = null
+  }
+  if (!response.ok) {
+    const error = new Error(payload?.error || 'Request failed')
+    error.status = response.status
+    throw error
+  }
+  return payload
+}
+
 export function playerUrl(path = '') {
   return `/api/players/me${path}`
 }
