@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getJson, patchJson } from '../services/http.js'
-import { CLASS_ICONS } from '../utils/playerClasses.js'
+import { classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
 import '../styles/profile.css'
+
+const LATER_ROWS = ['Notificaciones', 'Privacidad', 'Tema visual']
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -13,17 +15,17 @@ export default function ProfilePage() {
   const passwordId = useId()
   const confirmId = useId()
   const passwordHintId = useId()
-  const iconLabelId = useId()
   const previewRef = useRef('')
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [name, setName] = useState('')
+  const [accountName, setAccountName] = useState('')
+  const [playerClass, setPlayerClass] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
-  const [icon, setIcon] = useState('')
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -35,17 +37,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let cancelled = false
-    getJson('/api/users/me')
-      .then((payload) => {
+    Promise.all([getJson('/api/users/me'), getJson('/api/players/me')])
+      .then(([account, player]) => {
         if (cancelled) return
-        const user = payload?.user
+        const user = account?.user
         if (!user) {
           setLoadError({ status: 404 })
           return
         }
-        setName(user.username ?? '')
+        setName(player.playerName ?? '')
+        setAccountName(user.username ?? '')
+        setPlayerClass(player.playerClass ?? '')
         setEmail(user.email ?? '')
-        setIcon(user.userIcon ?? '')
       })
       .catch((error) => {
         if (!cancelled) setLoadError(error)
@@ -104,25 +107,18 @@ export default function ProfilePage() {
       setFormError(null)
       setSaved(false)
       requestAnimationFrame(() => {
-        document.querySelector('.profile-card [aria-invalid="true"]')?.focus()
+        document.querySelector('.settings-form [aria-invalid="true"]')?.focus()
       })
       return
     }
-    const body = {
-      username: name.trim(),
-      email: email.trim().toLowerCase(),
-      userIcon: icon,
-    }
+    const body = { email: email.trim().toLowerCase() }
     if (password) body.password = password
     setSaving(true)
     setSaved(false)
     setFormError(null)
     try {
       const payload = await patchJson('/api/users/me', body)
-      const user = payload.user
-      setName(user.username ?? '')
-      setEmail(user.email ?? '')
-      setIcon(user.userIcon ?? '')
+      setEmail(payload.user?.email ?? body.email)
       setPassword('')
       setConfirmPassword('')
       setErrors({})
@@ -136,7 +132,7 @@ export default function ProfilePage() {
       if (fieldErrors) {
         setErrors(fieldErrors)
         requestAnimationFrame(() => {
-          document.querySelector('.profile-card [aria-invalid="true"]')?.focus()
+          document.querySelector('.settings-form [aria-invalid="true"]')?.focus()
         })
       } else {
         setFormError(saveErrorMessage(error))
@@ -146,219 +142,198 @@ export default function ProfilePage() {
     }
   }
 
+  const classIcon = classById(playerClass).icon
+
   return (
     <main className="profile-page">
       <div className="profile-wrap">
         <Link className="profile-back" to="/home">
           ← Inicio
         </Link>
+        <h1 className="settings-title">Ajustes</h1>
 
         {loading ? (
           <section className="profile-card" aria-busy="true">
-            <h1>Tu perfil</h1>
-            <p className="profile-hint">Cargando tu perfil…</p>
+            <p className="profile-hint">Cargando…</p>
           </section>
         ) : loadError ? (
           <section className="profile-card">
-            <h1>Tu perfil</h1>
             <p className="profile-error" role="alert">
               {loadErrorMessage(loadError)}
             </p>
           </section>
         ) : (
-          <form className="profile-card" onSubmit={handleSubmit} noValidate>
-            <h1>Tu perfil</h1>
-
-            <div className="profile-photo-block">
-              <div className="profile-photo-row">
-                <div className="profile-photo">
-                  <div className="profile-photo-face">
-                    {photoPreview ? (
-                      <img src={photoPreview} alt="Foto de perfil" />
-                    ) : (
-                      <span className="profile-photo-emoji" aria-hidden="true">
-                        {icon}
-                      </span>
+          <>
+            <form className="settings-form" onSubmit={handleSubmit} noValidate>
+              <section className="settings-hero">
+                <h2>Personaje</h2>
+                <div className="settings-hero-body">
+                  <div className="profile-photo">
+                    <div className="profile-photo-face">
+                      {photoPreview ? (
+                        <img src={photoPreview} alt="Foto del personaje" />
+                      ) : (
+                        <span className="profile-photo-emoji" aria-hidden="true">
+                          {classIcon}
+                        </span>
+                      )}
+                    </div>
+                    <label className="settings-pencil" htmlFor={photoId}>
+                      <span className="visually-hidden">Cambiar foto</span>
+                      ✎
+                    </label>
+                  </div>
+                  <div className="profile-field settings-name">
+                    <label className="profile-label" htmlFor={nameId}>
+                      Nombre del personaje
+                    </label>
+                    <input
+                      id={nameId}
+                      name="playerName"
+                      type="text"
+                      autoComplete="nickname"
+                      value={name}
+                      onChange={(event) => {
+                        setName(event.target.value)
+                        forgetSaved()
+                        clearError('name')
+                      }}
+                      aria-invalid={Boolean(errors.name)}
+                      aria-describedby={errors.name ? `${nameId}-error` : undefined}
+                    />
+                    {playerClass && <p className="settings-class">{playerClass}</p>}
+                    {errors.name && (
+                      <p className="profile-error" id={`${nameId}-error`} role="alert">
+                        {errors.name}
+                      </p>
                     )}
                   </div>
-                  {photoPreview && icon && (
-                    <span className="profile-photo-badge" aria-hidden="true">
-                      {icon}
-                    </span>
+                </div>
+                <input
+                  id={photoId}
+                  className="profile-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                  onChange={handlePhotoChange}
+                  aria-invalid={Boolean(errors.photo)}
+                  aria-describedby={errors.photo ? `${photoId}-error` : undefined}
+                />
+                {errors.photo && (
+                  <p className="profile-error" id={`${photoId}-error`} role="alert">
+                    {errors.photo}
+                  </p>
+                )}
+              </section>
+
+              <section className="profile-card settings-account">
+                <header className="settings-account-head">
+                  <h2>Cuenta</h2>
+                  <p className="settings-static">{accountName}</p>
+                </header>
+                <div className="profile-field">
+                  <label className="profile-label" htmlFor={emailId}>
+                    Correo
+                  </label>
+                  <input
+                    id={emailId}
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value)
+                      forgetSaved()
+                      clearError('email')
+                    }}
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? `${emailId}-error` : undefined}
+                  />
+                  {errors.email && (
+                    <p className="profile-error" id={`${emailId}-error`} role="alert">
+                      {errors.email}
+                    </p>
                   )}
                 </div>
-                <div className="profile-photo-copy">
-                  <span className="profile-photo-title" id={`${photoId}-label`}>
-                    Foto de perfil
-                  </span>
-                  <label className="profile-upload" htmlFor={photoId}>
-                    Subir imagen
+                <div className="profile-field profile-password">
+                  <span className="profile-label">Contraseña</span>
+                  <p className="profile-hint" id={passwordHintId}>
+                    Déjala en blanco si no quieres cambiarla.
+                  </p>
+                  <label className="profile-sublabel" htmlFor={passwordId}>
+                    Nueva contraseña
                   </label>
-                </div>
-              </div>
-              <input
-                id={photoId}
-                className="profile-file"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-                onChange={handlePhotoChange}
-                aria-labelledby={`${photoId}-label`}
-                aria-invalid={Boolean(errors.photo)}
-                aria-describedby={errors.photo ? `${photoId}-error` : undefined}
-              />
-              {errors.photo && (
-                <p className="profile-error" id={`${photoId}-error`} role="alert">
-                  {errors.photo}
-                </p>
-              )}
-            </div>
-
-            <div className="profile-field">
-              <span className="profile-label" id={iconLabelId}>
-                O elige un emoji
-              </span>
-              <div
-                className="profile-emoji-grid"
-                role="listbox"
-                aria-labelledby={iconLabelId}
-              >
-                {CLASS_ICONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    role="option"
-                    aria-selected={icon === emoji}
-                    className={icon === emoji ? 'profile-emoji is-selected' : 'profile-emoji'}
-                    onClick={() => {
-                      setIcon(emoji)
+                  <input
+                    id={passwordId}
+                    name="new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value)
                       forgetSaved()
+                      clearError('password')
                     }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    aria-invalid={Boolean(errors.password)}
+                    aria-describedby={
+                      errors.password ? `${passwordId}-error ${passwordHintId}` : passwordHintId
+                    }
+                  />
+                  {errors.password && (
+                    <p className="profile-error" id={`${passwordId}-error`} role="alert">
+                      {errors.password}
+                    </p>
+                  )}
+                  <label className="profile-sublabel" htmlFor={confirmId}>
+                    Repetir contraseña
+                  </label>
+                  <input
+                    id={confirmId}
+                    name="confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value)
+                      forgetSaved()
+                      clearError('confirmPassword')
+                    }}
+                    aria-invalid={Boolean(errors.confirmPassword)}
+                    aria-describedby={
+                      errors.confirmPassword ? `${confirmId}-error` : undefined
+                    }
+                  />
+                  {errors.confirmPassword && (
+                    <p className="profile-error" id={`${confirmId}-error`} role="alert">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
 
-            <div className="profile-field">
-              <label className="profile-label" htmlFor={nameId}>
-                Nombre
-              </label>
-              <input
-                id={nameId}
-                name="username"
-                type="text"
-                autoComplete="username"
-                value={name}
-                onChange={(event) => {
-                  setName(event.target.value)
-                  forgetSaved()
-                  clearError('name')
-                }}
-                aria-invalid={Boolean(errors.name)}
-                aria-describedby={errors.name ? `${nameId}-error` : undefined}
-              />
-              {errors.name && (
-                <p className="profile-error" id={`${nameId}-error`} role="alert">
-                  {errors.name}
-                </p>
-              )}
-            </div>
+                <button className="profile-save" type="submit" disabled={saving}>
+                  {saving ? 'Guardando…' : 'Guardar cambios'}
+                </button>
+                {formError && (
+                  <p className="profile-error" role="alert">
+                    {formError}
+                  </p>
+                )}
+                {saved && (
+                  <p className="profile-saved" role="status">
+                    Cambios guardados.
+                  </p>
+                )}
+              </section>
+            </form>
 
-            <div className="profile-field">
-              <label className="profile-label" htmlFor={emailId}>
-                Correo
-              </label>
-              <input
-                id={emailId}
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value)
-                  forgetSaved()
-                  clearError('email')
-                }}
-                aria-invalid={Boolean(errors.email)}
-                aria-describedby={errors.email ? `${emailId}-error` : undefined}
-              />
-              {errors.email && (
-                <p className="profile-error" id={`${emailId}-error`} role="alert">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <div className="profile-field profile-password">
-              <span className="profile-label">Contraseña</span>
-              <p className="profile-hint" id={passwordHintId}>
-                Déjala en blanco si no quieres cambiarla.
-              </p>
-              <label className="profile-sublabel" htmlFor={passwordId}>
-                Nueva contraseña
-              </label>
-              <input
-                id={passwordId}
-                name="new-password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value)
-                  forgetSaved()
-                  clearError('password')
-                }}
-                aria-invalid={Boolean(errors.password)}
-                aria-describedby={
-                  errors.password ? `${passwordId}-error ${passwordHintId}` : passwordHintId
-                }
-              />
-              {errors.password && (
-                <p className="profile-error" id={`${passwordId}-error`} role="alert">
-                  {errors.password}
-                </p>
-              )}
-              <label className="profile-sublabel" htmlFor={confirmId}>
-                Repetir contraseña
-              </label>
-              <input
-                id={confirmId}
-                name="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => {
-                  setConfirmPassword(event.target.value)
-                  forgetSaved()
-                  clearError('confirmPassword')
-                }}
-                aria-invalid={Boolean(errors.confirmPassword)}
-                aria-describedby={
-                  errors.confirmPassword ? `${confirmId}-error` : undefined
-                }
-              />
-              {errors.confirmPassword && (
-                <p className="profile-error" id={`${confirmId}-error`} role="alert">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-
-            <button className="profile-save" type="submit" disabled={saving}>
-              {saving ? 'Guardando…' : 'Guardar cambios'}
-            </button>
-            {formError && (
-              <p className="profile-error" role="alert">
-                {formError}
-              </p>
-            )}
-            {saved && (
-              <p className="profile-saved" role="status">
-                Cambios guardados.
-              </p>
-            )}
-          </form>
+            <ul className="settings-rows">
+              {LATER_ROWS.map((label) => (
+                <li key={label}>
+                  <span>{label}</span>
+                  <span className="settings-soon">Pronto</span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
     </main>
@@ -366,7 +341,6 @@ export default function ProfilePage() {
 }
 
 function fieldErrorsFromSave(error) {
-  if (error.message === 'Username already exists') return { name: 'El nombre ya existe' }
   if (error.message === 'Email already exists') return { email: 'El correo ya existe' }
   if (error.message === 'Invalid email' || error.message === 'Email is required') {
     return { email: 'El correo no es válido' }

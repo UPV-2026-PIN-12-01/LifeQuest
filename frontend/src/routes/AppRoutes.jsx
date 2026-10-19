@@ -15,7 +15,8 @@ export default function AppRoutes() {
         <Route path="/character" element={<CharacterView />} />
         <Route path="/login" element={<SignupPage />} />
         <Route path="/home" element={<RequireSession><HomePage /></RequireSession>} />
-        <Route path="/profile" element={<RequireSession><ProfilePage /></RequireSession>} />
+        <Route path="/settings" element={<RequireSession><ProfilePage /></RequireSession>} />
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
       </Routes>
     </BrowserRouter>
   );
