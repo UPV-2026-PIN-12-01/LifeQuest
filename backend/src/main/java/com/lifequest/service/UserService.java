@@ -2,9 +2,11 @@ package com.lifequest.service;
 
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lifequest.exception.DuplicateUserException;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.User;
@@ -27,7 +29,7 @@ public class UserService {
 
 	// The Supabase JWT subject is the auth user UUID stored in users.inner_id.
 	@Transactional(readOnly = true)
-	public Long getIdByAuthSubject(String subject) {
+	public User getByAuthSubject(String subject) {
 		UUID innerId;
 		try {
 			innerId = UUID.fromString(subject);
@@ -35,8 +37,35 @@ public class UserService {
 			throw new ResourceNotFoundException("User not found");
 		}
 		return userRepository.findByInnerId(innerId)
-				.map(User::getId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
+
+	@Transactional(readOnly = true)
+	public Long getIdByAuthSubject(String subject) {
+		return getByAuthSubject(subject).getId();
+	}
+
+	// Null username or userIcon means leave that field as it is.
+	@Transactional
+	public User updateAccount(String subject, String username, String userIcon) {
+		User user = getByAuthSubject(subject);
+		if (username == null && userIcon == null) {
+			return user;
+		}
+		if (username != null) {
+			if (userRepository.existsByUsernameAndIdNot(username, user.getId())) {
+				throw new DuplicateUserException("Username already exists");
+			}
+			user.setUsername(username);
+		}
+		if (userIcon != null) {
+			user.setUserIcon(userIcon);
+		}
+		try {
+			return userRepository.saveAndFlush(user);
+		} catch (DataIntegrityViolationException ex) {
+			throw new DuplicateUserException("Username already exists");
+		}
 	}
 
 	@Transactional(readOnly = true)
