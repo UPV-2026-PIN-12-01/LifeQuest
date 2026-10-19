@@ -330,7 +330,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 100cqb;
 }
 
 .signup-class-field {
@@ -340,10 +339,6 @@
 
 .signup-character .signup-field {
   gap: 6px;
-}
-
-.signup-icon-field {
-  margin-top: 0;
 }
 
 .signup-field {
@@ -652,60 +647,6 @@
 
 .signup-class-card.is-selected.is-mago .signup-class-stats {
   color: #2563eb;
-}
-
-.signup-icon-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 8px;
-}
-
-.signup-icon-preview > span {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.signup-icon-preview strong {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.signup-icon-current {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e5e7eb;
-  border-radius: 50%;
-  background: #f3f4f6;
-  font-size: 1.2rem;
-  flex: 0 0 auto;
-}
-
-.signup-emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 8px;
-}
-
-.signup-emoji {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: #f9fafb;
-  font-size: 1.05rem;
-  cursor: pointer;
-}
-
-.signup-emoji.is-selected {
-  border-color: #6d5efc;
-  background: #f5f3ff;
 }
 
 .signup-actions {

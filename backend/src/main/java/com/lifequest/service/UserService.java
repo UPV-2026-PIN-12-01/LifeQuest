@@ -104,12 +104,11 @@ public class UserService {
 	}
 
 	@Transactional
-	public User create(String username, String email, UUID innerId, String userIcon) {
+	public User create(String username, String email, UUID innerId) {
 		User user = new User();
 		user.setUsername(username);
 		user.setEmail(email);
 		user.setInnerId(innerId);
-		user.setUserIcon(userIcon);
 		return userRepository.save(user);
 	}
 

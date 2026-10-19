@@ -88,14 +88,13 @@ try {
   })
   await goToCharacter(page)
   await page.locator('input[name="playerName"]').fill(photoHero)
-  await page.getByRole('option', { name: '🦊' }).click()
   const photoStart = signupCalls.length
   await page.getByRole('button', { name: '✨ Empezar aventura' }).click()
   await page.locator('.signup-success').waitFor({ timeout: 30000 })
   const todoText = await page.locator('.signup-success-card p').innerText()
   const photoCall = signupCalls[photoStart]
   check(
-    'photo + custom emoji 201 confetti',
+    'photo 201 confetti',
     photoCall?.status === 201 &&
       photoCall?.body?.username === photoUser &&
       todoText === 'TODO remove once dashboard done',
@@ -116,7 +115,7 @@ try {
   const skipCall = signupCalls[skipStart]
   const skipTodo = await page.locator('.signup-success-card p').innerText()
   check(
-    'skip photo default icon 201 confetti',
+    'skip photo 201 confetti',
     skipCall?.status === 201 &&
       skipCall?.body?.username === skipUser &&
       skipTodo === 'TODO remove once dashboard done',
