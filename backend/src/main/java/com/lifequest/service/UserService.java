@@ -1,10 +1,13 @@
 package com.lifequest.service;
 
+import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lifequest.exception.DuplicateUserException;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.User;
@@ -14,9 +17,11 @@ import com.lifequest.repository.UserRepository;
 public class UserService {
 
 	private final UserRepository userRepository;
+	private final CharacterStatsService characterStatsService;
 
-	public UserService(UserRepository userRepository) {
+	public UserService(UserRepository userRepository, CharacterStatsService characterStatsService) {
 		this.userRepository = userRepository;
+		this.characterStatsService = characterStatsService;
 	}
 
 	@Transactional(readOnly = true)
@@ -27,7 +32,7 @@ public class UserService {
 
 	// The Supabase JWT subject is the auth user UUID stored in users.inner_id.
 	@Transactional(readOnly = true)
-	public Long getIdByAuthSubject(String subject) {
+	public User getByAuthSubject(String subject) {
 		UUID innerId;
 		try {
 			innerId = UUID.fromString(subject);
@@ -35,8 +40,55 @@ public class UserService {
 			throw new ResourceNotFoundException("User not found");
 		}
 		return userRepository.findByInnerId(innerId)
-				.map(User::getId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
+
+	@Transactional(readOnly = true)
+	public Long getIdByAuthSubject(String subject) {
+		return getByAuthSubject(subject).getId();
+	}
+
+	@Transactional(readOnly = true)
+	public void ensureEmailAvailable(String email, Long userId) {
+		if (userRepository.existsByEmailAndIdNot(email, userId)) {
+			throw new DuplicateUserException("Email already exists");
+		}
+	}
+
+	// Null userIcon, email, or playerName means leave that field as it is. Username is never written.
+	@Transactional
+	public User updateAccount(String subject, String userIcon, String email, String playerName) {
+		User user = getByAuthSubject(subject);
+		if (userIcon == null && email == null && playerName == null) {
+			return user;
+		}
+		if (playerName != null) {
+			characterStatsService.renameForUser(user.getId(), playerName);
+			user.setPlayerName(playerName);
+		}
+		if (email != null) {
+			ensureEmailAvailable(email, user.getId());
+			user.setEmail(email);
+		}
+		if (userIcon != null) {
+			user.setUserIcon(userIcon);
+		}
+		try {
+			return userRepository.saveAndFlush(user);
+		} catch (DataIntegrityViolationException ex) {
+			throw duplicateFromIntegrity(ex);
+		}
+	}
+
+	private static DuplicateUserException duplicateFromIntegrity(DataIntegrityViolationException ex) {
+		String text = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase(Locale.ROOT);
+		if (text.contains("playername")) {
+			return new DuplicateUserException("Player name already exists");
+		}
+		if (text.contains("users_email_key") || text.contains("(email)")) {
+			return new DuplicateUserException("Email already exists");
+		}
+		return new DuplicateUserException("Username already exists");
 	}
 
 	@Transactional(readOnly = true)
@@ -50,12 +102,11 @@ public class UserService {
 	}
 
 	@Transactional
-	public User create(String username, String email, UUID innerId, String userIcon) {
+	public User create(String username, String email, UUID innerId) {
 		User user = new User();
 		user.setUsername(username);
 		user.setEmail(email);
 		user.setInnerId(innerId);
-		user.setUserIcon(userIcon);
 		return userRepository.save(user);
 	}
 

@@ -125,20 +125,6 @@
   font-weight: 600;
 }
 
-.player-profile-link {
-  align-self: flex-start;
-  margin-top: 6px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.player-profile-link:hover {
-  color: var(--lq-gold-light);
-}
-
 .player-xp {
   display: flex;
   flex-direction: column;

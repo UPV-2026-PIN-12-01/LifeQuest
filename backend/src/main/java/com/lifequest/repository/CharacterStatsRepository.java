@@ -11,4 +11,6 @@ public interface CharacterStatsRepository extends JpaRepository<CharacterStats, 
 	Optional<CharacterStats> findByUserId(Long userId);
 
 	boolean existsByPlayerName(String playerName);
+
+	boolean existsByPlayerNameAndUserIdNot(String playerName, Long userId);
 }

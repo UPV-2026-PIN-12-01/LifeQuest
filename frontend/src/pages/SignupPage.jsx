@@ -5,7 +5,7 @@ import CharacterStep from '../components/signup/CharacterStep.jsx'
 import SignupSuccess from '../components/signup/SignupSuccess.jsx'
 import { login, signup } from '../services/auth.js'
 import { saveSession } from '../services/session.js'
-import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
+import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { signupErrorFields } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
@@ -21,7 +21,6 @@ export default function SignupPage() {
   const [photoPreview, setPhotoPreview] = useState('')
   const [playerClass, setPlayerClass] = useState(DEFAULT_PLAYER_CLASS)
   const [playerName, setPlayerName] = useState('')
-  const [userIcon, setUserIcon] = useState(classById(DEFAULT_PLAYER_CLASS).icon)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -125,12 +124,7 @@ export default function SignupPage() {
   }
 
   function handleClassChange(nextClass) {
-    const previous = classById(playerClass)
-    const next = classById(nextClass)
     setPlayerClass(nextClass)
-    if (userIcon === previous.icon) {
-      setUserIcon(next.icon)
-    }
   }
 
   function handlePlayerNameChange(value) {
@@ -161,9 +155,6 @@ export default function SignupPage() {
       formData.append('password', password)
       formData.append('playerClass', playerClass)
       formData.append('playerName', playerName.trim())
-      if (userIcon !== classById(playerClass).icon) {
-        formData.append('userIcon', userIcon)
-      }
       if (photoFile) {
         formData.append('photo', photoFile)
       }
@@ -332,13 +323,11 @@ export default function SignupPage() {
                 <CharacterStep
                   playerClass={playerClass}
                   playerName={playerName}
-                  userIcon={userIcon}
                   error={errors.playerName}
                   formError={errors.form}
                   submitting={submitting}
                   onClassChange={handleClassChange}
                   onPlayerNameChange={handlePlayerNameChange}
-                  onIconChange={setUserIcon}
                   onBack={() => setStep(1)}
                   onSubmit={handleCharacterStart}
                 />
