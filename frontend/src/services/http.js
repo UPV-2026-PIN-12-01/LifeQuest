@@ -1,5 +1,14 @@
 import { clearSession, getAccessToken } from './session.js'
 
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL
+  ?? (import.meta.env.PROD ? 'https://lifequest.up.railway.app' : '')
+).replace(/\/$/, '')
+
+export function apiUrl(path) {
+  return `${API_ORIGIN}${path}`
+}
+
 export async function getJson(url) {
   const token = getAccessToken()
   if (!token) {
@@ -9,7 +18,7 @@ export async function getJson(url) {
   }
   let response
   try {
-    response = await fetch(url, {
+    response = await fetch(apiUrl(url), {
       headers: { Authorization: `Bearer ${token}` },
     })
   } catch {
@@ -43,7 +52,7 @@ export async function patchJson(url, body) {
   }
   let response
   try {
-    response = await fetch(url, {
+    response = await fetch(apiUrl(url), {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -82,7 +91,7 @@ export async function patchForm(url, formData) {
   }
   let response
   try {
-    response = await fetch(url, {
+    response = await fetch(apiUrl(url), {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
