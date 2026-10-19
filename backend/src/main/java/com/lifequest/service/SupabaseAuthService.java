@@ -82,6 +82,14 @@ public class SupabaseAuthService {
 		}
 	}
 
+	public void updateEmail(UUID authId, String email) {
+		putUser(authId, Map.of("email", email, "email_confirm", true), true);
+	}
+
+	public void updatePassword(UUID authId, String password) {
+		putUser(authId, Map.of("password", password), false);
+	}
+
 	public void deleteUser(UUID authId) {
 		try {
 			restClient.delete()
@@ -94,6 +102,26 @@ public class SupabaseAuthService {
 			}
 		} catch (RuntimeException ex) {
 			log.warn("Auth delete failed for {}", authId, ex);
+		}
+	}
+
+	private void putUser(UUID authId, Map<String, ?> body, boolean emailUpdate) {
+		try {
+			restClient.put()
+					.uri("/auth/v1/admin/users/{id}", authId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(body)
+					.retrieve()
+					.toBodilessEntity();
+		} catch (RestClientResponseException ex) {
+			int status = ex.getStatusCode().value();
+			String response = ex.getResponseBodyAsString();
+			if (emailUpdate && (status == 409 || status == 422
+					|| (response != null && response.toLowerCase().contains("already")))) {
+				throw new DuplicateUserException("Email already exists");
+			}
+			log.warn("Auth update failed with status {}", status);
+			throw new IllegalStateException(emailUpdate ? "Could not update auth email" : "Could not update password");
 		}
 	}
 

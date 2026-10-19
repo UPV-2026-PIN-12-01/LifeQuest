@@ -1,5 +1,6 @@
 package com.lifequest.service;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,18 +46,34 @@ public class UserService {
 		return getByAuthSubject(subject).getId();
 	}
 
-	// Null username or userIcon means leave that field as it is.
+	@Transactional(readOnly = true)
+	public void ensureUsernameAvailable(String username, Long userId) {
+		if (userRepository.existsByUsernameAndIdNot(username, userId)) {
+			throw new DuplicateUserException("Username already exists");
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public void ensureEmailAvailable(String email, Long userId) {
+		if (userRepository.existsByEmailAndIdNot(email, userId)) {
+			throw new DuplicateUserException("Email already exists");
+		}
+	}
+
+	// Null username, userIcon, or email means leave that field as it is.
 	@Transactional
-	public User updateAccount(String subject, String username, String userIcon) {
+	public User updateAccount(String subject, String username, String userIcon, String email) {
 		User user = getByAuthSubject(subject);
-		if (username == null && userIcon == null) {
+		if (username == null && userIcon == null && email == null) {
 			return user;
 		}
 		if (username != null) {
-			if (userRepository.existsByUsernameAndIdNot(username, user.getId())) {
-				throw new DuplicateUserException("Username already exists");
-			}
+			ensureUsernameAvailable(username, user.getId());
 			user.setUsername(username);
+		}
+		if (email != null) {
+			ensureEmailAvailable(email, user.getId());
+			user.setEmail(email);
 		}
 		if (userIcon != null) {
 			user.setUserIcon(userIcon);
@@ -64,8 +81,16 @@ public class UserService {
 		try {
 			return userRepository.saveAndFlush(user);
 		} catch (DataIntegrityViolationException ex) {
-			throw new DuplicateUserException("Username already exists");
+			throw duplicateFromIntegrity(ex);
 		}
+	}
+
+	private static DuplicateUserException duplicateFromIntegrity(DataIntegrityViolationException ex) {
+		String text = String.valueOf(ex.getMostSpecificCause().getMessage()).toLowerCase(Locale.ROOT);
+		if (text.contains("users_email_key") || text.contains("(email)")) {
+			return new DuplicateUserException("Email already exists");
+		}
+		return new DuplicateUserException("Username already exists");
 	}
 
 	@Transactional(readOnly = true)
