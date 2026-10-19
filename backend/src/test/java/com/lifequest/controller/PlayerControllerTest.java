@@ -71,11 +71,13 @@ class PlayerControllerTest {
 	@Test
 	void returnsProfile() throws Exception {
 		when(playerService.getProfile(7L))
-				.thenReturn(new PlayerProfileDto(7L, "test-can-delete-later", "Hero", "Mago", 3, 4, 17, 2));
+				.thenReturn(new PlayerProfileDto(7L, "test-can-delete-later", "Hero", "Mago",
+						"https://example.com/avatars/test-can-delete-later.png", 3, 4, 17, 2));
 
 		mockMvc.perform(get("/api/players/me").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.playerClass").value("Mago"))
+				.andExpect(jsonPath("$.profileUrl").value("https://example.com/avatars/test-can-delete-later.png"))
 				.andExpect(jsonPath("$.xpForNextLevel").value(17));
 	}
 

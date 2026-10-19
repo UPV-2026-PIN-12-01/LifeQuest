@@ -91,8 +91,18 @@
   font-size: 30px;
 }
 
+.player-avatar-photo {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .player-avatar-level {
   position: absolute;
+  z-index: 2;
   bottom: -6px;
   left: 50%;
   transform: translateX(-50%);

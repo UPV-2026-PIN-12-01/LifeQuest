@@ -13,7 +13,11 @@ export default function PlayerHero({ player, weekStats }) {
   return (
     <section className="player-hero" aria-label="Tu personaje">
       <div className="player-avatar" style={{ '--xp-percent': `${xpPercent}%` }} aria-hidden="true">
-        <span className="player-avatar-icon">{playerClass.icon}</span>
+        {player.profileUrl ? (
+          <img className="player-avatar-photo" src={player.profileUrl} alt="" />
+        ) : (
+          <span className="player-avatar-icon">{playerClass.icon}</span>
+        )}
         <span className="player-avatar-level">Nv. {player.level}</span>
       </div>
 

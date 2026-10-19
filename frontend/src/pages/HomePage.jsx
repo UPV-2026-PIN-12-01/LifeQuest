@@ -12,6 +12,7 @@ import '../styles/home.css'
 
 const EMPTY_PLAYER = {
   username: '',
+  profileUrl: '',
   playerClass: DEFAULT_PLAYER_CLASS,
   level: 1,
   xp: 0,

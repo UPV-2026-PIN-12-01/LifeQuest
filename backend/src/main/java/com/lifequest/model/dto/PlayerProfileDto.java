@@ -5,6 +5,7 @@ public record PlayerProfileDto(
 		String username,
 		String playerName,
 		String playerClass,
+		String profileUrl,
 		int level,
 		long xp,
 		long xpForNextLevel,
