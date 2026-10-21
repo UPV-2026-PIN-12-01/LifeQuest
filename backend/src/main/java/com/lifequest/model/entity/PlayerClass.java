@@ -17,11 +17,12 @@ public enum PlayerClass {
 		};
 	}
 
-	public String defaultIcon() {
+	// Matches the class ids in frontend/src/utils/playerClasses.js
+	public String displayName() {
 		return switch (this) {
-			case knight -> "⚔️";
-			case archer -> "🏹";
-			case magician -> "🪄";
+			case knight -> "Guerrero";
+			case archer -> "Arquero";
+			case magician -> "Mago";
 		};
 	}
 }

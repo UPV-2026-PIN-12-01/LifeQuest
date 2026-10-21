@@ -1,0 +1,48 @@
+/* LifeQuest brand palette, taken from the signup gradient. Use these instead of new hex values. */
+:root {
+  --lq-violet-900: #2a1868;
+  --lq-violet-800: #3b2594;
+  --lq-violet-700: #4a2db8;
+  --lq-violet-600: #5b3dcc;
+  --lq-violet-500: #6d5efc;
+  --lq-violet-200: #c4b5fd;
+  --lq-violet-100: #ede9fe;
+  --lq-violet-50: #f4f2fb;
+
+  /* Gold means reward: XP, level, streak. */
+  --lq-gold: #f5b82e;
+  --lq-gold-light: #fcd34d;
+  --lq-gold-ink: #8a5a00;
+  --lq-gold-soft: #fff4d6;
+
+  --lq-success: #16a34a;
+  --lq-success-ink: #15803d;
+  --lq-success-soft: #dcfce7;
+  --lq-danger: #dc2626;
+  --lq-danger-soft: #fee2e2;
+
+  --lq-ink: #1c1633;
+  --lq-ink-muted: #6b6485;
+  --lq-ink-faint: #a8a2bd;
+  --lq-line: #e6e1f5;
+  --lq-surface: #fff;
+  --lq-surface-muted: #faf9ff;
+
+  /* Task colors: solid for the bar, soft for the card background. */
+  --lq-task-purple: #6d5efc;
+  --lq-task-purple-soft: #efedff;
+  --lq-task-yellow: #f59e0b;
+  --lq-task-yellow-soft: #fff3dc;
+  --lq-task-red: #f0533c;
+  --lq-task-red-soft: #ffece8;
+  --lq-task-blue: #0ea5e9;
+  --lq-task-blue-soft: #e3f5fd;
+  --lq-task-green: #10b981;
+  --lq-task-green-soft: #dff7ee;
+  --lq-task-orange: #f97316;
+  --lq-task-orange-soft: #ffedd5;
+
+  --lq-hero-gradient:
+    radial-gradient(90% 160% at 100% 0%, rgba(109, 94, 252, 0.55) 0%, transparent 60%),
+    linear-gradient(120deg, var(--lq-violet-900) 0%, var(--lq-violet-700) 100%);
+}

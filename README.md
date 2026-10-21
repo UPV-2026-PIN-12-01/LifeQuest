@@ -6,8 +6,12 @@ Java (Spring Boot) backend + JavaScript (React) frontend.
 
 ## Deployments
 
-- Production (`main`): https://life-quest-project.vercel.app
-- Develop: https://life-quest-git-develop-trabajo-pin-2026-grupo1201.vercel.app
+- **Develop:** https://life-quest-project.vercel.app
+  - Temporarily promoted to the production URL
+- **Develop backend UI:** https://lifequest.up.railway.app
+  - [Swagger UI](https://lifequest.up.railway.app/swagger-ui/index.html)
+- **Production (`main`):** none yet
+  - For showruns we’ll demote develop and put `main` on production
 
 ## Prerequisites
 
@@ -32,7 +36,7 @@ API: `http://localhost:8080`
 
 - `GET /api/health`
 - `GET /api/hello`
-- Swagger UI: `http://localhost:8080/swagger.html`
+- [Swagger UI](http://localhost:8080/swagger.html)
 
 ## Run the frontend
 
@@ -41,7 +45,6 @@ cd frontend
 npm install
 npm run dev
 ```
-Character View
 UI: `http://localhost:5173`
 
 Vite proxies `/api` to the backend on port 8080. Saving frontend files updates the page automatically (HMR).

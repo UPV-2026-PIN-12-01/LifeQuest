@@ -4,7 +4,7 @@ This is the format I usually follow when writing commits.
 
 Format -> `PIN-{Worki_ID} type(scope): short summary`
 
-- **Worki_ID** — the ticket number for that change. Use `0` (`PIN-0`) if the change is outside a Worki ticket
+- **Worki_ID** — the `PIN-` number on the current branch (`PIN-609/user-profile` → `609`). Do not ask when the branch already has it. On `develop`, use `PIN-0`. Also use `PIN-0` when the change is outside a Worki ticket.
 - **type** — required (`feat`, `fix`, etc.)
 - **scope** — optional, in parentheses. Says where it changed (`auth`, `api`, `ui`)
 - **summary** — one line, in imperative mood, no period at the end

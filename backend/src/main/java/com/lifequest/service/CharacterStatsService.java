@@ -1,10 +1,13 @@
 package com.lifequest.service;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.lifequest.exception.DuplicateUserException;
+import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.PlayerClass;
 import com.lifequest.repository.CharacterStatsRepository;
@@ -18,9 +21,52 @@ public class CharacterStatsService {
 		this.characterStatsRepository = characterStatsRepository;
 	}
 
+	// XP needed to go from level to level + 1. Must match the stats_xp_rules_check CHECK in the DB,
+	// where reaching level L takes L^2 + 10L total XP.
+	public static long xpForNextLevel(int level) {
+		return 2L * level + 11;
+	}
+
+	@Transactional(readOnly = true)
+	public CharacterStats getByUserId(Long userId) {
+		return characterStatsRepository.findByUserId(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("Character not found"));
+	}
+
 	@Transactional(readOnly = true)
 	public boolean existsByPlayerName(String playerName) {
 		return characterStatsRepository.existsByPlayerName(playerName);
+	}
+
+	// Own name is free. Another character's name is 409.
+	@Transactional(readOnly = true)
+	public void ensurePlayerNameAvailable(Long userId, String playerName) {
+		CharacterStats stats = getByUserId(userId);
+		if (playerName.equals(stats.getPlayerName())) {
+			return;
+		}
+		if (characterStatsRepository.existsByPlayerNameAndUserIdNot(playerName, userId)) {
+			throw new DuplicateUserException("Player name already exists");
+		}
+	}
+
+	// Flush the character row first so users.playerName can follow it.
+	@Transactional
+	public void renameForUser(Long userId, String playerName) {
+		CharacterStats stats = characterStatsRepository.findByUserId(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("Character not found"));
+		if (playerName.equals(stats.getPlayerName())) {
+			return;
+		}
+		if (characterStatsRepository.existsByPlayerNameAndUserIdNot(playerName, userId)) {
+			throw new DuplicateUserException("Player name already exists");
+		}
+		stats.setPlayerName(playerName);
+		try {
+			characterStatsRepository.saveAndFlush(stats);
+		} catch (DataIntegrityViolationException ex) {
+			throw new DuplicateUserException("Player name already exists");
+		}
 	}
 
 	@Transactional

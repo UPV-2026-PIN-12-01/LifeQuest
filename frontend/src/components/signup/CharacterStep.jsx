@@ -1,27 +1,19 @@
 import { useId } from 'react'
 import FieldError from './FieldError.jsx'
-import {
-  CLASS_ICONS,
-  PLAYER_CLASSES,
-  classById,
-} from '../../utils/playerClasses.js'
+import { PLAYER_CLASSES } from '../../utils/playerClasses.js'
 
 export default function CharacterStep({
   playerClass,
   playerName,
-  userIcon,
   error,
   formError,
   submitting,
   onClassChange,
   onPlayerNameChange,
-  onIconChange,
   onBack,
   onSubmit,
 }) {
   const nameId = useId()
-  const selected = classById(playerClass)
-  const usingDefaultIcon = userIcon === selected.icon
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -69,7 +61,6 @@ export default function CharacterStep({
                 />
                 <span className="signup-class-copy">
                   <span className="signup-class-title">
-                    <span aria-hidden="true">{item.icon}</span>
                     {item.name}
                     {selectedClass && (
                       <span className="signup-class-badge">Seleccionado</span>
@@ -107,49 +98,6 @@ export default function CharacterStep({
           Este es el nombre de tu héroe dentro del juego.
         </p>
       </div>
-      </div>
-
-      <div className="signup-field signup-icon-field">
-        <span className="signup-label" id="signup-icon-label">
-          Icono del personaje
-        </span>
-        <div className="signup-icon-preview">
-          <span className="signup-icon-current" aria-hidden="true">
-            {userIcon}
-          </span>
-          <span>
-            <strong>
-              {usingDefaultIcon
-                ? `Predeterminado de ${selected.name}`
-                : 'Icono personalizado'}
-            </strong>
-            <span className="signup-hint">
-              Puedes cambiar el icono eligiendo un emoji.
-            </span>
-          </span>
-        </div>
-        <div
-          className="signup-emoji-grid"
-          role="listbox"
-          aria-labelledby="signup-icon-label"
-        >
-          {CLASS_ICONS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              role="option"
-              aria-selected={userIcon === emoji}
-              className={
-                userIcon === emoji
-                  ? 'signup-emoji is-selected'
-                  : 'signup-emoji'
-              }
-              onClick={() => onIconChange(emoji)}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
       </div>
 
       {formError && (

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
@@ -16,6 +17,21 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(InvalidSignupException.class)
 	public ResponseEntity<Map<String, String>> invalidSignup(InvalidSignupException ex) {
 		return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
+	@ExceptionHandler(InvalidRequestException.class)
+	public ResponseEntity<Map<String, String>> invalidRequest(InvalidRequestException ex) {
+		return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<Map<String, String>> badParam(MethodArgumentTypeMismatchException ex) {
+		return error(HttpStatus.BAD_REQUEST, ex.getName() + " is invalid");
+	}
+
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<Map<String, String>> notFound(ResourceNotFoundException ex) {
+		return error(HttpStatus.NOT_FOUND, ex.getMessage());
 	}
 
 	@ExceptionHandler(MissingServletRequestParameterException.class)

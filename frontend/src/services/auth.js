@@ -1,7 +1,10 @@
+import { apiUrl } from './http.js'
+import { clearSession, readSession } from './session.js'
+
 export async function signup(formData) {
   let response
   try {
-    response = await fetch('/api/auth/signup', {
+    response = await fetch(apiUrl('/api/auth/signup'), {
       method: 'POST',
       body: formData,
     })
@@ -29,7 +32,7 @@ export async function signup(formData) {
 export async function login(email, password) {
   let response
   try {
-    response = await fetch('/api/auth/login', {
+    response = await fetch(apiUrl('/api/auth/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -62,13 +65,13 @@ export async function getCurrentUser() {
   if (!session?.access_token) {
     return null
   }
-  const response = await fetch('/api/auth/me', {
+  const response = await fetch(apiUrl('/api/auth/me'), {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
   })
   if (response.status === 401) {
-    sessionStorage.removeItem('lifequest.session')
+    clearSession()
     return null
   }
   if (!response.ok) {
