@@ -1,6 +1,6 @@
 # Run
 
-JDK 21, Node 20.19+
+JDK 25, Node 20.19+
 
 **Backend** — http://localhost:8080  
 Swagger UI — http://localhost:8080/swagger.html

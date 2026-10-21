@@ -79,3 +79,35 @@ export async function getCurrentUser() {
   }
   return response.json()
 }
+
+export async function getCharacterStats() {
+  const session = readSession()
+  if (!session?.access_token) {
+    throw new Error('You must log in to load character stats')
+  }
+
+  const response = await fetch('/api/character/stats', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  })
+  if (!response.ok) {
+    const error = new Error(
+      response.status === 401
+        ? 'Your session has expired. Please log in again.'
+        : 'Could not load character stats',
+    )
+    error.status = response.status
+    throw error
+  }
+  return response.json()
+}
+
+function readSession() {
+  try {
+    return JSON.parse(sessionStorage.getItem('lifequest.session') || 'null')
+  } catch {
+    sessionStorage.removeItem('lifequest.session')
+    return null
+  }
+}

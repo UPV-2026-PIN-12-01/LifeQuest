@@ -3,9 +3,11 @@ package com.lifequest.service;
 import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.lifequest.exception.DuplicateUserException;
 import com.lifequest.exception.ResourceNotFoundException;
@@ -99,6 +101,13 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public boolean existsByEmail(String email) {
 		return userRepository.existsByEmail(email);
+	}
+
+	@Transactional(readOnly = true)
+	public User getByInnerId(UUID innerId) {
+		return userRepository.findByInnerId(innerId)
+				.orElseThrow(() -> new ResponseStatusException(
+						HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	@Transactional
