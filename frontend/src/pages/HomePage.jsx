@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
+import TaskTable from '../components/home/TaskTable.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import { getDailyQuests, getPlayerProfile } from '../services/player.js'
@@ -77,15 +78,18 @@ export default function HomePage() {
         </p>
       )}
       <PlayerHero player={player} weekStats={weekStats} />
-      <section className="week-panel">
-        <WeekHeader
-          label={weekOffset === 0 ? 'Semana actual' : 'Semana'}
-          rangeLabel={weekRangeLabel(weekStart)}
-          onPrevious={() => setWeekOffset((offset) => offset - 1)}
-          onNext={() => setWeekOffset((offset) => offset + 1)}
-        />
-        <WeekGrid weekStart={weekStart} tasks={tasks} />
-      </section>
+      <div className="calendar-task-layout">
+        <section className="week-panel">
+          <WeekHeader
+            label={weekOffset === 0 ? 'Semana actual' : 'Semana'}
+            rangeLabel={weekRangeLabel(weekStart)}
+            onPrevious={() => setWeekOffset((offset) => offset - 1)}
+            onNext={() => setWeekOffset((offset) => offset + 1)}
+          />
+          <WeekGrid weekStart={weekStart} tasks={tasks} />
+        </section>
+        <TaskTable tasks={tasks} />
+      </div>
       {quests.length > 0 && <DailyQuests quests={quests} />}
     </main>
   )
