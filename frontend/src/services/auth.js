@@ -86,7 +86,7 @@ export async function getCharacterStats() {
     throw new Error('You must log in to load character stats')
   }
 
-  const response = await fetch('/api/character/stats', {
+  const response = await fetch(apiUrl('/api/character/stats'), {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
@@ -101,13 +101,4 @@ export async function getCharacterStats() {
     throw error
   }
   return response.json()
-}
-
-function readSession() {
-  try {
-    return JSON.parse(sessionStorage.getItem('lifequest.session') || 'null')
-  } catch {
-    sessionStorage.removeItem('lifequest.session')
-    return null
-  }
 }

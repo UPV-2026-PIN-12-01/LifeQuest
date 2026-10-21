@@ -486,22 +486,7 @@ export default function Character({
                   </div>
                 </div>
               )
-            })}
-            <div className="bg-indigo-950 rounded-2xl p-5 sm:col-span-2 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <p className="font-bold">Equipamiento activo</p>
-                <p className="text-xs text-indigo-200 mt-1">
-                  {equipment.filter((i) => i.equipped).length} objetos equipados
-                  mejoran tus estadísticas.
-                </p>
-              </div>
-              <button
-                onClick={() => changeTab("inventory")}
-                className="px-4 py-2 rounded-xl bg-white text-indigo-700 text-sm font-semibold"
-              >
-                Gestionar inventario
-              </button>
-            </div>
+            })}      
           </div>
         </div>
       )}

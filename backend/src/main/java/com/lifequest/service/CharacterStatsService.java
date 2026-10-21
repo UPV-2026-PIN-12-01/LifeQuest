@@ -27,11 +27,6 @@ public class CharacterStatsService {
 		return 2L * level + 11;
 	}
 
-	@Transactional(readOnly = true)
-	public CharacterStats getByUserId(Long userId) {
-		return characterStatsRepository.findByUserId(userId)
-				.orElseThrow(() -> new ResourceNotFoundException("Character not found"));
-	}
 
 	@Transactional(readOnly = true)
 	public boolean existsByPlayerName(String playerName) {

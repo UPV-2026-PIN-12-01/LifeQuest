@@ -4,7 +4,7 @@ PIN 2026 (UPV) group 12.01. Java Spring Boot backend + JavaScript React frontend
 
 ## Layout
 
-- `backend/` — Java 25, Maven, Spring Boot, port 8080 (`/api/health`, `/api/hello`)
+- `backend/` — Java 21, Maven, Spring Boot, port 8080 (`/api/health`, `/api/hello`)
 - `frontend/` — Vite + React + npm, port 5173, proxies `/api` to the backend
 - `ai/` — dumps for prompts, briefs, notes, CONTEXT.
 - How to run: see `RUN.md`
