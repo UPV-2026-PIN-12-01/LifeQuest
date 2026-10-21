@@ -356,8 +356,8 @@ function LoginForm({
   return (
     <form className="signup-login-stub" onSubmit={onSubmit} noValidate>
       <header className="signup-card-header">
-        <h2>Iniciar sesión</h2>
-        <p>Continúa tu aventura</p>
+        <h2>Bienvenido de vuelta</h2>
+        <p>Inicia sesión para continuar tu aventura</p>
       </header>
       <div className="signup-field">
         <label className="signup-label" htmlFor={emailId}>
@@ -368,6 +368,7 @@ function LoginForm({
           name="login-email"
           type="email"
           autoComplete="username"
+          placeholder="tú@email.com"
           value={email}
           onChange={onEmailChange}
           disabled={submitting}
@@ -382,6 +383,7 @@ function LoginForm({
           name="login-password"
           type="password"
           autoComplete="current-password"
+          placeholder="••••••••"
           value={password}
           onChange={onPasswordChange}
           disabled={submitting}
