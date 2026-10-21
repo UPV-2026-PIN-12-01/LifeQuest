@@ -19,3 +19,17 @@ export function statusById(id) {
 export function priorityById(id) {
   return TASK_PRIORITIES.find((priority) => priority.id === id) ?? TASK_PRIORITIES[0]
 }
+
+// Same values as the chk_task_color constraint in the tasks table.
+export const TASK_COLORS = [
+  { id: 'purple', label: 'Morado' },
+  { id: 'blue', label: 'Azul' },
+  { id: 'green', label: 'Verde' },
+  { id: 'yellow', label: 'Amarillo' },
+  { id: 'red', label: 'Rojo' },
+]
+
+export const TASK_ICONS = ['📆', '📘', '📝', '🧪', '💻', '💪', '🏃', '🧹', '🎨', '🎮']
+
+// XP of the reward the backend creates, by priority.
+export const XP_BY_PRIORITY = { low: 10, medium: 20, high: 30 }

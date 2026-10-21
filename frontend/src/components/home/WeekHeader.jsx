@@ -11,7 +11,6 @@ export default function WeekHeader({ label, rangeLabel, onPrevious, onNext, onAd
         <h1 className="week-title">{label}</h1>
         {rangeLabel && <span className="week-range">{rangeLabel}</span>}
       </div>
-      {/* Disabled until the create-task form exists. */}
       <button
         type="button"
         className="add-task-button"

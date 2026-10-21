@@ -2,6 +2,7 @@ package com.lifequest.model.entity;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.Column;
@@ -40,10 +41,13 @@ public class Task {
 	@Column(name = "task_reward_id")
 	private Long rewardId;
 
+	// status and priority are Postgres enums, so writes cast the text value.
 	@Column(nullable = false)
+	@ColumnTransformer(write = "?::public.task_status")
 	private String status;
 
 	@Column(nullable = false)
+	@ColumnTransformer(write = "?::public.task_priority")
 	private String priority;
 
 	@Column(nullable = false)
