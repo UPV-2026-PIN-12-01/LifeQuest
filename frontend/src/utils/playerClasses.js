@@ -31,27 +31,6 @@ export const PLAYER_CLASSES = [
 
 export const DEFAULT_PLAYER_CLASS = PLAYER_CLASSES[0].id
 
-export const CLASS_ICONS = [
-  '⚔️',
-  '🛡️',
-  '🏹',
-  '💧',
-  '✨',
-  '💚',
-  '🎯',
-  '🐉',
-  '🔥',
-  '🗡️',
-  '🪄',
-  '💎',
-  '👑',
-  '☀️',
-  '⚡',
-  '⛰️',
-  '🐺',
-  '🦊',
-]
-
 export function classById(id) {
   return PLAYER_CLASSES.find((item) => item.id === id) ?? PLAYER_CLASSES[0]
 }

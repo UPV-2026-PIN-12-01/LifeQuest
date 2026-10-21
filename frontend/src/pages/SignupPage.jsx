@@ -5,14 +5,14 @@ import CharacterStep from '../components/signup/CharacterStep.jsx'
 import SignupSuccess from '../components/signup/SignupSuccess.jsx'
 import { login, signup } from '../services/auth.js'
 import { saveSession } from '../services/session.js'
-import { classById, DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
+import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { signupErrorFields } from '../utils/signupErrors.js'
 import { validateAccount, validatePhoto } from '../utils/validation.js'
 import '../styles/signup.css'
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState('signup')
+  const [tab, setTab] = useState('login')
   const [step, setStep] = useState(1)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -21,7 +21,6 @@ export default function SignupPage() {
   const [photoPreview, setPhotoPreview] = useState('')
   const [playerClass, setPlayerClass] = useState(DEFAULT_PLAYER_CLASS)
   const [playerName, setPlayerName] = useState('')
-  const [userIcon, setUserIcon] = useState(classById(DEFAULT_PLAYER_CLASS).icon)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -125,12 +124,7 @@ export default function SignupPage() {
   }
 
   function handleClassChange(nextClass) {
-    const previous = classById(playerClass)
-    const next = classById(nextClass)
     setPlayerClass(nextClass)
-    if (userIcon === previous.icon) {
-      setUserIcon(next.icon)
-    }
   }
 
   function handlePlayerNameChange(value) {
@@ -161,9 +155,6 @@ export default function SignupPage() {
       formData.append('password', password)
       formData.append('playerClass', playerClass)
       formData.append('playerName', playerName.trim())
-      if (userIcon !== classById(playerClass).icon) {
-        formData.append('userIcon', userIcon)
-      }
       if (photoFile) {
         formData.append('photo', photoFile)
       }
@@ -332,13 +323,11 @@ export default function SignupPage() {
                 <CharacterStep
                   playerClass={playerClass}
                   playerName={playerName}
-                  userIcon={userIcon}
                   error={errors.playerName}
                   formError={errors.form}
                   submitting={submitting}
                   onClassChange={handleClassChange}
                   onPlayerNameChange={handlePlayerNameChange}
-                  onIconChange={setUserIcon}
                   onBack={() => setStep(1)}
                   onSubmit={handleCharacterStart}
                 />
@@ -367,8 +356,8 @@ function LoginForm({
   return (
     <form className="signup-login-stub" onSubmit={onSubmit} noValidate>
       <header className="signup-card-header">
-        <h2>Iniciar sesión</h2>
-        <p>Continúa tu aventura</p>
+        <h2>Bienvenido de vuelta</h2>
+        <p>Inicia sesión para continuar tu aventura</p>
       </header>
       <div className="signup-field">
         <label className="signup-label" htmlFor={emailId}>
@@ -379,6 +368,7 @@ function LoginForm({
           name="login-email"
           type="email"
           autoComplete="username"
+          placeholder="tú@email.com"
           value={email}
           onChange={onEmailChange}
           disabled={submitting}
@@ -393,6 +383,7 @@ function LoginForm({
           name="login-password"
           type="password"
           autoComplete="current-password"
+          placeholder="••••••••"
           value={password}
           onChange={onPasswordChange}
           disabled={submitting}

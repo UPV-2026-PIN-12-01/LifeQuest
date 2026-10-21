@@ -60,7 +60,6 @@ public class SignupService {
 			String email,
 			String password,
 			String playerClass,
-			String userIcon,
 			String playerName,
 			MultipartFile photo) {
 		String trimmedUsername = requireText(username, "Username is required");
@@ -74,7 +73,6 @@ public class SignupService {
 		}
 
 		PlayerClass resolvedClass = resolveClass(playerClass);
-		String icon = StringUtils.hasText(userIcon) ? userIcon.trim() : resolvedClass.defaultIcon();
 		PhotoPayload photoPayload = resolvePhoto(photo);
 
 		rejectIfTaken(trimmedUsername, normalizedEmail, resolvedPlayerName);
@@ -83,7 +81,7 @@ public class SignupService {
 		User created;
 		try {
 			created = transactionTemplate.execute(status -> {
-				User user = userService.create(trimmedUsername, normalizedEmail, authId, icon);
+				User user = userService.create(trimmedUsername, normalizedEmail, authId);
 				CharacterStats stats = characterStatsService.createForUser(user.getId(), resolvedPlayerName, resolvedClass);
 				return userService.linkCharacter(user, stats);
 			});

@@ -68,6 +68,7 @@ class TaskServiceTest {
 
 		TaskDto dto = tasks.get(0);
 		assertThat(dto.title()).isEqualTo("Repasar test-can-delete-later");
+		assertThat(dto.description()).isEqualTo("test-can-delete-later");
 		assertThat(dto.date()).isEqualTo("2026-10-11");
 		assertThat(dto.startTime()).isEqualTo("00:30");
 		assertThat(dto.endTime()).isEqualTo("01:00");

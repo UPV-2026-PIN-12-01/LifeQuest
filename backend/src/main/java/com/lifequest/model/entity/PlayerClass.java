@@ -25,12 +25,4 @@ public enum PlayerClass {
 			case magician -> "Mago";
 		};
 	}
-
-	public String defaultIcon() {
-		return switch (this) {
-			case knight -> "⚔️";
-			case archer -> "🏹";
-			case magician -> "🪄";
-		};
-	}
 }

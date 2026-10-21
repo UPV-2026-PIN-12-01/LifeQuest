@@ -1,6 +1,6 @@
 # Run
 
-JDK 21, Node 20.19+
+JDK 25, Node 20.19+
 
 **Backend** — http://localhost:8080  
 Swagger UI — http://localhost:8080/swagger.html
@@ -14,10 +14,9 @@ cd backend
 
 Windows: `mvnw.cmd spring-boot:run`
 
-If port 8080 is already in use:
-```bash
-netstat -ano | findstr ":8080"
-taskkill /PID <pid> /F
+If port 8080 is already in use (PowerShell):
+```powershell
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080 -State Listen).OwningProcess -Force
 ```
 
 **Frontend** — http://localhost:5173

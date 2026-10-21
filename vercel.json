@@ -1,23 +1,13 @@
 {
   "services": {
     "frontend": {
-      "root": "frontend/"
-    },
-    "backend": {
-      "root": "backend/",
-      "runtime": "container",
-      "entrypoint": "Dockerfile.vercel",
-      "functions": {
-        "Dockerfile.vercel": { "maxDuration": 300 }
-      }
+      "root": "frontend/",
+      "rewrites": [
+        { "source": "/(.*)", "destination": "/index.html" }
+      ]
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": { "service": "backend" } },
-    { "source": "/swagger.html", "destination": { "service": "backend" } },
-    { "source": "/swagger-ui/(.*)", "destination": { "service": "backend" } },
-    { "source": "/v3/api-docs", "destination": { "service": "backend" } },
-    { "source": "/v3/api-docs/(.*)", "destination": { "service": "backend" } },
     { "source": "/(.*)", "destination": { "service": "frontend" } }
   ]
 }

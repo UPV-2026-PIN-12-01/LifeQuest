@@ -4,6 +4,7 @@ export async function getPlayerProfile() {
   const profile = await getJson(playerUrl())
   return {
     username: profile.playerName || profile.username,
+    profileUrl: profile.profileUrl || '',
     playerClass: profile.playerClass,
     level: profile.level,
     xp: profile.xp,

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CharacterView from '../pages/CharacterView.jsx';
-import HelloPage from '../pages/HelloPage.jsx';
 import HomePage from '../pages/HomePage.jsx';
+import ProfilePage from '../pages/ProfilePage.jsx';
 import SignupPage from '../pages/SignupPage.jsx';
 import { hasSession } from '../services/session.js';
 
@@ -9,14 +9,14 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirige la raíz '/' automáticamente a '/character' */}
-        <Route path="/" element={<Navigate to="/character" replace />} />
+        <Route path="/" element={<Navigate to={hasSession() ? '/home' : '/login'} replace />} />
         
         {/* Tus rutas */}
         <Route path="/character" element={<CharacterView />} />
-        <Route path="/hello" element={<HelloPage />} />
         <Route path="/login" element={<SignupPage />} />
         <Route path="/home" element={<RequireSession><HomePage /></RequireSession>} />
+        <Route path="/settings" element={<RequireSession><ProfilePage /></RequireSession>} />
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
       </Routes>
     </BrowserRouter>
   );

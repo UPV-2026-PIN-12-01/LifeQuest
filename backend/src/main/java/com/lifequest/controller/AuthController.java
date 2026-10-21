@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+
 import com.lifequest.model.dto.AuthenticatedUserDto;
 import com.lifequest.model.dto.LoginDto;
 import com.lifequest.model.dto.ProfileDto;
@@ -29,6 +31,7 @@ public class AuthController {
 		this.supabaseAuthService = supabaseAuthService;
 	}
 
+	@SecurityRequirements
 	@PostMapping("/login")
 	public LoginDto login(
 			@RequestParam String email,
@@ -41,16 +44,16 @@ public class AuthController {
 		return new AuthenticatedUserDto(jwt.getSubject(), jwt.getClaimAsString("email"));
 	}
 
+	@SecurityRequirements
 	@PostMapping("/signup")
 	public ResponseEntity<ProfileDto> signup(
 			@RequestParam String username,
 			@RequestParam String email,
 			@RequestParam String password,
 			@RequestParam(required = false) String playerClass,
-			@RequestParam(required = false) String userIcon,
 			@RequestParam(required = false) String playerName,
 			@RequestParam(required = false) MultipartFile photo) {
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(signupService.signup(username, email, password, playerClass, userIcon, playerName, photo));
+				.body(signupService.signup(username, email, password, playerClass, playerName, photo));
 	}
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
-import TaskFormModal from '../components/home/TaskFormModal.jsx'
+import TaskTable from '../components/home/TaskTable.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import { getDailyQuests, getPlayerProfile } from '../services/player.js'
@@ -13,6 +13,7 @@ import '../styles/home.css'
 
 const EMPTY_PLAYER = {
   username: '',
+  profileUrl: '',
   playerClass: DEFAULT_PLAYER_CLASS,
   level: 1,
   xp: 0,
@@ -80,16 +81,18 @@ export default function HomePage() {
         </p>
       )}
       <PlayerHero player={player} weekStats={weekStats} />
-      <section className="week-panel">
-        <WeekHeader
-          label={weekOffset === 0 ? 'Semana actual' : 'Semana'}
-          rangeLabel={weekRangeLabel(weekStart)}
-          onPrevious={() => setWeekOffset((offset) => offset - 1)}
-          onNext={() => setWeekOffset((offset) => offset + 1)}
-          onAddTask={() => setEditor({ task: null })}
-        />
-        <WeekGrid weekStart={weekStart} tasks={tasks} onSelectTask={(task) => setEditor({ task })} />
-      </section>
+      <div className="calendar-task-layout">
+        <section className="week-panel">
+          <WeekHeader
+            label={weekOffset === 0 ? 'Semana actual' : 'Semana'}
+            rangeLabel={weekRangeLabel(weekStart)}
+            onPrevious={() => setWeekOffset((offset) => offset - 1)}
+            onNext={() => setWeekOffset((offset) => offset + 1)}
+          />
+          <WeekGrid weekStart={weekStart} tasks={tasks} />
+        </section>
+        <TaskTable tasks={tasks} />
+      </div>
       {quests.length > 0 && <DailyQuests quests={quests} />}
       {editor && (
         <TaskFormModal
