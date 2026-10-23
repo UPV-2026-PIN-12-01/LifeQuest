@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -28,7 +29,9 @@ import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
+import com.lifequest.exception.InvalidStateException;
 import com.lifequest.repository.TaskRepository;
+import com.lifequest.repository.TaskSessionRepository;
 
 class TaskServiceTest {
 
@@ -45,7 +48,8 @@ class TaskServiceTest {
 		taskRepository = mock(TaskRepository.class);
 		rewardService = mock(RewardService.class);
 		UserService userService = mock(UserService.class);
-		taskService = new TaskService(taskRepository, rewardService, userService, Clock.fixed(NOW, MADRID));
+		taskService = new TaskService(taskRepository, rewardService, userService, mock(TaskSessionRepository.class),
+				Clock.fixed(NOW, MADRID));
 	}
 
 	@Test
@@ -86,6 +90,9 @@ class TaskServiceTest {
 		assertThat(TaskService.displayStatus(task("DONE", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
 				.isEqualTo("completed");
 		assertThat(TaskService.displayStatus(task("NOT_DONE", "2026-10-10T07:00:00Z", "2026-10-10T08:00:00Z", null), NOW))
+				.isEqualTo("not_completed");
+		// Unanswered for more than 24 hours after the end.
+		assertThat(TaskService.displayStatus(task("PENDING", "2026-10-09T07:00:00Z", "2026-10-09T08:00:00Z", null), NOW))
 				.isEqualTo("not_completed");
 	}
 
@@ -185,6 +192,26 @@ class TaskServiceTest {
 		assertThatThrownBy(() -> taskService.create(7L, new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "pink",
 				LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low")))
 				.isInstanceOf(InvalidRequestException.class);
+	}
+
+	@Test
+	void rejectsBackdatedOrTooShortTasks() {
+		// NOW is 12:00 in Madrid on 2026-10-10.
+		TaskRequestDto backdated = new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "blue",
+				LocalDate.parse("2026-10-10"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low");
+		assertThatThrownBy(() -> taskService.create(7L, backdated)).isInstanceOf(InvalidRequestException.class);
+		assertThatThrownBy(() -> taskService.create(7L, request("low", "09:00", "09:10")))
+				.isInstanceOf(InvalidRequestException.class);
+	}
+
+	@Test
+	void startedTaskCannotBeEdited() {
+		Task task = task("PENDING", "2026-10-10T09:00:00Z", "2026-10-10T11:00:00Z", 3L);
+		when(taskRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(task));
+
+		assertThatThrownBy(() -> taskService.update(7L, 1L, request("high", "18:00", "19:00")))
+				.isInstanceOf(InvalidStateException.class);
+		verify(rewardService, never()).updateXp(any(), anyLong());
 	}
 
 	@Test

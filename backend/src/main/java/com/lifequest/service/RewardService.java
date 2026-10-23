@@ -1,5 +1,6 @@
 package com.lifequest.service;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +44,26 @@ public class RewardService {
 		Reward reward = rewardRepository.findById(rewardId)
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 		reward.setXpReward(xp);
+	}
+
+	@Transactional(readOnly = true)
+	public Reward getById(Long rewardId) {
+		return rewardRepository.findById(rewardId)
+				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
+	}
+
+	// XP already granted to the user from from (inclusive) to toExclusive, by claim time.
+	@Transactional(readOnly = true)
+	public long claimedXpBetween(Long userId, Instant from, Instant toExclusive) {
+		return rewardRepository.sumClaimedXp(userId, from, toExclusive);
+	}
+
+	// The reward keeps the XP actually granted, so the card shows what the user got.
+	@Transactional
+	public void claim(Reward reward, long grantedXp, Instant now) {
+		reward.setXpReward(grantedXp);
+		reward.setClaimedAt(now);
+		rewardRepository.save(reward);
 	}
 
 	@Transactional

@@ -28,6 +28,23 @@ public class CharacterStatsService {
 	}
 
 
+	// Levels up while the XP covers the next level. xpTotal is derived so it always passes
+	// stats_xp_rules_check: at level 1 it equals xpCurrent, above it is xpCurrent + L^2 + 10L.
+	@Transactional
+	public CharacterStats addXp(Long userId, long xp) {
+		CharacterStats stats = getByUserId(userId);
+		int level = stats.getLevel() == null ? 1 : stats.getLevel();
+		long current = (stats.getXpCurrent() == null ? 0 : stats.getXpCurrent()) + xp;
+		while (current >= xpForNextLevel(level)) {
+			current -= xpForNextLevel(level);
+			level++;
+		}
+		stats.setLevel(level);
+		stats.setXpCurrent(current);
+		stats.setXpTotal(level == 1 ? current : current + (long) level * level + 10L * level);
+		return characterStatsRepository.save(stats);
+	}
+
 	@Transactional(readOnly = true)
 	public boolean existsByPlayerName(String playerName) {
 		return characterStatsRepository.existsByPlayerName(playerName);

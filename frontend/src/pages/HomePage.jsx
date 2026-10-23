@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
+import TaskFormModal from '../components/home/TaskFormModal.jsx'
 import TaskTable from '../components/home/TaskTable.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
+import useTaskHeartbeats from '../hooks/useTaskHeartbeats.js'
 import { getDailyQuests, getPlayerProfile } from '../services/player.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
@@ -31,6 +33,10 @@ export default function HomePage() {
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
   const [tasksVersion, setTasksVersion] = useState(0)
+  // Bumped after a completion so the hero shows the new XP and level.
+  const [playerVersion, setPlayerVersion] = useState(0)
+
+  useTaskHeartbeats(tasks)
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
@@ -59,7 +65,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [playerVersion])
 
   useEffect(() => {
     let cancelled = false
@@ -88,10 +94,17 @@ export default function HomePage() {
             rangeLabel={weekRangeLabel(weekStart)}
             onPrevious={() => setWeekOffset((offset) => offset - 1)}
             onNext={() => setWeekOffset((offset) => offset + 1)}
+            onAddTask={() => setEditor({ task: null })}
           />
-          <WeekGrid weekStart={weekStart} tasks={tasks} />
+          <WeekGrid weekStart={weekStart} tasks={tasks} onSelectTask={(task) => setEditor({ task })} />
         </section>
-        <TaskTable tasks={tasks} />
+        <TaskTable
+          tasks={tasks}
+          onTaskChanged={(changed) => {
+            setTasks((current) => current.map((task) => (task.id === changed.id ? changed : task)))
+            setPlayerVersion((version) => version + 1)
+          }}
+        />
       </div>
       {quests.length > 0 && <DailyQuests quests={quests} />}
       {editor && (

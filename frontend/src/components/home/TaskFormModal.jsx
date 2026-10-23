@@ -1,8 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { createTask, deleteTask, updateTask } from '../../services/tasks.js'
 import { TASK_COLORS, TASK_ICONS, TASK_PRIORITIES, XP_BY_PRIORITY } from '../../utils/taskOptions.js'
+import { addDays, toIsoDate } from '../../utils/week.js'
 
 const TITLE_MAX = 80
+// Same limits as TaskService in the backend, checked here so the user sees why before sending.
+const PAST_START_GRACE_MS = 15 * 60_000
+const MIN_DURATION_MS = 15 * 60_000
+
+// Backend error messages for the task form, in the user's language.
+const SERVER_ERRORS = {
+  'Task cannot start in the past': 'La misión no puede empezar en el pasado.',
+  'Task must last at least 15 minutes': 'La misión tiene que durar al menos 15 minutos.',
+  'Task cannot cross midnight UTC': 'De momento una misión no puede cruzar la medianoche UTC. Ajusta las horas.',
+  'Task cannot be edited once it has started': 'Una misión que ya ha empezado no se puede editar.',
+  'endTime must be after startTime': 'La hora de fin tiene que ser posterior a la de inicio.',
+}
 
 // Create a task when `task` is null, otherwise edit or delete it. Calls onSaved after any change.
 export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
@@ -230,11 +243,23 @@ function initialForm(task, defaultDate) {
     description: '',
     icon: TASK_ICONS[0],
     color: TASK_COLORS[0].id,
-    date: defaultDate,
-    startTime: '09:00',
-    endTime: '10:00',
+    ...defaultSlot(defaultDate),
     priority: 'medium',
   }
+}
+
+// The next full hour of defaultDate when it is today and still fits the day, else 09:00 of the next free day.
+function defaultSlot(defaultDate) {
+  const now = new Date()
+  const nextHour = now.getHours() + 1
+  if (defaultDate !== toIsoDate(now)) {
+    return { date: defaultDate, startTime: '09:00', endTime: '10:00' }
+  }
+  if (nextHour <= 22) {
+    const pad = (hour) => `${String(hour).padStart(2, '0')}:00`
+    return { date: defaultDate, startTime: pad(nextHour), endTime: pad(nextHour + 1) }
+  }
+  return { date: toIsoDate(addDays(now, 1)), startTime: '09:00', endTime: '10:00' }
 }
 
 function validate(form) {
@@ -245,14 +270,17 @@ function validate(form) {
   const start = new Date(`${form.date}T${form.startTime}`)
   const end = new Date(`${form.date}T${form.endTime}`)
   if (start.getUTCDate() !== end.getUTCDate()) {
-    return 'De momento una misión no puede cruzar la medianoche UTC. Ajusta las horas.'
+    return SERVER_ERRORS['Task cannot cross midnight UTC']
   }
+  if (end - start < MIN_DURATION_MS) return SERVER_ERRORS['Task must last at least 15 minutes']
+  if (start.getTime() < Date.now() - PAST_START_GRACE_MS) return SERVER_ERRORS['Task cannot start in the past']
   return null
 }
 
 function requestErrorMessage(error) {
   if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
   if (error.status === 404) return 'Esta misión ya no existe.'
+  if (SERVER_ERRORS[error.message]) return SERVER_ERRORS[error.message]
   if (error.status === 400) return 'Revisa los datos de la misión.'
   return 'No se pudo guardar. Inténtalo de nuevo más tarde.'
 }
