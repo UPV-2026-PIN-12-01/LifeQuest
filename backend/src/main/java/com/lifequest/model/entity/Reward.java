@@ -1,5 +1,7 @@
 package com.lifequest.model.entity;
 
+import java.time.Instant;
+
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.Column;
@@ -27,6 +29,9 @@ public class Reward {
 	@Column(name = "user_id")
 	private Long userId;
 
+	@Column(name = "claimed_at")
+	private Instant claimedAt;
+
 	public Long getId() {
 		return id;
 	}
@@ -53,5 +58,13 @@ public class Reward {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	public Instant getClaimedAt() {
+		return claimedAt;
+	}
+
+	public void setClaimedAt(Instant claimedAt) {
+		this.claimedAt = claimedAt;
 	}
 }

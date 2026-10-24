@@ -26,7 +26,9 @@ export async function requestJson(url, { method = 'GET', body } = {}) {
   let response
   try {
     response = await fetch(apiUrl(url), {
-      headers: { Authorization: `Bearer ${token}` },
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
     const error = new Error('Network error')

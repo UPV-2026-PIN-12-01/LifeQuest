@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { priorityById, statusById } from '../../utils/taskOptions.js'
+import TaskActions from './TaskActions.jsx'
 
-export default function TaskTable({ tasks }) {
-  const [selectedTask, setSelectedTask] = useState(null)
+// onTaskChanged receives the task the server returns after a check-in, completion or skip.
+export default function TaskTable({ tasks, onTaskChanged }) {
+  // The id, not a copy, so the details follow the latest task from the server.
+  const [selectedId, setSelectedId] = useState(null)
+  const selectedTask = tasks.find((task) => task.id === selectedId) ?? null
 
   return (
     <section className="task-table-panel" aria-labelledby="task-table-title">
@@ -38,7 +42,7 @@ export default function TaskTable({ tasks }) {
                       <button
                         className="task-table-link"
                         type="button"
-                        onClick={() => setSelectedTask(task)}
+                        onClick={() => setSelectedId(task.id)}
                       >
                         <span className="task-table-icon" aria-hidden="true">{task.icon}</span>
                         <span>{task.title}</span>
@@ -55,13 +59,17 @@ export default function TaskTable({ tasks }) {
         </div>
       )}
       {selectedTask && (
-        <TaskDetailsModal task={selectedTask} onClose={() => setSelectedTask(null)} />
+        <TaskDetailsModal
+          task={selectedTask}
+          onClose={() => setSelectedId(null)}
+          onTaskChanged={onTaskChanged}
+        />
       )}
     </section>
   )
 }
 
-function TaskDetailsModal({ task, onClose }) {
+function TaskDetailsModal({ task, onClose, onTaskChanged }) {
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape') onClose()
@@ -109,7 +117,10 @@ function TaskDetailsModal({ task, onClose }) {
             <dd className="tabular">+{task.xp} XP</dd>
           </div>
         </dl>
-        <button className="task-modal-action" type="button" onClick={onClose}>Cerrar</button>
+        {onTaskChanged && <TaskActions task={task} onChanged={onTaskChanged} />}
+        <button className="task-modal-action task-modal-action-secondary" type="button" onClick={onClose}>
+          Cerrar
+        </button>
       </section>
     </div>
   )

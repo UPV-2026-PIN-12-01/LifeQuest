@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
 		return error(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
+	@ExceptionHandler(InvalidStateException.class)
+	public ResponseEntity<Map<String, String>> invalidState(InvalidStateException ex) {
+		return error(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
 	@ExceptionHandler(InvalidLoginException.class)
 	public ResponseEntity<Map<String, String>> invalidLogin(InvalidLoginException ex) {
 		return error(HttpStatus.UNAUTHORIZED, ex.getMessage());

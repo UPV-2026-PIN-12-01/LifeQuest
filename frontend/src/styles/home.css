@@ -402,6 +402,58 @@
   font-weight: 700;
 }
 
+.task-modal-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.task-modal-action-secondary {
+  background: var(--lq-surface-muted);
+  color: var(--lq-ink);
+  box-shadow: inset 0 0 0 1px var(--lq-line);
+}
+
+.task-actions {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.task-actions-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.task-session {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--lq-violet-50);
+  color: var(--lq-ink-muted);
+}
+
+.task-session strong {
+  color: var(--lq-violet-700);
+  font-size: 22px;
+}
+
+.task-verification {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--lq-success-soft);
+  color: var(--lq-success-ink);
+  font-weight: 700;
+}
+
+.task-actions-error {
+  margin: 0;
+  color: var(--lq-danger);
+  font-size: 14px;
+}
+
 .week-header {
   display: flex;
   align-items: center;

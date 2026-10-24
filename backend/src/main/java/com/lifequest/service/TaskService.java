@@ -1,6 +1,7 @@
 package com.lifequest.service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +24,11 @@ import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
+import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.entity.Task;
+import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
+import com.lifequest.repository.TaskSessionRepository;
 
 @Service
 public class TaskService {
@@ -39,17 +45,26 @@ public class TaskService {
 	// XP of the reward created with each task, by form priority.
 	static final Map<String, Long> XP_BY_PRIORITY = Map.of("low", 10L, "medium", 20L, "high", 30L);
 	static final Map<String, String> DB_PRIORITY_BY_FORM = Map.of("low", "LOW", "medium", "MID", "high", "HIGH");
+	// A task may be planned a little late (the form was slow), but not backdated to claim XP.
+	static final Duration PAST_START_GRACE = Duration.ofMinutes(15);
+	// Shorter tasks would let users farm XP with many one-minute tasks.
+	static final Duration MIN_DURATION = Duration.ofMinutes(15);
+	// After this, an unconfirmed task counts as not done and can no longer be completed.
+	static final Duration CONFIRM_WINDOW = Duration.ofHours(24);
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
 	private final TaskRepository taskRepository;
 	private final RewardService rewardService;
 	private final UserService userService;
+	private final TaskSessionRepository taskSessionRepository;
 	private final Clock clock;
 
-	public TaskService(TaskRepository taskRepository, RewardService rewardService, UserService userService, Clock clock) {
+	public TaskService(TaskRepository taskRepository, RewardService rewardService, UserService userService,
+			TaskSessionRepository taskSessionRepository, Clock clock) {
 		this.taskRepository = taskRepository;
 		this.rewardService = rewardService;
 		this.userService = userService;
+		this.taskSessionRepository = taskSessionRepository;
 		this.clock = clock;
 	}
 
@@ -67,8 +82,11 @@ public class TaskService {
 		List<Task> tasks = findTasks(userId, from, to);
 		Map<Long, Long> xpByReward = rewardService.xpByRewardId(
 				tasks.stream().map(Task::getRewardId).filter(Objects::nonNull).distinct().toList());
+		Map<Long, TaskSession> sessionByTask = tasks.isEmpty() ? Map.of()
+				: taskSessionRepository.findByTaskIdIn(tasks.stream().map(Task::getId).toList()).stream()
+						.collect(Collectors.toMap(TaskSession::getTaskId, Function.identity()));
 		Instant now = clock.instant();
-		return tasks.stream().map(task -> toDto(task, xpByReward, now)).toList();
+		return tasks.stream().map(task -> toDto(task, xpByReward, sessionByTask.get(task.getId()), now)).toList();
 	}
 
 	@Transactional(readOnly = true)
@@ -92,9 +110,13 @@ public class TaskService {
 	}
 
 	// Status is not part of the form, so editing keeps it; the reward XP follows the new priority.
+	// Once started a task is frozen, so its priority or times cannot be raised after the fact.
 	@Transactional
 	public TaskDto update(Long userId, Long taskId, TaskRequestDto request) {
 		Task task = findOwned(userId, taskId);
+		if (!clock.instant().isBefore(task.getStartTime())) {
+			throw new InvalidStateException("Task cannot be edited once it has started");
+		}
 		apply(task, request);
 		long xp = XP_BY_PRIORITY.get(request.priority());
 		if (task.getRewardId() == null) {
@@ -117,7 +139,7 @@ public class TaskService {
 		}
 	}
 
-	private Task findOwned(Long userId, Long taskId) {
+	Task findOwned(Long userId, Long taskId) {
 		return taskRepository.findByIdAndUserId(taskId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 	}
@@ -144,6 +166,12 @@ public class TaskService {
 		}
 		Instant start = toInstant(request.date(), request.startTime());
 		Instant end = toInstant(request.date(), request.endTime());
+		if (start.isBefore(clock.instant().minus(PAST_START_GRACE))) {
+			throw new InvalidRequestException("Task cannot start in the past");
+		}
+		if (Duration.between(start, end).compareTo(MIN_DURATION) < 0) {
+			throw new InvalidRequestException("Task must last at least " + MIN_DURATION.toMinutes() + " minutes");
+		}
 		// The day_task_check constraint compares the day of month in UTC, not in the app time zone.
 		if (start.atOffset(ZoneOffset.UTC).getDayOfMonth() != end.atOffset(ZoneOffset.UTC).getDayOfMonth()) {
 			throw new InvalidRequestException("Task cannot cross midnight UTC");
@@ -163,7 +191,15 @@ public class TaskService {
 	}
 
 	private TaskDto toDto(Task task, long xp) {
-		return toDto(task, task.getRewardId() == null ? Map.of() : Map.of(task.getRewardId(), xp), clock.instant());
+		return toDto(task, task.getRewardId() == null ? Map.of() : Map.of(task.getRewardId(), xp), null, clock.instant());
+	}
+
+	// The calendar shape of one task with its current reward and session, for the completion endpoints.
+	TaskDto describe(Task task) {
+		Map<Long, Long> xpByReward = task.getRewardId() == null ? Map.of()
+				: rewardService.xpByRewardId(List.of(task.getRewardId()));
+		TaskSession session = taskSessionRepository.findByTaskId(task.getId()).orElse(null);
+		return toDto(task, xpByReward, session, clock.instant());
 	}
 
 	private List<Task> findTasks(Long userId, LocalDate from, LocalDate to) {
@@ -174,7 +210,7 @@ public class TaskService {
 				userId, start, endExclusive);
 	}
 
-	private TaskDto toDto(Task task, Map<Long, Long> xpByReward, Instant now) {
+	private TaskDto toDto(Task task, Map<Long, Long> xpByReward, TaskSession session, Instant now) {
 		ZoneId zone = clock.getZone();
 		ZonedDateTime start = task.getStartTime().atZone(zone);
 		ZonedDateTime end = task.getEndTime().atZone(zone);
@@ -190,11 +226,16 @@ public class TaskService {
 				end.format(TIME),
 				displayStatus(task, now),
 				displayPriority(task.getPriority()),
-				xp);
+				xp,
+				TaskVerification.of(task, session, now).id(),
+				session == null ? null : session.getStartedAt().toString(),
+				session != null && session.isOpen(),
+				session == null ? 0 : session.getFocusedSeconds());
 	}
 
 	// DONE / NOT_DONE are the user's outcome; any other stored value shows as pending, in progress or
-	// finished depending on the clock, so the card can ask "¿La completaste?".
+	// finished depending on the clock, so the card can ask "¿La completaste?". Past the confirm window
+	// an unanswered task shows as not completed.
 	static String displayStatus(Task task, Instant now) {
 		if (DB_STATUS_DONE.equals(task.getStatus())) {
 			return "completed";
@@ -205,7 +246,14 @@ public class TaskService {
 		if (now.isBefore(task.getStartTime())) {
 			return "pending";
 		}
-		return now.isBefore(task.getEndTime()) ? "in_progress" : "finished";
+		if (now.isBefore(task.getEndTime())) {
+			return "in_progress";
+		}
+		return isConfirmWindowClosed(task, now) ? "not_completed" : "finished";
+	}
+
+	static boolean isConfirmWindowClosed(Task task, Instant now) {
+		return now.isAfter(task.getEndTime().plus(CONFIRM_WINDOW));
 	}
 
 	// The home shows three levels: MAX and HIGH are high, MID is medium, LOW and NULL are low.
