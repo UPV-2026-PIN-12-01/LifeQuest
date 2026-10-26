@@ -12,3 +12,4 @@ COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 ENV PORT=80
 EXPOSE 80
 CMD ["sh", "-c", "java -jar app.jar --server.port=${PORT:-80}"]
+
