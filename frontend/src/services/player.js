@@ -9,6 +9,7 @@ export async function getPlayerProfile() {
     level: profile.level,
     xp: profile.xp,
     xpForNextLevel: profile.xpForNextLevel,
+    gold: profile.gold,
     streakDays: profile.streakDays,
   }
 }

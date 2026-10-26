@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AuthenticatedLayout from '../components/AuthenticatedLayout.jsx';
 import CharacterView from '../pages/CharacterView.jsx';
 import HomePage from '../pages/HomePage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
@@ -11,11 +12,12 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to={hasSession() ? '/home' : '/login'} replace />} />
         
-        {/* Tus rutas */}
-        <Route path="/character" element={<CharacterView />} />
         <Route path="/login" element={<SignupPage />} />
-        <Route path="/home" element={<RequireSession><HomePage /></RequireSession>} />
-        <Route path="/settings" element={<RequireSession><ProfilePage /></RequireSession>} />
+        <Route element={<RequireSession><AuthenticatedLayout /></RequireSession>}>
+          <Route path="/character" element={<CharacterView />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/settings" element={<ProfilePage />} />
+        </Route>
         <Route path="/profile" element={<Navigate to="/settings" replace />} />
       </Routes>
     </BrowserRouter>
