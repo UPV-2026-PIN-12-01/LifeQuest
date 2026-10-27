@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { getJson, patchForm, patchJson } from '../services/http.js'
 import { classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
@@ -9,6 +9,7 @@ const LATER_ROWS = ['Notificaciones', 'Privacidad', 'Tema visual']
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const { refreshPlayer } = useOutletContext()
   const photoId = useId()
   const nameId = useId()
   const emailId = useId()
@@ -155,6 +156,7 @@ export default function ProfilePage() {
       }
       setErrors({})
       setSaved(true)
+      await refreshPlayer()
     } catch (error) {
       if (error.status === 401) {
         navigate('/login', { replace: true })

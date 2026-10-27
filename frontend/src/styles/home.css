@@ -226,6 +226,7 @@
 }
 
 .week-panel {
+  scroll-margin-top: 16px;
   overflow: hidden;
   border: 1px solid var(--lq-line);
   border-radius: 18px;
@@ -233,6 +234,7 @@
 }
 
 .task-table-panel {
+  scroll-margin-top: 16px;
   overflow: hidden;
   border: 1px solid var(--lq-line);
   border-radius: 18px;

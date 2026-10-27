@@ -1,208 +1,140 @@
-import { NavLink } from "react-router-dom"
-import { CLASS_META } from "../pages/Login"
+import { Link, useLocation } from 'react-router-dom'
+import { classById } from '../utils/playerClasses.js'
+
 const NAV = [
-  { to: "/", icon: "🏠", label: "Inicio" },
-  { to: "/character", icon: "⚔️", label: "Personaje" },
-  { to: "/character/inventory", icon: "🎒", label: "Inventario", nested: true },
-  { to: "/character/shop", icon: "🏪", label: "Tienda", nested: true },
-  { to: "/combat", icon: "🗡️", label: "Combate" },
-  { to: "/ranking", icon: "🏅", label: "Clasificación" },
-  { to: "/ranking/friends", icon: "👥", label: "Amigos", nested: true },
-  { to: "/dashboard", icon: "📊", label: "Dashboard" },
-  { to: "/goals", icon: "🚩", label: "Objetivos" },
-  { to: "/challenges", icon: "🎯", label: "Desafíos" },
-  { to: "/achievements", icon: "🏆", label: "Logros" },
-  { to: "/ai", icon: "🤖", label: "LifeQuest IA" },
-  { to: "/settings", icon: "⚙️", label: "Ajustes" },
+  { to: '/home', icon: '🏠', label: 'Inicio' },
+  { to: '/home#week', icon: '📅', label: 'Semana' },
+  { to: '/home#tasks', icon: '✅', label: 'Tareas' },
+  { to: '/character', icon: '⚔️', label: 'Personaje' },
+  { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
-const NAV_TRAINING = {
-  to: "/training",
-  icon: "🔥",
-  label: "Modo Entrenamiento",
+
+function isSelected(to, pathname, hash) {
+  const [targetPath, targetHash] = to.split('#')
+  if (targetPath !== pathname) return false
+  return targetHash ? `#${targetHash}` === hash : !hash
 }
-function AccountAvatar({ profilePhoto, username, size = 40 }) {
-  if (profilePhoto) {
+
+function AccountAvatar({ profileUrl, username }) {
+  if (profileUrl) {
     return (
-      <div
-        className="rounded-full overflow-hidden flex-shrink-0"
-        style={{ width: size, height: size }}
-      >
-        <img
-          src={profilePhoto}
-          alt="perfil"
-          className="w-full h-full object-cover"
-        />
-      </div>
+      <img
+        src={profileUrl}
+        alt=""
+        className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
+      />
     )
   }
-  const initial = (username || "A")[0].toUpperCase()
+
   return (
     <div
-      className="rounded-full flex items-center justify-center flex-shrink-0 font-bold"
-      style={{
-        width: size,
-        height: size,
-        background: "var(--color-primary)",
-        color: "white",
-        fontSize: size * 0.4,
-      }}
+      aria-hidden="true"
+      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-bold text-white"
+      style={{ background: 'var(--lq-violet-500)' }}
     >
-      {initial}
+      {(username || 'A')[0].toUpperCase()}
     </div>
   )
 }
-export default function Sidebar({
-  stats,
-  playerName = "Aventurero",
-  avatar: _avatar,
-  username = "aventurero",
-  profilePhoto = "",
-  characterClass = "warrior",
-  onLogout,
-}) {
-  const xpPct = Math.round((stats.xp / stats.xpToNext) * 100)
-  const classMeta = CLASS_META[characterClass]
+
+export default function Sidebar({ player, onLogout }) {
+  const { pathname, hash } = useLocation()
+  const playerClass = classById(player.playerClass)
+  const xp = Number(player.xp) || 0
+  const xpGoal = Number(player.xpForNextLevel) || 1
+  const xpPercent = Math.min(100, Math.round((xp / xpGoal) * 100))
+
   return (
     <aside
-      className="hidden lg:flex fixed left-0 top-0 h-screen w-64 flex-col z-40"
-      style={{ background: "var(--color-sidebar)" }}
+      className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col lg:flex"
+      style={{ background: 'var(--lq-violet-900)' }}
     >
-      {/* Logo */}
-      <div className="px-6 pt-7 pb-5 border-b border-indigo-900">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-            style={{ background: "var(--color-primary)" }}
+      <div className="border-b px-6 pb-5 pt-7" style={{ borderColor: 'rgba(196,181,253,0.18)' }}>
+        <Link to="/home" className="flex items-center gap-3 no-underline">
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-lg"
+            style={{ background: 'var(--lq-violet-500)' }}
           >
             ⚔️
-          </div>
-          <span
-            className="text-white text-xl font-bold"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
+          </span>
+          <span className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
             LifeQuest
           </span>
-        </div>
+        </Link>
       </div>
 
-      {/* Player card */}
       <div
-        className="px-4 py-4 mx-3 mt-4 rounded-xl"
-        style={{ background: "rgba(99,102,241,0.2)" }}
+        className="mx-3 mt-4 rounded-xl px-4 py-4"
+        style={{ background: 'rgba(109,94,252,0.22)' }}
       >
-        <div className="flex items-center gap-3 mb-3">
-          <AccountAvatar
-            profilePhoto={profilePhoto}
-            username={username}
-            size={40}
-          />
+        <div className="mb-3 flex items-center gap-3">
+          <AccountAvatar profileUrl={player.profileUrl} username={player.username} />
           <div className="min-w-0">
-            <p
-              className="text-white text-sm font-semibold leading-tight truncate"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {username}
+            <p className="truncate text-sm font-semibold leading-tight text-white">
+              {player.username || 'Aventurero'}
             </p>
-            <p
-              className="text-xs truncate"
-              style={{ color: "var(--color-sidebar-text)" }}
-            >
-              {playerName} · {classMeta.label}
+            <p className="truncate text-xs" style={{ color: 'var(--lq-violet-200)' }}>
+              {playerClass.name}
             </p>
-            <p
-              className="text-xs"
-              style={{ color: "var(--color-sidebar-text)" }}
-            >
-              Nivel {stats.level}
+            <p className="text-xs" style={{ color: 'var(--lq-violet-200)' }}>
+              Nivel {player.level}
             </p>
           </div>
         </div>
+
         <div
-          className="flex items-center justify-between text-xs mb-1.5"
-          style={{ color: "var(--color-sidebar-text)" }}
+          className="mb-1.5 flex justify-between text-xs"
+          style={{ color: 'var(--lq-violet-200)' }}
         >
           <span>XP</span>
-          <span>
-            {stats.xp} / {stats.xpToNext}
-          </span>
+          <span>{xp} / {xpGoal}</span>
         </div>
-        <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.1)" }}
-        >
+        <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${xpPct}%`, background: "var(--color-accent-xp)" }}
+            style={{ width: `${xpPercent}%`, background: 'var(--lq-gold)' }}
           />
         </div>
-        <div
-          className="flex gap-4 mt-3 text-xs"
-          style={{ color: "var(--color-sidebar-text)" }}
-        >
-          <span>💰 {stats.gold}</span>
-          <span>🔥 {stats.streak} días</span>
+        <div className="mt-3 flex gap-4 text-xs" style={{ color: 'var(--lq-violet-200)' }}>
+          <span>💰 {player.gold ?? 0}</span>
+          <span>🔥 {player.streakDays ?? 0} días</span>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 mt-4 space-y-1 overflow-y-auto">
-        {NAV.map(({ to, icon, label, nested }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/" || to === "/character" || to === "/ranking"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                nested ? "ml-4" : ""
-              } ${isActive ? "text-white" : "hover:text-white"}`
-            }
-            style={({ isActive }) => ({
-              background: isActive ? "var(--color-primary)" : "transparent",
-              color: isActive ? "white" : "var(--color-sidebar-text)",
-            })}
-          >
-            <span className="text-base">{icon}</span>
-            {label}
-          </NavLink>
-        ))}
+      <nav aria-label="Navegación principal" className="mt-4 flex-1 space-y-1 overflow-y-auto px-3">
+        {NAV.map(({ to, icon, label }) => {
+          const selected = isSelected(to, pathname, hash)
+          return (
+            <Link
+              key={to}
+              to={to}
+              aria-current={selected ? 'page' : undefined}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+              style={{
+                background: selected ? 'var(--lq-violet-500)' : 'transparent',
+                color: selected ? 'white' : 'var(--lq-violet-200)',
+              }}
+            >
+              <span aria-hidden="true" className="text-base">{icon}</span>
+              {label}
+            </Link>
+          )
+        })}
       </nav>
 
-      {/* Training mode */}
-      <div className="px-3 pb-2">
-        <NavLink
-          to={NAV_TRAINING.to}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
-              isActive ? "text-white" : ""
-            }`
-          }
-          style={({ isActive }) => ({
-            background: isActive
-              ? "linear-gradient(135deg,#ef4444,#f97316)"
-              : "rgba(239,68,68,0.15)",
-            color: isActive ? "white" : "#fca5a5",
-            border: "1px solid rgba(239,68,68,0.3)",
-          })}
-        >
-          <span className="text-base">{NAV_TRAINING.icon}</span>
-          {NAV_TRAINING.label}
-        </NavLink>
-      </div>
-
-      <div className="px-3 pb-5 border-t border-indigo-900 pt-3 space-y-1">
+      <div className="space-y-1 border-t px-3 pb-5 pt-3" style={{ borderColor: 'rgba(196,181,253,0.18)' }}>
         <button
+          type="button"
           onClick={onLogout}
-          className="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
-          style={{
-            color: "var(--color-sidebar-text)",
-            background: "transparent",
-          }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:text-white"
+          style={{ color: 'var(--lq-violet-200)', background: 'transparent' }}
         >
-          <span className="text-base">🚪</span>
+          <span aria-hidden="true" className="text-base">🚪</span>
           Cerrar sesión
         </button>
-        <p className="px-3 text-xs" style={{ color: "rgba(199,210,254,0.35)" }}>
-          LifeQuest v0.1 • MVP
+        <p className="px-3 text-xs" style={{ color: 'rgba(196,181,253,0.55)' }}>
+          LifeQuest · MVP
         </p>
       </div>
     </aside>

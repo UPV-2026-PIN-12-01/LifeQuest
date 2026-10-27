@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import DailyQuests from '../components/home/DailyQuests.jsx'
 import PlayerHero from '../components/home/PlayerHero.jsx'
 import TaskFormModal from '../components/home/TaskFormModal.jsx'
@@ -7,35 +7,21 @@ import TaskTable from '../components/home/TaskTable.jsx'
 import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import useTaskHeartbeats from '../hooks/useTaskHeartbeats.js'
-import { getDailyQuests, getPlayerProfile } from '../services/player.js'
+import { getDailyQuests } from '../services/player.js'
 import { getTasksForWeek } from '../services/tasks.js'
-import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { addDays, startOfWeek, toIsoDate, weekRangeLabel } from '../utils/week.js'
 import '../styles/home.css'
 
-const EMPTY_PLAYER = {
-  username: '',
-  profileUrl: '',
-  playerClass: DEFAULT_PLAYER_CLASS,
-  level: 1,
-  xp: 0,
-  xpForNextLevel: 100,
-  streakDays: 0,
-}
-
 export default function HomePage() {
   const navigate = useNavigate()
+  const { player, refreshPlayer } = useOutletContext()
   const [weekOffset, setWeekOffset] = useState(0)
   const [tasks, setTasks] = useState([])
-  const [player, setPlayer] = useState(EMPTY_PLAYER)
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
   const [tasksVersion, setTasksVersion] = useState(0)
-  // Bumped after a completion so the hero shows the new XP and level.
-  const [playerVersion, setPlayerVersion] = useState(0)
-
   useTaskHeartbeats(tasks)
 
   // An expired or missing session sends the user back to log in.
@@ -55,9 +41,8 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getPlayerProfile(), getDailyQuests()]).then(([profile, dailyQuests]) => {
+    getDailyQuests().then((dailyQuests) => {
       if (cancelled) return
-      setPlayer(profile)
       setQuests(dailyQuests)
     }).catch((error) => {
       if (!cancelled) setLoadError(error)
@@ -65,7 +50,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [playerVersion])
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -88,7 +73,7 @@ export default function HomePage() {
       )}
       <PlayerHero player={player} weekStats={weekStats} />
       <div className="calendar-task-layout">
-        <section className="week-panel">
+        <section id="week" className="week-panel">
           <WeekHeader
             label={weekOffset === 0 ? 'Semana actual' : 'Semana'}
             rangeLabel={weekRangeLabel(weekStart)}
@@ -99,10 +84,11 @@ export default function HomePage() {
           <WeekGrid weekStart={weekStart} tasks={tasks} onSelectTask={(task) => setEditor({ task })} />
         </section>
         <TaskTable
+          id="tasks"
           tasks={tasks}
           onTaskChanged={(changed) => {
             setTasks((current) => current.map((task) => (task.id === changed.id ? changed : task)))
-            setPlayerVersion((version) => version + 1)
+            refreshPlayer()
           }}
         />
       </div>

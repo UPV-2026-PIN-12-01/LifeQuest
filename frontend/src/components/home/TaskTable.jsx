@@ -3,13 +3,13 @@ import { priorityById, statusById } from '../../utils/taskOptions.js'
 import TaskActions from './TaskActions.jsx'
 
 // onTaskChanged receives the task the server returns after a check-in, completion or skip.
-export default function TaskTable({ tasks, onTaskChanged }) {
+export default function TaskTable({ id, tasks, onTaskChanged }) {
   // The id, not a copy, so the details follow the latest task from the server.
   const [selectedId, setSelectedId] = useState(null)
   const selectedTask = tasks.find((task) => task.id === selectedId) ?? null
 
   return (
-    <section className="task-table-panel" aria-labelledby="task-table-title">
+    <section id={id} className="task-table-panel" aria-labelledby="task-table-title">
       <div className="task-table-heading">
         <div>
           <p className="section-kicker">Resumen semanal</p>
