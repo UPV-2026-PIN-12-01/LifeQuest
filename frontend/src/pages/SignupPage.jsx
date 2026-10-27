@@ -2,7 +2,6 @@ import { useEffect, useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
-import SignupSuccess from '../components/signup/SignupSuccess.jsx'
 import { login, signup } from '../services/auth.js'
 import { saveSession } from '../services/session.js'
 import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
@@ -23,7 +22,6 @@ export default function SignupPage() {
   const [playerName, setPlayerName] = useState('')
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -159,14 +157,24 @@ export default function SignupPage() {
         formData.append('photo', photoFile)
       }
       await signup(formData)
-      setSuccess(true)
     } catch (error) {
       const nextErrors = signupErrorFields(error.status, error.payload)
       if (nextErrors.username || nextErrors.email) {
         setStep(1)
       }
       setErrors(nextErrors)
-    } finally {
+      setSubmitting(false)
+      return
+    }
+    // Account created: sign in with the same credentials, like the login tab.
+    try {
+      const session = await login(email, password)
+      saveSession(session)
+      navigate('/home', { replace: true })
+    } catch {
+      setLoginEmail(email.trim())
+      setLoginError('Cuenta creada. Inicia sesión para continuar.')
+      setTab('login')
       setSubmitting(false)
     }
   }
@@ -336,7 +344,6 @@ export default function SignupPage() {
           </div>
         </div>
       </section>
-      {success && <SignupSuccess onDismiss={() => setSuccess(false)} />}
     </div>
   )
 }

@@ -90,15 +90,14 @@ try {
   await page.locator('input[name="playerName"]').fill(photoHero)
   const photoStart = signupCalls.length
   await page.getByRole('button', { name: '✨ Empezar aventura' }).click()
-  await page.locator('.signup-success').waitFor({ timeout: 30000 })
-  const todoText = await page.locator('.signup-success-card p').innerText()
+  await page.waitForURL('**/home', { timeout: 30000 })
   const photoCall = signupCalls[photoStart]
   check(
-    'photo 201 confetti',
+    'photo 201 goes home',
     photoCall?.status === 201 &&
       photoCall?.body?.username === photoUser &&
-      todoText === 'TODO remove once dashboard done',
-    `status=${photoCall?.status} body=${JSON.stringify(photoCall?.body)} todo="${todoText}"`,
+      page.url().endsWith('/home'),
+    `status=${photoCall?.status} body=${JSON.stringify(photoCall?.body)}`,
   )
 
   await page.goto(baseUrl, { waitUntil: 'networkidle' })
@@ -111,14 +110,13 @@ try {
   await page.locator('input[name="playerName"]').fill(skipHero)
   const skipStart = signupCalls.length
   await page.getByRole('button', { name: '✨ Empezar aventura' }).click()
-  await page.locator('.signup-success').waitFor({ timeout: 30000 })
+  await page.waitForURL('**/home', { timeout: 30000 })
   const skipCall = signupCalls[skipStart]
-  const skipTodo = await page.locator('.signup-success-card p').innerText()
   check(
-    'skip photo 201 confetti',
+    'skip photo 201 goes home',
     skipCall?.status === 201 &&
       skipCall?.body?.username === skipUser &&
-      skipTodo === 'TODO remove once dashboard done',
+      page.url().endsWith('/home'),
     `status=${skipCall?.status} body=${JSON.stringify(skipCall?.body)}`,
   )
 
@@ -134,15 +132,14 @@ try {
   await page.getByRole('button', { name: '✨ Empezar aventura' }).click()
   await page.getByRole('heading', { name: 'Crea tu cuenta' }).waitFor({ timeout: 30000 })
   const dupError = await page.locator('.signup-error-tooltip').innerText()
-  const confettiAfterDup = await page.locator('.signup-success').count()
   const dupCall = signupCalls[dupStart]
   check(
-    'duplicate 409 no confetti',
+    'duplicate 409 stays on signup',
     dupCall?.status === 409 &&
       dupCall?.body?.error === 'Username already exists' &&
-      confettiAfterDup === 0 &&
+      !page.url().endsWith('/home') &&
       /nombre de usuario ya existe/i.test(dupError),
-    `status=${dupCall?.status} body=${JSON.stringify(dupCall?.body)} error="${dupError}" confetti=${confettiAfterDup}`,
+    `status=${dupCall?.status} body=${JSON.stringify(dupCall?.body)} error="${dupError}"`,
   )
 } catch (error) {
   check('script', false, error.stack || String(error))
