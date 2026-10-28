@@ -32,10 +32,15 @@ public class RewardService {
 
 	@Transactional
 	public Long create(Long userId, long xp) {
+		return create(userId, xp, 0);
+	}
+
+	@Transactional
+	public Long create(Long userId, long xp, long gold) {
 		Reward reward = new Reward();
 		reward.setUserId(userId);
 		reward.setXpReward(xp);
-		reward.setGoldReward(0L);
+		reward.setGoldReward(gold);
 		return rewardRepository.save(reward).getId();
 	}
 
