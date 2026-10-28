@@ -116,9 +116,7 @@ export default function ChallengesPage() {
 
       {loadError && (
         <p className="challenges-error" role="alert">
-          {loadError.status === 401
-            ? 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
-            : 'No se pudieron cargar tus desafíos. Inténtalo de nuevo más tarde.'}
+          {challengeLoadErrorMessage(loadError)}
         </p>
       )}
 
@@ -135,12 +133,12 @@ export default function ChallengesPage() {
             />
           ))}
         </section>
-      ) : (
+      ) : !loadError ? (
         <section className="challenges-empty-state" aria-live="polite">
           <h2>{history ? 'Todavía no tienes desafíos completados' : 'Todavía no tienes desafíos'}</h2>
           <p>Convierte una tarea programada en un desafío para empezar.</p>
         </section>
-      )}
+      ) : null}
       {showForm && (
         <ChallengeFormModal
           tasks={tasks}
@@ -172,6 +170,15 @@ export default function ChallengesPage() {
       )}
     </main>
   )
+}
+
+function challengeLoadErrorMessage(error) {
+  if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
+  if (error.status === 404) return 'El backend desplegado todavía no tiene disponible la función de desafíos (404).'
+  if (error.status >= 500) {
+    return `El backend no pudo cargar los desafíos (${error.status}).${error.message ? ` ${error.message}` : ''}`
+  }
+  return `No se pudieron cargar tus desafíos${error.status ? ` (${error.status})` : ''}. Inténtalo de nuevo más tarde.`
 }
 
 function ChallengeCard({ challenge, history, busy, onEvaluate, onClaim }) {
