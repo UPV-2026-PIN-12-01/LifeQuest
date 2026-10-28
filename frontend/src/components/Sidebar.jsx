@@ -3,8 +3,6 @@ import { classById } from '../utils/playerClasses.js'
 
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
-  { to: '/home#week', icon: '📅', label: 'Semana' },
-  { to: '/home#tasks', icon: '✅', label: 'Tareas' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
