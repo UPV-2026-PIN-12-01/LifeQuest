@@ -12,4 +12,8 @@ public interface RewardRepository extends JpaRepository<Reward, Long> {
 	@Query("select coalesce(sum(r.xpReward), 0) from Reward r "
 			+ "where r.userId = :userId and r.claimedAt >= :from and r.claimedAt < :toExclusive")
 	long sumClaimedXp(Long userId, Instant from, Instant toExclusive);
+
+	@Query("select count(r) from Reward r "
+			+ "where r.userId = :userId and r.claimedAt >= :from and r.claimedAt < :toExclusive")
+	long countClaimed(Long userId, Instant from, Instant toExclusive);
 }
