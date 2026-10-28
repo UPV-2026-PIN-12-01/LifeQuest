@@ -82,7 +82,7 @@ function TaskDetailsModal({ task, onClose, onTaskChanged }) {
   return (
     <div className="task-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
-        className={`task-modal task-color-${task.color}`}
+        className={`task-modal task-details-modal task-color-${task.color}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-modal-title"
