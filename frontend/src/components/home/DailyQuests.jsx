@@ -5,7 +5,7 @@ export default function DailyQuests({ quests }) {
     <section className="quests-card" aria-labelledby="quests-title">
       <header className="quests-header">
         <h2 id="quests-title" className="quests-title">
-          Misiones de hoy
+          Desafíos diarios
         </h2>
         <span className="quests-count tabular">
           {claimed} / {quests.length}

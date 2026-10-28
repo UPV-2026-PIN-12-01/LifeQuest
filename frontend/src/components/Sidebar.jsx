@@ -5,6 +5,7 @@ const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
+  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
 ]
 
 function isSelected(to, pathname, hash) {
