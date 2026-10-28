@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ChallengeFormModal from '../components/challenges/ChallengeFormModal.jsx'
-import { claimChallenge, evaluateChallenge, getChallenges } from '../services/challenges.js'
+import { claimChallenge, deleteChallenge, evaluateChallenge, getChallenges } from '../services/challenges.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import '../styles/challenges.css'
 
@@ -15,6 +15,7 @@ export default function ChallengesPage() {
   const [tasksLoading, setTasksLoading] = useState(false)
   const [evaluation, setEvaluation] = useState(null)
   const [busyChallengeId, setBusyChallengeId] = useState(null)
+  const [deletingChallengeId, setDeletingChallengeId] = useState(null)
   const [refreshVersion, setRefreshVersion] = useState(0)
   const [rewardToast, setRewardToast] = useState(null)
 
@@ -59,6 +60,20 @@ export default function ChallengesPage() {
       setLoadError(error)
     } finally {
       setBusyChallengeId(null)
+    }
+  }
+
+  async function handleDelete(challenge) {
+    if (!window.confirm('¿Quieres eliminar este desafío del historial?')) return
+    setDeletingChallengeId(challenge.id)
+    setLoadError(null)
+    try {
+      await deleteChallenge(challenge.id)
+      setRefreshVersion((version) => version + 1)
+    } catch (error) {
+      setLoadError(error)
+    } finally {
+      setDeletingChallengeId(null)
     }
   }
 
@@ -128,8 +143,10 @@ export default function ChallengesPage() {
               challenge={challenge}
               history={history}
               busy={busyChallengeId === challenge.id}
+              deleting={deletingChallengeId === challenge.id}
               onEvaluate={() => setEvaluation(challenge)}
               onClaim={() => handleClaim(challenge)}
+              onDelete={() => handleDelete(challenge)}
             />
           ))}
         </section>
@@ -181,12 +198,23 @@ function challengeLoadErrorMessage(error) {
   return `No se pudieron cargar tus desafíos${error.status ? ` (${error.status})` : ''}. Inténtalo de nuevo más tarde.`
 }
 
-function ChallengeCard({ challenge, history, busy, onEvaluate, onClaim }) {
+function ChallengeCard({ challenge, history, busy, deleting, onEvaluate, onClaim, onDelete }) {
   const task = challenge.task
   const difficulty = difficultyLabel(challenge.difficulty)
 
   return (
     <article className="challenge-card">
+      {history && (
+        <button
+          type="button"
+          className="challenge-delete-button"
+          onClick={onDelete}
+          disabled={deleting}
+          aria-label="Eliminar desafío del historial"
+        >
+          ×
+        </button>
+      )}
       <div className="challenge-card-heading">
         <div>
           <p className="challenge-task-name">
@@ -219,7 +247,12 @@ function ChallengeCard({ challenge, history, busy, onEvaluate, onClaim }) {
             </button>
           )
         ) : (
-          <button type="button" className="challenge-action-button" onClick={onEvaluate}>
+          <button
+            type="button"
+            className="challenge-action-button"
+            onClick={onEvaluate}
+            disabled={task?.status !== 'finished' && task?.status !== 'completed'}
+          >
             ⚔️ He cumplido el desafío
           </button>
         )}

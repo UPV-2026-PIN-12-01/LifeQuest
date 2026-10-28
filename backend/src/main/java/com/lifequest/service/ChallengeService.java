@@ -2,6 +2,8 @@ package com.lifequest.service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +35,7 @@ public class ChallengeService {
 			"HARD", new long[] { 75, 25 },
 			"VERY HARD", new long[] { 120, 40 },
 			"LEGENDARY FEAT", new long[] { 200, 75 });
+	private static final long DAILY_CLAIM_LIMIT = 3;
 
 	private final ChallengeRepository challengeRepository;
 	private final TaskService taskService;
@@ -117,12 +120,19 @@ public class ChallengeService {
 				throw new InvalidStateException("Complete the linked task before claiming this reward");
 			}
 		}
+		Instant now = clock.instant();
+		ZoneId zone = clock.getZone();
+		Instant startOfDay = LocalDate.now(clock).atStartOfDay(zone).toInstant();
+		Instant startOfNextDay = LocalDate.now(clock).plusDays(1).atStartOfDay(zone).toInstant();
+		if (rewardService.countClaimedBetween(userId, startOfDay, startOfNextDay) >= DAILY_CLAIM_LIMIT) {
+			throw new InvalidStateException("You can claim only three challenges per day");
+		}
 		if (challenge.getRewardId() != null) {
 			Reward reward = rewardService.getById(challenge.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Challenge reward was already claimed");
 			}
-			rewardService.claim(reward, reward.getXpReward(), clock.instant());
+			rewardService.claim(reward, reward.getXpReward(), now);
 			characterStatsService.addXp(userId, reward.getXpReward());
 		}
 		return toDto(challenge);

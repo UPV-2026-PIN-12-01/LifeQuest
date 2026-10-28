@@ -143,9 +143,36 @@
 }
 
 .challenge-card {
+  position: relative;
   padding: 28px 30px;
   border-radius: 24px;
   background: white;
+}
+
+.challenge-delete-button {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #8ca0c0;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.challenge-delete-button:hover,
+.challenge-delete-button:focus-visible {
+  color: #202b42;
+  background: #edf0f7;
+}
+
+.challenge-delete-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 .challenge-card-heading {
@@ -226,7 +253,9 @@
 }
 
 .challenge-action-button:disabled {
-  opacity: 0.6;
+  color: #fff;
+  background: #9aa3b5;
+  cursor: not-allowed;
 }
 
 .challenge-evaluation-modal {
