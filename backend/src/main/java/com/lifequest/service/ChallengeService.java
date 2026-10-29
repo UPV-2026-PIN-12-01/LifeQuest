@@ -96,6 +96,7 @@ public class ChallengeService {
 			throw new InvalidRequestException("completed is required");
 		}
 		if (!request.completed()) {
+			challenge.setCompleted(true);
 			challenge.setRating(null);
 			return toDto(challengeRepository.save(challenge));
 		}
@@ -113,6 +114,9 @@ public class ChallengeService {
 		Challenge challenge = findOwned(userId, challengeId);
 		if (!challenge.isCompleted()) {
 			throw new InvalidStateException("Challenge must be completed before claiming its reward");
+		}
+		if (challenge.getRating() == null) {
+			throw new InvalidStateException("Only successfully completed challenges can be claimed");
 		}
 		if (challenge.getTaskId() != null) {
 			Task task = taskService.findOwned(userId, challenge.getTaskId());

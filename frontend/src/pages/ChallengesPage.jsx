@@ -64,7 +64,8 @@ export default function ChallengesPage() {
   }
 
   async function handleDelete(challenge) {
-    if (!window.confirm('¿Quieres eliminar este desafío del historial?')) return
+    const location = history ? 'del historial' : 'de tus desafíos activos'
+    if (!window.confirm(`¿Quieres eliminar este desafío ${location}?`)) return
     setDeletingChallengeId(challenge.id)
     setLoadError(null)
     try {
@@ -152,7 +153,7 @@ export default function ChallengesPage() {
         </section>
       ) : !loadError ? (
         <section className="challenges-empty-state" aria-live="polite">
-          <h2>{history ? 'Todavía no tienes desafíos completados' : 'Todavía no tienes desafíos'}</h2>
+          <h2>{history ? 'Todavía no tienes desafíos en el historial' : 'Todavía no tienes desafíos'}</h2>
           <p>Convierte una tarea programada en un desafío para empezar.</p>
         </section>
       ) : null}
@@ -175,6 +176,7 @@ export default function ChallengesPage() {
           onClose={() => setEvaluation(null)}
           onSaved={() => {
             setEvaluation(null)
+            setHistory(true)
             setRefreshVersion((version) => version + 1)
           }}
         />
@@ -192,6 +194,7 @@ export default function ChallengesPage() {
 function challengeLoadErrorMessage(error) {
   if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
   if (error.status === 404) return 'El backend desplegado todavía no tiene disponible la función de desafíos (404).'
+  if (error.status === 409 && error.message) return error.message
   if (error.status >= 500) {
     return `El backend no pudo cargar los desafíos (${error.status}).${error.message ? ` ${error.message}` : ''}`
   }
@@ -204,17 +207,15 @@ function ChallengeCard({ challenge, history, busy, deleting, onEvaluate, onClaim
 
   return (
     <article className="challenge-card">
-      {history && (
-        <button
-          type="button"
-          className="challenge-delete-button"
-          onClick={onDelete}
-          disabled={deleting}
-          aria-label="Eliminar desafío del historial"
-        >
-          ×
-        </button>
-      )}
+      <button
+        type="button"
+        className="challenge-delete-button"
+        onClick={onDelete}
+        disabled={deleting}
+        aria-label={`Eliminar desafío ${history ? 'del historial' : 'activo'}`}
+      >
+        ×
+      </button>
       <div className="challenge-card-heading">
         <div>
           <p className="challenge-task-name">
@@ -222,8 +223,8 @@ function ChallengeCard({ challenge, history, busy, deleting, onEvaluate, onClaim
           </p>
           <h2>{challenge.name}</h2>
         </div>
-        <span className={`challenge-status${challenge.completed ? ' is-completed' : ''}`}>
-          {challenge.completed ? 'Desafío superado' : 'Activo'}
+        <span className={`challenge-status${challenge.rating !== null && challenge.completed ? ' is-completed' : ''}`}>
+          {challenge.rating === null ? 'No superado' : challenge.completed ? 'Desafío superado' : 'Activo'}
         </span>
       </div>
       <p className="challenge-description">
@@ -241,7 +242,7 @@ function ChallengeCard({ challenge, history, busy, deleting, onEvaluate, onClaim
           Tarea: {taskStatusLabel(task?.status)}
         </span>
         {history ? (
-          !challenge.rewardClaimed && (
+          challenge.rating !== null && !challenge.rewardClaimed && (
             <button type="button" className="challenge-action-button" onClick={onClaim} disabled={busy}>
               {busy ? 'Reclamando…' : '⚔️ Reclamar desafío'}
             </button>
