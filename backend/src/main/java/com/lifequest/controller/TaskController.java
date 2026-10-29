@@ -69,4 +69,5 @@ public class TaskController {
 	public TaskDto skip(@AuthenticationPrincipal Jwt jwt, @PathVariable Long taskId) {
 		return taskCompletionService.skip(userService.getIdByAuthSubject(jwt.getSubject()), taskId);
 	}
+
 }

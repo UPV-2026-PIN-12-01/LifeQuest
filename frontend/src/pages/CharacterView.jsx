@@ -7,7 +7,7 @@ import {
 } from "../data"
 import warriorImg from "../assets/warrior1.png"
 import AvatarDisplay from "../components/AvatarDisplay"
-import { getCharacterStats } from "../services/auth"
+import { getJson } from "../services/http.js"
 const STAT_META = [
   { key: "hp", label: "Vida", icon: "❤️", color: "#ef4444" },
   { key: "strength", label: "Fuerza", icon: "💪", color: "#f59e0b" },
@@ -220,7 +220,7 @@ export default function Character({
   useEffect(() => {
     let cancelled = false
 
-    getCharacterStats()
+    getJson("/api/character/stats")
       .then((characterStats) => {
         if (!cancelled) {
           setLoadedStats((currentStats) => ({

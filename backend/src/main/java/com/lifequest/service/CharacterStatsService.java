@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.lifequest.exception.DuplicateUserException;
+import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.PlayerClass;
@@ -38,10 +39,35 @@ public class CharacterStatsService {
 		while (current >= xpForNextLevel(level)) {
 			current -= xpForNextLevel(level);
 			level++;
+			increaseCharacterStatsForLvlUp(userId);
+			stats = getByUserId(userId);
 		}
 		stats.setLevel(level);
 		stats.setXpCurrent(current);
 		stats.setXpTotal(level == 1 ? current : current + (long) level * level + 10L * level);
+		return characterStatsRepository.save(stats);
+	}
+
+
+	public void increaseCharacterStatsForLvlUp(Long userId) {
+		increaseCharacterStats(userId, 10, 5, 5, 5, 5);
+	}
+
+	@Transactional
+	public CharacterStats increaseCharacterStats(long userId, long hp, int strength, int speed, int stamina, int wisdom) {
+		if (hp < 0 || strength < 0 || speed < 0 || stamina < 0 || wisdom < 0) {
+			throw new InvalidRequestException("Stat increments must be non-negative");
+		}
+		CharacterStats stats = getByUserId(userId);
+		try {
+			stats.setHp(Math.addExact(stats.getHp(), hp));
+			stats.setStrength(Math.addExact(stats.getStrength(), strength));
+			stats.setSpeed(Math.addExact(stats.getSpeed(), speed));
+			stats.setStamina(Math.addExact(stats.getStamina(), stamina));
+			stats.setWisdom(Math.addExact(stats.getWisdom(), wisdom));
+		} catch (ArithmeticException ex) {
+			throw new InvalidRequestException("Stat increment exceeds the supported range");
+		}
 		return characterStatsRepository.save(stats);
 	}
 
@@ -94,5 +120,9 @@ public class CharacterStatsService {
 		return characterStatsRepository.findByUserId(userId)
 				.orElseThrow(() -> new ResponseStatusException(
 						HttpStatus.NOT_FOUND, "Character stats not found for user ID: " + userId));
+	}
+
+	public CharacterStats save(CharacterStats stats) {
+		return characterStatsRepository.save(stats);
 	}
 }

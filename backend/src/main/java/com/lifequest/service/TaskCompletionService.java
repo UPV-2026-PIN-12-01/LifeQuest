@@ -16,6 +16,7 @@ import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
+import com.lifequest.model.entity.ActivityType;
 
 // Check-in, heartbeats and the final answer of a task. The client only says "started", "still here" and
 // "done"; every time and every XP amount comes from the server clock and the stored task.
@@ -104,6 +105,7 @@ public class TaskCompletionService {
 				characterStatsService.addXp(userId, granted);
 			}
 		}
+		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_DONE);
 		taskRepository.save(task);
 		return taskService.describe(task);
@@ -113,6 +115,7 @@ public class TaskCompletionService {
 	public TaskDto skip(Long userId, Long taskId) {
 		Task task = pendingTask(userId, taskId);
 		closeSession(task, clock.instant());
+		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_NOT_DONE);
 		taskRepository.save(task);
 		return taskService.describe(task);
@@ -160,5 +163,36 @@ public class TaskCompletionService {
 			taskSessionRepository.save(session);
 		}
 		return session;
+	}
+
+	private void increaseCharacterStats(long userId, Task task) {
+		ActivityType activityType = task.getActivityType();
+		if (activityType == null) {
+			throw new InvalidStateException("Task has no activity type");
+		}
+		switch (activityType) {
+			case EXERCISE:
+				characterStatsService.increaseCharacterStats(userId, 0, 2, 0, 1, 0);
+				break;
+			case STUDY:
+				characterStatsService.increaseCharacterStats(userId, 0, 0, 0, 0, 3);
+				break;
+			case SOCIAL:
+				characterStatsService.increaseCharacterStats(userId, 2, 0, 1, 0, 0);
+				break;
+			case SPORTS:
+				characterStatsService.increaseCharacterStats(userId, 0, 0, 1, 2, 0);
+				break;
+			case ENTERTAINMENT:
+				characterStatsService.increaseCharacterStats(userId, 0, 0, 2, 0, 0);
+				break;
+			case WORK:
+				characterStatsService.increaseCharacterStats(userId, 1, 1, 0, 0, 1);
+				break;
+			case UNDEFINED:
+				break;
+			default:
+				throw new InvalidStateException("Unknown activity type");
+		}
 	}
 }

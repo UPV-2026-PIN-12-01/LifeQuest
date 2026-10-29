@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -24,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.ActivityType;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
@@ -52,6 +54,7 @@ class TaskCompletionServiceTest {
 		task = new Task();
 		task.setName("Repasar test-can-delete-later");
 		task.setStatus("PENDING");
+		task.setActivityType(ActivityType.STUDY);
 		task.setPriority("MID");
 		task.setColor("purple");
 		task.setStartTime(START);
@@ -71,6 +74,27 @@ class TaskCompletionServiceTest {
 
 		verify(rewardService).claim(eq(reward), eq(20L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 		verify(characterStatsService).addXp(7L, 20L);
+		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
+		assertThat(task.getStatus()).isEqualTo("DONE");
+	}
+
+	@Test
+	void onlyCompletedTasksGrantActivityStats() {
+		task.setActivityType(ActivityType.EXERCISE);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).increaseCharacterStats(7L, 0, 2, 0, 1, 0);
+	}
+
+	@Test
+	void legacyUndefinedActivityCanBeCompletedWithoutStatBonus() {
+		task.setActivityType(ActivityType.UNDEFINED);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(),
+				anyInt(), anyInt());
 		assertThat(task.getStatus()).isEqualTo("DONE");
 	}
 
@@ -106,6 +130,7 @@ class TaskCompletionServiceTest {
 		assertThatThrownBy(() -> serviceAt("2026-10-10T09:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
 		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt());
 	}
 
 	@Test
@@ -113,6 +138,7 @@ class TaskCompletionServiceTest {
 		task.setStatus("DONE");
 		assertThatThrownBy(() -> serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
+		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt());
 
 		task.setStatus("PENDING");
 		assertThatThrownBy(() -> serviceAt("2026-10-11T10:01:00Z").complete(7L, 1L))
@@ -142,11 +168,12 @@ class TaskCompletionServiceTest {
 	}
 
 	@Test
-	void skipMarksNotDoneWithoutXp() {
+	void skipMarksNotDoneAndGrantsActivityStatsWithoutXp() {
 		TaskDto dto = serviceAt("2026-10-10T10:30:00Z").skip(7L, 1L);
 
 		assertThat(dto.status()).isEqualTo("not_completed");
 		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 	}
 
 	@Test

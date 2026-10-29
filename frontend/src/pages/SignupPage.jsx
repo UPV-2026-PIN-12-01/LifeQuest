@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
 import { login, signup } from '../services/auth.js'
+import { preloadSessionData } from '../services/player.js'
 import { saveSession } from '../services/session.js'
 import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 import { signupErrorFields } from '../utils/signupErrors.js'
@@ -62,6 +63,7 @@ export default function SignupPage() {
     try {
       const session = await login(loginEmail, loginPassword)
       saveSession(session)
+      void preloadSessionData()
       navigate('/home', { replace: true })
     } catch (error) {
       if (error.status === 401) {
@@ -170,6 +172,7 @@ export default function SignupPage() {
     try {
       const session = await login(email, password)
       saveSession(session)
+      void preloadSessionData()
       navigate('/home', { replace: true })
     } catch {
       setLoginEmail(email.trim())

@@ -27,31 +27,31 @@ public class CharacterStats {
 	private Long userId;
 
 	@Column(name = "hp", nullable = false)
-	private Long hp;
+	private Long hp = 20L;
 
 	@Column(name = "strength", nullable = false)
-	private Integer strength;
+	private Integer strength = 5;
 
 	@Column(name = "speed", nullable = false)
-	private Integer speed;
+	private Integer speed = 5;
 
 	@Column(name = "stamina", nullable = false)
-	private Integer stamina;
+	private Integer stamina = 5;
 
 	@Column(name = "wisdom", nullable = false)
-	private Integer wisdom;
+	private Integer wisdom = 5;
 
 	@Column(name = "level", nullable = false)
-	private Integer level;
+	private Integer level = 1;
 
 	@Column(name = "xpTotal", nullable = false)
-	private Long xpTotal;
+	private Long xpTotal = 0L;
 
 	@Column(name = "xpCurrent", nullable = false)
-	private Long xpCurrent;
+	private Long xpCurrent = 0L;
 
 	@Column(name = "gold", nullable = false)
-	private Long gold;
+	private Long gold = 0L;
 
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(name = "class", nullable = false)
