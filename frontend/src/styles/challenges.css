@@ -243,6 +243,11 @@
   color: var(--lq-success);
 }
 
+.challenge-task-status.is-not_completed,
+.challenge-task-status.is-failed {
+  color: var(--lq-danger);
+}
+
 .challenge-action-button {
   padding: 11px 16px;
   border: 0;

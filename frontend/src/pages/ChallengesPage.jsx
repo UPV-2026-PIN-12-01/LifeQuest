@@ -354,6 +354,7 @@ function taskStatusLabel(status) {
     finished: 'Finalizada',
     in_progress: 'En progreso',
     pending: 'Pendiente',
-    not_completed: 'No completada',
+    not_completed: 'Fallada',
+    failed: 'Fallada',
   }[status] || 'No disponible'
 }

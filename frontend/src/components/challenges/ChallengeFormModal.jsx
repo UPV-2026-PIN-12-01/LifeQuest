@@ -57,6 +57,9 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
   const [customDifficulty, setCustomDifficulty] = useState('NORMAL')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const selectedTaskId = tasks.some((task) => String(task.id) === taskId)
+    ? taskId
+    : (tasks[0]?.id ? String(tasks[0].id) : '')
   const condition = conditionIndex === CUSTOM_INDEX
     ? {
       name: customName.trim(),
@@ -65,7 +68,7 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
       reward: DIFFICULTIES.find((difficulty) => difficulty.value === customDifficulty).reward,
     }
     : CONDITIONS[conditionIndex]
-  const selectedTask = tasks.find((task) => String(task.id) === taskId)
+  const selectedTask = tasks.find((task) => String(task.id) === selectedTaskId)
 
   useEffect(() => {
     if (!dialogRef.current?.open) dialogRef.current?.showModal()
@@ -73,7 +76,7 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (!taskId) {
+    if (!selectedTaskId) {
       setError('Selecciona una tarea programada.')
       return
     }
@@ -89,7 +92,7 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
         name: condition.name,
         description: condition.description,
         difficulty: condition.difficulty,
-        taskId: Number(taskId),
+        taskId: Number(selectedTaskId),
         requirement: condition.description,
       })
       onCreated()
@@ -132,7 +135,7 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
           <>
             <label className="challenge-field">
               <span>Tarea</span>
-              <select value={taskId} onChange={(event) => setTaskId(event.target.value)} required>
+              <select value={selectedTaskId} onChange={(event) => setTaskId(event.target.value)} required>
                 {tasks.map((task) => (
                   <option key={task.id} value={task.id}>
                     {task.icon} {task.title} [{task.status === 'completed' ? 'Completada' : 'Programada'}]
