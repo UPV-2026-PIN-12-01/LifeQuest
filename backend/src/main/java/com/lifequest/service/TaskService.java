@@ -29,6 +29,7 @@ import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
+import com.lifequest.model.entity.ActivityType;
 
 @Service
 public class TaskService {
@@ -67,7 +68,6 @@ public class TaskService {
 		this.taskSessionRepository = taskSessionRepository;
 		this.clock = clock;
 	}
-
 	// Tasks whose start falls on any day from `from` to `to`, both included, in the app time zone.
 	@Transactional(readOnly = true)
 	public List<TaskDto> findForUser(Long userId, LocalDate from, LocalDate to) {
@@ -158,6 +158,9 @@ public class TaskService {
 		if (request.priority() == null || !DB_PRIORITY_BY_FORM.containsKey(request.priority())) {
 			throw new InvalidRequestException("priority must be low, medium or high");
 		}
+		if (request.activityType() == null) {
+			throw new InvalidRequestException("activityType is required");
+		}
 		if (request.date() == null || request.startTime() == null || request.endTime() == null) {
 			throw new InvalidRequestException("date, startTime and endTime are required");
 		}
@@ -182,6 +185,7 @@ public class TaskService {
 		task.setIcon(icon.isEmpty() ? DEFAULT_ICON : icon);
 		task.setColor(request.color());
 		task.setPriority(DB_PRIORITY_BY_FORM.get(request.priority()));
+		task.setActivityType(request.activityType());
 		task.setStartTime(start);
 		task.setEndTime(end);
 	}
@@ -195,7 +199,7 @@ public class TaskService {
 	}
 
 	// The calendar shape of one task with its current reward and session, for the completion endpoints.
-	TaskDto describe(Task task) {
+	public TaskDto describe(Task task) {
 		Map<Long, Long> xpByReward = task.getRewardId() == null ? Map.of()
 				: rewardService.xpByRewardId(List.of(task.getRewardId()));
 		TaskSession session = taskSessionRepository.findByTaskId(task.getId()).orElse(null);
@@ -227,6 +231,7 @@ public class TaskService {
 				displayStatus(task, now),
 				displayPriority(task.getPriority()),
 				xp,
+				task.getActivityType(),
 				TaskVerification.of(task, session, now).id(),
 				session == null ? null : session.getStartedAt().toString(),
 				session != null && session.isOpen(),
@@ -263,4 +268,5 @@ public class TaskService {
 		}
 		return "MID".equals(priority) ? "medium" : "low";
 	}
+
 }

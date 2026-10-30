@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createTask, deleteTask, updateTask } from '../../services/tasks.js'
-import { TASK_COLORS, TASK_ICONS, TASK_PRIORITIES, XP_BY_PRIORITY } from '../../utils/taskOptions.js'
+import { TASK_ACTIVITY_TYPES, TASK_COLORS, TASK_ICONS, TASK_PRIORITIES, XP_BY_PRIORITY } from '../../utils/taskOptions.js'
 import { addDays, toIsoDate } from '../../utils/week.js'
 
 const TITLE_MAX = 80
@@ -145,6 +145,21 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
         </div>
 
         <fieldset className="task-field">
+          <label htmlFor="task-activity-type">Tipo de actividad</label>
+          <select
+            id="task-activity-type"
+            value={form.activityType}
+            onChange={(event) => update('activityType', event.target.value)}
+          >
+            {TASK_ACTIVITY_TYPES.map((activityType) => (
+              <option key={activityType.id} value={activityType.id}>
+                {activityType.label}
+              </option>
+            ))}
+          </select>
+        </fieldset>
+
+        <fieldset className="task-field">
           <legend>Prioridad</legend>
           <div className="task-choice-row">
             {TASK_PRIORITIES.map((priority) => (
@@ -236,6 +251,7 @@ function initialForm(task, defaultDate) {
       startTime: task.startTime,
       endTime: task.endTime,
       priority: task.priority,
+      activityType: task.activityType || 'STUDY',
     }
   }
   return {
@@ -245,6 +261,7 @@ function initialForm(task, defaultDate) {
     color: TASK_COLORS[0].id,
     ...defaultSlot(defaultDate),
     priority: 'medium',
+    activityType: 'STUDY',
   }
 }
 

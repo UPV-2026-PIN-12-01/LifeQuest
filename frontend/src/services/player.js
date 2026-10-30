@@ -1,4 +1,6 @@
 import { getJson, playerUrl } from './http.js'
+import { getTasksForWeek } from './tasks.js'
+import { startOfWeek, toIsoDate } from '../utils/week.js'
 
 export async function getPlayerProfile() {
   const profile = await getJson(playerUrl())
@@ -15,5 +17,18 @@ export async function getPlayerProfile() {
 }
 
 export async function getDailyQuests() {
-  return getJson(playerUrl('/daily-quests'))
+  const url = playerUrl('/daily-quests')
+  const cacheDate = toIsoDate(new Date())
+  return getJson(url, { cacheKey: `${url}?cacheDate=${cacheDate}` })
+}
+
+export function preloadSessionData() {
+  const weekStart = startOfWeek(new Date())
+  return Promise.allSettled([
+    getPlayerProfile(),
+    getJson('/api/character/stats'),
+    getJson('/api/users/me'),
+    getDailyQuests(),
+    getTasksForWeek(weekStart),
+  ])
 }

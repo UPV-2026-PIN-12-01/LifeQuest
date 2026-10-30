@@ -34,6 +34,8 @@ import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.service.TaskCompletionService;
 import com.lifequest.service.TaskService;
 import com.lifequest.service.UserService;
+import com.lifequest.model.entity.ActivityType;
+
 
 @WebMvcTest(TaskController.class)
 @Import({ SecurityConfig.class, CorsConfig.class })
@@ -42,12 +44,12 @@ class TaskControllerTest {
 	private static final String AUTH_SUBJECT = "00000000-0000-0000-0000-000000000007";
 	private static final String BODY = """
 			{"title":"Repasar test-can-delete-later","description":"","icon":"📘","color":"blue",
-			"date":"2026-10-12","startTime":"09:00","endTime":"10:30","priority":"high"}
+			"date":"2026-10-12","startTime":"09:00","endTime":"10:30","priority":"high","activityType":"STUDY"}
 			""";
 	private static final TaskRequestDto REQUEST = new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "blue",
-			LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:30"), "high");
+			LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:30"), "high", ActivityType.STUDY);
 	private static final TaskDto SAVED = new TaskDto(5L, "Repasar test-can-delete-later", "", "📘", "blue",
-			"2026-10-12", "09:00", "10:30", "pending", "high", 30, "none", null, false, 0);
+			"2026-10-12", "09:00", "10:30", "pending", "high", 30, ActivityType.STUDY, "none", null, false, 0);
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -122,7 +124,7 @@ class TaskControllerTest {
 	@Test
 	void completesTask() throws Exception {
 		TaskDto completed = new TaskDto(5L, "Repasar test-can-delete-later", "", "📘", "blue",
-				"2026-10-12", "09:00", "10:30", "completed", "high", 45, "focus", "2026-10-12T07:00:00Z", false, 5400);
+				"2026-10-12", "09:00", "10:30", "completed", "high", 45, ActivityType.STUDY, "focus", null, false, 5400);
 		when(taskCompletionService.complete(7L, 5L)).thenReturn(completed);
 
 		mockMvc.perform(post("/api/players/me/tasks/5/complete").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))

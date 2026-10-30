@@ -1,4 +1,5 @@
 import { clearSession, getAccessToken } from './session.js'
+import { getCachedData, invalidateCachedData } from './dataCache.js'
 
 const API_ORIGIN = (
   import.meta.env.VITE_API_URL
@@ -9,8 +10,8 @@ export function apiUrl(path) {
   return `${API_ORIGIN}${path}`
 }
 
-export async function getJson(url) {
-  return requestJson(url)
+export async function getJson(url, { cacheKey = url } = {}) {
+  return getCachedData(cacheKey, () => requestJson(url))
 }
 
 // Sends `body` as JSON when given; a 204 or empty response resolves to null.
@@ -48,6 +49,9 @@ export async function requestJson(url, { method = 'GET', body } = {}) {
     const error = new Error(payload?.error || 'Request failed')
     error.status = response.status
     throw error
+  }
+  if (method !== 'GET') {
+    invalidateAfterMutation(url)
   }
   return payload
 }
@@ -88,6 +92,7 @@ export async function patchJson(url, body) {
     error.status = response.status
     throw error
   }
+  invalidateAfterMutation(url)
   return payload
 }
 
@@ -124,7 +129,30 @@ export async function patchForm(url, formData) {
     error.status = response.status
     throw error
   }
+  invalidateAfterMutation(url)
   return payload
+}
+
+function invalidateAfterMutation(url) {
+  const path = url.split('?')[0]
+  if (path.startsWith('/api/players/me/tasks')) {
+    invalidateCachedData('/api/players/me/tasks')
+    const action = path.slice('/api/players/me/tasks'.length).split('/').filter(Boolean).at(-1)
+    if (['start', 'heartbeat'].includes(action)) return
+
+    invalidateCachedData('/api/players/me/daily-quests')
+    if (action !== undefined && !['start', 'heartbeat'].includes(action)) {
+      invalidateCachedData('/api/players/me', '/api/character/stats')
+    }
+    return
+  }
+  if (path.startsWith('/api/users/me')) {
+    invalidateCachedData('/api/users/me', '/api/players/me')
+    return
+  }
+  if (path === '/api/character/stats') {
+    invalidateCachedData('/api/character/stats', '/api/players/me')
+  }
 }
 
 export function playerUrl(path = '') {

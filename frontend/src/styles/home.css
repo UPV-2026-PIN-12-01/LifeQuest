@@ -1026,6 +1026,7 @@
 .task-field input[type='text'],
 .task-field input[type='date'],
 .task-field input[type='time'],
+.task-field select,
 .task-field textarea {
   width: 100%;
   padding: 9px 11px;

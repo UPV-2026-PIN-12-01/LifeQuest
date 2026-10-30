@@ -12,6 +12,15 @@ export const TASK_PRIORITIES = [
   { id: 'high', label: 'Alta', icon: '▲' },
 ]
 
+export const TASK_ACTIVITY_TYPES = [
+  { id: 'EXERCISE', label: 'Ejercicio' },
+  { id: 'STUDY', label: 'Estudio' },
+  { id: 'WORK', label: 'Trabajo' },
+  { id: 'SOCIAL', label: 'Social' },
+  { id: 'SPORTS', label: 'Deporte' },
+  { id: 'ENTERTAINMENT', label: 'Entretenimiento' },
+]
+
 export function statusById(id) {
   return TASK_STATUSES.find((status) => status.id === id) ?? TASK_STATUSES[0]
 }

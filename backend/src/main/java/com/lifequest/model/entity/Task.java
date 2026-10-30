@@ -6,6 +6,7 @@ import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -52,6 +53,11 @@ public class Task {
 
 	@Column(nullable = false)
 	private String color;
+
+	@Convert(converter = ActivityTypeConverter.class)
+	@Column(name = "activity_type", nullable = false, columnDefinition = "public.task_type")
+	@ColumnTransformer(read = "activity_type::text", write = "?::public.task_type")
+	private ActivityType activityType = ActivityType.STUDY;
 
 	public Long getId() {
 		return id;
@@ -135,5 +141,14 @@ public class Task {
 
 	public void setColor(String color) {
 		this.color = color;
+		return;
+	}
+
+	public ActivityType getActivityType() {
+		return activityType;
+	}
+
+	public void setActivityType(ActivityType activityType) {
+		this.activityType = activityType;
 	}
 }

@@ -29,6 +29,7 @@ import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
+import com.lifequest.model.entity.ActivityType;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
@@ -129,8 +130,10 @@ class TaskServiceTest {
 		assertThat(task.getStartTime()).isEqualTo(Instant.parse("2026-10-12T07:00:00Z"));
 		assertThat(task.getEndTime()).isEqualTo(Instant.parse("2026-10-12T08:30:00Z"));
 		assertThat(task.getRewardId()).isEqualTo(9L);
+		assertThat(task.getActivityType()).isEqualTo(ActivityType.STUDY);
 		assertThat(dto.startTime()).isEqualTo("09:00");
 		assertThat(dto.priority()).isEqualTo("high");
+		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
 		assertThat(dto.xp()).isEqualTo(30L);
 	}
 
@@ -187,10 +190,10 @@ class TaskServiceTest {
 		assertThatThrownBy(() -> taskService.create(7L, request("urgent", "09:00", "10:00")))
 				.isInstanceOf(InvalidRequestException.class);
 		assertThatThrownBy(() -> taskService.create(7L, new TaskRequestDto(" ", "", "📘", "purple",
-				LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low")))
+				LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low", ActivityType.STUDY)))
 				.isInstanceOf(InvalidRequestException.class);
 		assertThatThrownBy(() -> taskService.create(7L, new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "pink",
-				LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low")))
+				LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low", ActivityType.STUDY)))
 				.isInstanceOf(InvalidRequestException.class);
 	}
 
@@ -198,7 +201,7 @@ class TaskServiceTest {
 	void rejectsBackdatedOrTooShortTasks() {
 		// NOW is 12:00 in Madrid on 2026-10-10.
 		TaskRequestDto backdated = new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "blue",
-				LocalDate.parse("2026-10-10"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low");
+				LocalDate.parse("2026-10-10"), LocalTime.parse("09:00"), LocalTime.parse("10:00"), "low", ActivityType.STUDY);
 		assertThatThrownBy(() -> taskService.create(7L, backdated)).isInstanceOf(InvalidRequestException.class);
 		assertThatThrownBy(() -> taskService.create(7L, request("low", "09:00", "09:10")))
 				.isInstanceOf(InvalidRequestException.class);
@@ -223,7 +226,7 @@ class TaskServiceTest {
 
 	private static TaskRequestDto request(String priority, String start, String end) {
 		return new TaskRequestDto("Repasar test-can-delete-later", "test-can-delete-later", "📘", "blue",
-				LocalDate.parse("2026-10-12"), LocalTime.parse(start), LocalTime.parse(end), priority);
+				LocalDate.parse("2026-10-12"), LocalTime.parse(start), LocalTime.parse(end), priority, ActivityType.STUDY);
 	}
 
 	private static Task task(String status, String start, String end, Long rewardId) {
@@ -234,6 +237,7 @@ class TaskServiceTest {
 		task.setStatus(status);
 		task.setPriority("MID");
 		task.setColor("purple");
+		task.setActivityType(ActivityType.STUDY);
 		task.setStartTime(Instant.parse(start));
 		task.setEndTime(Instant.parse(end));
 		task.setRewardId(rewardId);

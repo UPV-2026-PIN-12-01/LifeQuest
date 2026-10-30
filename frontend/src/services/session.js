@@ -1,7 +1,10 @@
 // Supabase session returned by /api/auth/login, kept for this browser tab.
+import { clearCachedData } from './dataCache.js'
+
 const STORAGE_KEY = 'lifequest.session'
 
 export function saveSession(session) {
+  clearCachedData()
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
   } catch {
@@ -19,6 +22,7 @@ export function readSession() {
 }
 
 export function clearSession() {
+  clearCachedData()
   try {
     sessionStorage.removeItem(STORAGE_KEY)
   } catch {
