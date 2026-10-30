@@ -8,7 +8,7 @@ import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import useTaskHeartbeats from '../hooks/useTaskHeartbeats.js'
 import { getDailyQuests } from '../services/player.js'
-import { getTasksForWeek } from '../services/tasks.js'
+import { getCachedTasksForWeek, getTasksForWeek, setCachedTasksForWeek } from '../services/tasks.js'
 import { addDays, startOfWeek, toIsoDate, weekRangeLabel } from '../utils/week.js'
 import '../styles/home.css'
 
@@ -16,13 +16,18 @@ export default function HomePage() {
   const navigate = useNavigate()
   const { player, refreshPlayer } = useOutletContext()
   const [weekOffset, setWeekOffset] = useState(0)
-  const [tasks, setTasks] = useState([])
+  const [taskData, setTaskData] = useState(() => {
+    const initialWeek = startOfWeek(new Date())
+    return {
+      weekKey: initialWeek.getTime(),
+      tasks: getCachedTasksForWeek(initialWeek) ?? [],
+    }
+  })
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
   const [tasksVersion, setTasksVersion] = useState(0)
-  useTaskHeartbeats(tasks)
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
@@ -31,6 +36,9 @@ export default function HomePage() {
 
   const weekStart = addDays(startOfWeek(new Date()), weekOffset * 7)
   const weekKey = weekStart.getTime()
+  const cachedTasks = getCachedTasksForWeek(weekStart)
+  const tasks = taskData.weekKey === weekKey ? taskData.tasks : cachedTasks ?? []
+  useTaskHeartbeats(tasks)
 
   const completedTasks = tasks.filter((task) => task.status === 'completed')
   const weekStats = {
@@ -54,8 +62,12 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false
-    getTasksForWeek(new Date(weekKey)).then((weekTasks) => {
-      if (!cancelled) setTasks(weekTasks)
+    const requestedWeekStart = new Date(weekKey)
+    getTasksForWeek(requestedWeekStart).then((weekTasks) => {
+      if (!cancelled) {
+        setTaskData({ weekKey, tasks: weekTasks })
+        setCachedTasksForWeek(requestedWeekStart, weekTasks)
+      }
     }).catch((error) => {
       if (!cancelled) setLoadError(error)
     })
@@ -87,7 +99,12 @@ export default function HomePage() {
           id="tasks"
           tasks={tasks}
           onTaskChanged={(changed) => {
-            setTasks((current) => current.map((task) => (task.id === changed.id ? changed : task)))
+            setTaskData((current) => {
+              const currentTasks = current.weekKey === weekKey ? current.tasks : cachedTasks ?? []
+              const next = currentTasks.map((task) => (task.id === changed.id ? changed : task))
+              setCachedTasksForWeek(weekStart, next)
+              return { weekKey, tasks: next }
+            })
             refreshPlayer()
           }}
         />

@@ -39,6 +39,27 @@ export function getCachedData(key, load) {
   return request
 }
 
+export function getCachedDataValue(key) {
+  if (memoryCache.has(key)) {
+    return memoryCache.get(key)
+  }
+
+  const stored = readStoredCache()
+  if (!Object.hasOwn(stored, key)) {
+    return undefined
+  }
+
+  memoryCache.set(key, stored[key])
+  return stored[key]
+}
+
+export function setCachedDataValue(key, value) {
+  memoryCache.set(key, value)
+  const stored = readStoredCache()
+  stored[key] = value
+  writeStoredCache(stored)
+}
+
 export function invalidateCachedData(...prefixes) {
   if (prefixes.length === 0) return
 

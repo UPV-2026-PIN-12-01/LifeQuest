@@ -1,12 +1,25 @@
 import { getJson, playerUrl, requestJson } from './http.js'
+import { getCachedDataValue, setCachedDataValue } from './dataCache.js'
 import { addDays, toIsoDate } from '../utils/week.js'
 
-export async function getTasksForWeek(weekStart) {
-  const params = new URLSearchParams({
+export function tasksCacheKey(weekStart) {
+  return playerUrl(`/tasks?${new URLSearchParams({
     from: toIsoDate(weekStart),
     to: toIsoDate(addDays(weekStart, 6)),
-  })
-  return getJson(playerUrl(`/tasks?${params}`))
+  })}`)
+}
+
+export async function getTasksForWeek(weekStart) {
+  const url = tasksCacheKey(weekStart)
+  return getJson(url, { cacheKey: url })
+}
+
+export function getCachedTasksForWeek(weekStart) {
+  return getCachedDataValue(tasksCacheKey(weekStart))
+}
+
+export function setCachedTasksForWeek(weekStart, tasks) {
+  setCachedDataValue(tasksCacheKey(weekStart), tasks)
 }
 
 // `task` has title, description, icon, color, date (yyyy-MM-dd), startTime, endTime (HH:mm) and priority.

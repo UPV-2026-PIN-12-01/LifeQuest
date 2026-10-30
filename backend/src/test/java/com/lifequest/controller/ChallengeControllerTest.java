@@ -22,6 +22,7 @@ import com.lifequest.config.CorsConfig;
 import com.lifequest.config.SecurityConfig;
 import com.lifequest.model.dto.ChallengeDto;
 import com.lifequest.model.dto.TaskDto;
+import com.lifequest.model.entity.ActivityType;
 import com.lifequest.service.ChallengeService;
 import com.lifequest.service.UserService;
 
@@ -48,7 +49,7 @@ class ChallengeControllerTest {
 	@Test
 	void returnsActiveChallenges() throws Exception {
 		TaskDto task = new TaskDto(12L, "Estudiar test-can-delete-later", "", "📘", "purple",
-				"2026-10-28", "09:00", "10:30", "finished", "medium", 20, "none", null, false, 0);
+				"2026-10-28", "09:00", "10:30", "finished", "medium", 20, ActivityType.STUDY, null, null, false, 0);
 		ChallengeDto challenge = new ChallengeDto(4L, null, "No usar solucionario", "Resolver sin soluciones",
 				"HARD", false, 12L, null, "SHOWN", "No consultar las soluciones", 75, 25, false, task);
 		when(challengeService.findForUser(7L, false)).thenReturn(List.of(challenge));
