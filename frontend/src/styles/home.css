@@ -1085,6 +1085,13 @@
   font-weight: 700;
 }
 
+.task-reward-note {
+  color: var(--lq-ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .task-choice input:checked + span {
   border-color: var(--lq-violet-500);
   background: var(--lq-violet-100);

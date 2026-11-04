@@ -42,3 +42,8 @@ export const TASK_ICONS = ['📆', '📘', '📝', '🧪', '💻', '💪', '🏃
 
 // XP of the reward the backend creates, by priority.
 export const XP_BY_PRIORITY = { low: 10, medium: 20, high: 30 }
+
+export function taskDurationMultiplier(durationMinutes) {
+  if (!Number.isFinite(durationMinutes) || durationMinutes < 30) return 1
+  return Math.min(2, 1.1 + ((durationMinutes - 30) / 150) * 0.9)
+}

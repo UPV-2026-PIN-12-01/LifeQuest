@@ -99,7 +99,10 @@ public class TaskCompletionService {
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Reward was already claimed");
 			}
-			long granted = capToDailyLimit(verification.apply(reward.getXpReward()), claimedToday(userId, now));
+			long granted = capToDailyLimit(
+					verification.apply(
+							reward.getXpReward(), Duration.between(task.getStartTime(), task.getEndTime())),
+					claimedToday(userId, now));
 			rewardService.claim(reward, granted, now);
 			if (granted > 0) {
 				characterStatsService.addXp(userId, granted);

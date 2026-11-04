@@ -219,6 +219,9 @@ public class TaskService {
 		ZonedDateTime start = task.getStartTime().atZone(zone);
 		ZonedDateTime end = task.getEndTime().atZone(zone);
 		long xp = task.getRewardId() == null ? 0 : xpByReward.getOrDefault(task.getRewardId(), 0L);
+		if (!DB_STATUS_DONE.equals(task.getStatus())) {
+			xp = TaskDurationReward.apply(xp, Duration.between(task.getStartTime(), task.getEndTime()));
+		}
 		return new TaskDto(
 				task.getId(),
 				task.getName(),

@@ -79,7 +79,7 @@ class TaskServiceTest {
 		assertThat(dto.endTime()).isEqualTo("01:00");
 		assertThat(dto.status()).isEqualTo("pending");
 		assertThat(dto.priority()).isEqualTo("medium");
-		assertThat(dto.xp()).isEqualTo(50L);
+		assertThat(dto.xp()).isEqualTo(55L);
 	}
 
 	@Test
@@ -134,7 +134,7 @@ class TaskServiceTest {
 		assertThat(dto.startTime()).isEqualTo("09:00");
 		assertThat(dto.priority()).isEqualTo("high");
 		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
-		assertThat(dto.xp()).isEqualTo(30L);
+		assertThat(dto.xp()).isEqualTo(44L);
 	}
 
 	@Test

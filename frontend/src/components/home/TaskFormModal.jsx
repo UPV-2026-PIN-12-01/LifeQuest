@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createTask, deleteTask, updateTask } from '../../services/tasks.js'
-import { TASK_ACTIVITY_TYPES, TASK_COLORS, TASK_ICONS, TASK_PRIORITIES, XP_BY_PRIORITY } from '../../utils/taskOptions.js'
+import {
+  TASK_ACTIVITY_TYPES,
+  TASK_COLORS,
+  TASK_ICONS,
+  TASK_PRIORITIES,
+  taskDurationMultiplier,
+  XP_BY_PRIORITY,
+} from '../../utils/taskOptions.js'
 import { addDays, toIsoDate } from '../../utils/week.js'
 
 const TITLE_MAX = 80
@@ -25,6 +32,9 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const isEdit = Boolean(task)
+  const durationMinutes = getDurationMinutes(form.startTime, form.endTime)
+  const durationMultiplier = taskDurationMultiplier(durationMinutes)
+  const estimatedXp = Math.round(XP_BY_PRIORITY[form.priority] * durationMultiplier)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -177,6 +187,11 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
               </label>
             ))}
           </div>
+          <p className="task-reward-note">
+            Bonus por duración: ×{durationMultiplier.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ·
+            {' '}{estimatedXp} XP estimada antes del bonus de verificación.
+            {' '}Desde 30 min aumenta progresivamente hasta ×2 a las 3 h.
+          </p>
         </fieldset>
 
         <fieldset className="task-field">
@@ -292,6 +307,15 @@ function validate(form) {
   if (end - start < MIN_DURATION_MS) return SERVER_ERRORS['Task must last at least 15 minutes']
   if (start.getTime() < Date.now() - PAST_START_GRACE_MS) return SERVER_ERRORS['Task cannot start in the past']
   return null
+}
+
+function getDurationMinutes(startTime, endTime) {
+  if (!startTime || !endTime) return 0
+  const toMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+  return Math.max(0, toMinutes(endTime) - toMinutes(startTime))
 }
 
 function requestErrorMessage(error) {

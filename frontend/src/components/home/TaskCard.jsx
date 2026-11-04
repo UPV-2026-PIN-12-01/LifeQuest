@@ -49,7 +49,12 @@ export default function TaskCard({ task, onSelect }) {
         <span className="task-time tabular">
           {task.startTime}–{task.endTime}
         </span>
-        <span className="task-xp tabular">+{task.xp}</span>
+        <span
+          className="task-xp tabular"
+          title={isCompleted ? 'XP obtenida' : 'XP estimada con el bonus de duración; se suma el bonus de verificación al completar.'}
+        >
+          +{task.xp}
+        </span>
       </div>
       <span className="visually-hidden">
         {status.label}. Prioridad {priority.label.toLowerCase()}. {task.xp} XP.

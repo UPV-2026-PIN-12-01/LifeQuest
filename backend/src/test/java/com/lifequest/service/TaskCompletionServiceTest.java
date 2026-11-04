@@ -2,6 +2,7 @@ package com.lifequest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Map;
@@ -69,11 +71,11 @@ class TaskCompletionServiceTest {
 	}
 
 	@Test
-	void completingAfterTheEndGrantsBaseXp() {
+	void completingAfterTheEndGrantsDurationAdjustedXp() {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
-		verify(rewardService).claim(eq(reward), eq(20L), eq(Instant.parse("2026-10-10T10:30:00Z")));
-		verify(characterStatsService).addXp(7L, 20L);
+		verify(rewardService).claim(eq(reward), eq(26L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(characterStatsService).addXp(7L, 26L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 		assertThat(task.getStatus()).isEqualTo("DONE");
 	}
@@ -104,7 +106,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T10:00:30Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 30L);
+		verify(characterStatsService).addXp(7L, 38L);
 	}
 
 	@Test
@@ -113,7 +115,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T09:45:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 24L);
+		verify(characterStatsService).addXp(7L, 31L);
 	}
 
 	@Test
@@ -122,7 +124,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T11:00:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 20L);
+		verify(characterStatsService).addXp(7L, 26L);
 	}
 
 	@Test
@@ -161,7 +163,7 @@ class TaskCompletionServiceTest {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		// 10 at full rate up to 200, then half of the other 10.
-		verify(characterStatsService).addXp(7L, 15L);
+		verify(characterStatsService).addXp(7L, 18L);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 0)).isEqualTo(30);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 390)).isEqualTo(10);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 400)).isZero();
@@ -203,6 +205,15 @@ class TaskCompletionServiceTest {
 		TaskVerification.recordHeartbeat(task, session, Instant.parse("2026-10-10T09:05:30Z"));
 		assertThat(session.getFocusedSeconds()).isEqualTo(30);
 		assertThat(session.getLastHeartbeatAt()).isEqualTo(Instant.parse("2026-10-10T09:05:30Z"));
+	}
+
+	@Test
+	void durationMultiplierStartsAtThirtyMinutesAndCapsAtThreeHours() {
+		assertThat(TaskDurationReward.multiplier(Duration.ofMinutes(15))).isEqualTo(1.0);
+		assertThat(TaskDurationReward.multiplier(Duration.ofMinutes(30))).isCloseTo(1.1, within(0.000001));
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(1))).isCloseTo(1.28, within(0.000001));
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(3))).isEqualTo(2.0);
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(4))).isEqualTo(2.0);
 	}
 
 	private void withSession(String startedAt, long focusedSeconds) {

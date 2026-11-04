@@ -48,8 +48,8 @@ export default function TaskActions({ task, onChanged }) {
           <strong className="tabular">⏱ {formatDuration(now - Date.parse(task.sessionStartedAt))}</strong>
           <span>Foco registrado: {Math.floor(task.focusedSeconds / 60)} min</span>
           <small>
-            Con esta página abierta ganas el bonus de foco (×1,5). Si sales a entrenar o con amigos, pulsa Terminar al
-            acabar y cuenta como check-in (×1,2).
+            La duración planificada también aumenta la XP (×1,1 desde 30 min, hasta ×2 a las 3 h). Con esta página
+            abierta ganas el bonus de foco (×1,5); si sales a entrenar o con amigos, el check-in da ×1,2.
           </small>
         </div>
       )}
