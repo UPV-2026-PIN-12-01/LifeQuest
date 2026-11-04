@@ -5,6 +5,8 @@ import ChallengesPage from '../pages/ChallengesPage.jsx';
 import HomePage from '../pages/HomePage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 import SignupPage from '../pages/SignupPage.jsx';
+import GoalsPage from '../pages/GoalsPage.jsx';
+
 import { hasSession } from '../services/session.js';
 
 export default function AppRoutes() {
@@ -17,6 +19,7 @@ export default function AppRoutes() {
         <Route element={<RequireSession><AuthenticatedLayout /></RequireSession>}>
           <Route path="/character" element={<CharacterView />} />
           <Route path="/challenges" element={<ChallengesPage />} />
+          <Route path="/goals" element={<GoalsPage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/settings" element={<ProfilePage />} />
         </Route>

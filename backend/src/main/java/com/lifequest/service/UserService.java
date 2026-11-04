@@ -32,6 +32,12 @@ public class UserService {
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 
+	@Transactional
+	public void lockForUpdate(Long userId) {
+		userRepository.findByIdForUpdate(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
+
 	// The Supabase JWT subject is the auth user UUID stored in users.inner_id.
 	@Transactional(readOnly = true)
 	public User getByAuthSubject(String subject) {

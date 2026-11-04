@@ -510,6 +510,10 @@
   gap: 4px;
 }
 
+.goal-date-fields {
+  grid-template-columns: 1fr 1fr;
+}
+
 .challenge-field input:not([type="radio"]),
 .challenge-field textarea {
   width: 100%;
@@ -737,6 +741,10 @@
   }
 
   .challenge-difficulty-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-date-fields {
     grid-template-columns: 1fr;
   }
 

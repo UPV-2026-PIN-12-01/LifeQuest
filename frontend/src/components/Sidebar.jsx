@@ -4,8 +4,9 @@ import { classById } from '../utils/playerClasses.js'
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
-  { to: '/settings', icon: '⚙️', label: 'Ajustes' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/goals', icon: '🚩', label: 'Objetivos' },
+  { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
 
 function isSelected(to, pathname, hash) {

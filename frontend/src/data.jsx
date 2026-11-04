@@ -146,38 +146,12 @@ export const INITIAL_TASKS = [
     day: "Sáb",
   },
 ]
-export const INITIAL_GOALS = [
-  {
-    id: "1",
-    title: "Terminar el TFG",
-    description:
-      "Completar y entregar el trabajo fin de grado antes del 30 de septiembre.",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    status: "pending",
-    xpReward: 500,
-    goldReward: 200,
-  },
-  {
-    id: "2",
-    title: "Correr 3 veces por semana",
-    description: "Mantener una rutina de running durante todo el mes.",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    status: "pending",
-    xpReward: 300,
-    goldReward: 100,
-  },
-  {
-    id: "3",
-    title: "Leer 2 libros",
-    description: "Leer dos libros de desarrollo personal este mes.",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    status: "completed",
-    xpReward: 200,
-    goldReward: 80,
-  },
+export const GOAL_REWARD_TIERS = [
+  { level: 1, name: "Bronce", xp: 100, gold: 50, claimWaitHours: 24 },
+  { level: 2, name: "Plata", xp: 150, gold: 75, claimWaitHours: 36 },
+  { level: 3, name: "Oro", xp: 200, gold: 100, claimWaitHours: 48 },
+  { level: 4, name: "Platino", xp: 250, gold: 125, claimWaitHours: 60 },
+  { level: 5, name: "Diamante", xp: 300, gold: 150, claimWaitHours: 72 },
 ]
 export const INITIAL_STATS = {
   level: 1,
