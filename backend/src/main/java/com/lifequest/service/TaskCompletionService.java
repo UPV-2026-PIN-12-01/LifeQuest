@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
@@ -135,7 +136,8 @@ public class TaskCompletionService {
 	private long claimedToday(Long userId, Instant now) {
 		ZoneId zone = clock.getZone();
 		LocalDate today = LocalDate.ofInstant(now, zone);
-		return rewardService.claimedXpBetween(userId, today.atStartOfDay(zone).toInstant(),
+		return rewardService.claimedXpForSourceBetween(
+				userId, RewardSource.TASK, today.atStartOfDay(zone).toInstant(),
 				today.plusDays(1).atStartOfDay(zone).toInstant());
 	}
 

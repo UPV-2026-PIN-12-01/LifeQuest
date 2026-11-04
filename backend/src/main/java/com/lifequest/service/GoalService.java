@@ -22,6 +22,7 @@ import com.lifequest.model.dto.GoalRequestDto;
 import com.lifequest.model.entity.Goal;
 import com.lifequest.model.entity.GoalRewardTier;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.repository.GoalRepository;
 
 @Service
@@ -80,7 +81,7 @@ public class GoalService {
 			throw new InvalidStateException("You can create at most three goals per week");
 		}
 
-		long rewardId = rewardService.create(userId, tier.xp(), tier.gold());
+		long rewardId = rewardService.create(userId, tier.xp(), tier.gold(), RewardSource.OBJECTIVE);
 		Goal goal = new Goal();
 		goal.setUserId(userId);
 		goal.setName(request.title().trim());

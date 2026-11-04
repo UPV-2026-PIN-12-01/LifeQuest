@@ -2,9 +2,11 @@ package com.lifequest.model.entity;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +33,11 @@ public class Reward {
 
 	@Column(name = "claimed_at")
 	private Instant claimedAt;
+
+	@Convert(converter = RewardSourceConverter.class)
+	@ColumnTransformer(read = "source::text", write = "?::public.source_type")
+	@Column(name = "source")
+	private RewardSource source;
 
 	public Long getId() {
 		return id;
@@ -66,5 +73,13 @@ public class Reward {
 
 	public void setClaimedAt(Instant claimedAt) {
 		this.claimedAt = claimedAt;
+	}
+
+	public RewardSource getSource() {
+		return source;
+	}
+
+	public void setSource(RewardSource source) {
+		this.source = source;
 	}
 }

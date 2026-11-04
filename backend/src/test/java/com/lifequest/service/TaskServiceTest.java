@@ -30,6 +30,7 @@ import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.ActivityType;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
@@ -116,7 +117,7 @@ class TaskServiceTest {
 
 	@Test
 	void createStoresLocalTimesAsPendingWithReward() {
-		when(rewardService.create(7L, 30L)).thenReturn(9L);
+		when(rewardService.create(7L, 30L, RewardSource.TASK)).thenReturn(9L);
 		when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		TaskDto dto = taskService.create(7L, request("high", "09:00", "10:30"));
@@ -135,6 +136,7 @@ class TaskServiceTest {
 		assertThat(dto.priority()).isEqualTo("high");
 		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
 		assertThat(dto.xp()).isEqualTo(44L);
+		verify(rewardService).create(7L, 30L, RewardSource.TASK);
 	}
 
 	@Test
@@ -145,7 +147,7 @@ class TaskServiceTest {
 
 		TaskDto dto = taskService.update(7L, 1L, request("low", "18:00", "19:00"));
 
-		verify(rewardService).updateXp(3L, 10L);
+		verify(rewardService).updateXp(3L, 10L, RewardSource.TASK);
 		assertThat(task.getStatus()).isEqualTo("DONE");
 		assertThat(task.getPriority()).isEqualTo("LOW");
 		assertThat(dto.startTime()).isEqualTo("18:00");
@@ -214,7 +216,7 @@ class TaskServiceTest {
 
 		assertThatThrownBy(() -> taskService.update(7L, 1L, request("high", "18:00", "19:00")))
 				.isInstanceOf(InvalidStateException.class);
-		verify(rewardService, never()).updateXp(any(), anyLong());
+		verify(rewardService, never()).updateXp(any(), anyLong(), any(RewardSource.class));
 	}
 
 	@Test

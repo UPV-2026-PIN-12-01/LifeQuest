@@ -10,6 +10,7 @@ import {
 } from '../services/goals.js'
 import '../styles/challenges.css'
 
+
 const WEEKLY_LIMIT = 3
 
 export default function GoalsPage() {

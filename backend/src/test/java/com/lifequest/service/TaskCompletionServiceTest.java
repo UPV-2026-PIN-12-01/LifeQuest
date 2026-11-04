@@ -158,7 +158,8 @@ class TaskCompletionServiceTest {
 
 	@Test
 	void dailyCapHalvesThenStopsXp() {
-		when(rewardService.claimedXpBetween(eq(7L), any(), any())).thenReturn(190L);
+		when(rewardService.claimedXpForSourceBetween(eq(7L), eq(com.lifequest.model.entity.RewardSource.TASK),
+				any(), any())).thenReturn(190L);
 
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 

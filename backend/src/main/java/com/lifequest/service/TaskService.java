@@ -27,6 +27,7 @@ import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
 import com.lifequest.model.entity.ActivityType;
@@ -105,7 +106,7 @@ public class TaskService {
 		task.setStatus(DB_STATUS_PENDING);
 		apply(task, request);
 		long xp = XP_BY_PRIORITY.get(request.priority());
-		task.setRewardId(rewardService.create(userId, xp));
+		task.setRewardId(rewardService.create(userId, xp, RewardSource.TASK));
 		return toDto(taskRepository.save(task), xp);
 	}
 
@@ -120,9 +121,9 @@ public class TaskService {
 		apply(task, request);
 		long xp = XP_BY_PRIORITY.get(request.priority());
 		if (task.getRewardId() == null) {
-			task.setRewardId(rewardService.create(userId, xp));
+			task.setRewardId(rewardService.create(userId, xp, RewardSource.TASK));
 		} else {
-			rewardService.updateXp(task.getRewardId(), xp);
+			rewardService.updateXp(task.getRewardId(), xp, RewardSource.TASK);
 		}
 		return toDto(taskRepository.save(task), xp);
 	}

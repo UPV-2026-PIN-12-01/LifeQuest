@@ -20,6 +20,7 @@ import com.lifequest.model.dto.ChallengeRequestDto;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.Challenge;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.model.entity.Task;
 import com.lifequest.repository.ChallengeRepository;
 
@@ -82,7 +83,7 @@ public class ChallengeService {
 		challenge.setDifficulty(difficulty);
 		challenge.setCompleted(false);
 		challenge.setVisibility(VISIBLE);
-		challenge.setRewardId(rewardService.create(userId, reward[0], reward[1]));
+		challenge.setRewardId(rewardService.create(userId, reward[0], reward[1], RewardSource.CHALLENGE));
 		return toDto(challengeRepository.save(challenge));
 	}
 
