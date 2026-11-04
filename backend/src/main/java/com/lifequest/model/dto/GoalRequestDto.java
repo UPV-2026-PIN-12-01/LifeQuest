@@ -1,12 +1,11 @@
 package com.lifequest.model.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record GoalRequestDto(
 		String title,
 		String description,
-		LocalDate startDate,
-		LocalDate endDate,
-		long xpReward,
-		long goldReward) {
+		LocalDateTime startDate,
+		LocalDateTime endDate,
+		int rewardTier) {
 }

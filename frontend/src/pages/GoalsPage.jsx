@@ -1,31 +1,47 @@
-import { useEffect, useState } from "react"
-import { getJson, requestJson } from "../services/http.js"
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { GOAL_REWARD_TIERS } from '../data.jsx'
+import {
+  claimGoal,
+  createGoal,
+  deleteGoal,
+  evaluateGoal,
+  getGoalQuota,
+  getGoals,
+} from '../services/goals.js'
+import '../styles/challenges.css'
 
-export default function Goals() {
-  const [goals, setGoals] = useState([])
+const WEEKLY_LIMIT = 3
+
+export default function GoalsPage() {
+  const [history, setHistory] = useState(false)
+  const [activeGoals, setActiveGoals] = useState([])
+  const [historyGoals, setHistoryGoals] = useState([])
+  const [quota, setQuota] = useState({ createdThisWeek: 0, weeklyLimit: WEEKLY_LIMIT })
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [updatingGoal, setUpdatingGoal] = useState(null)
-  const [error, setError] = useState("")
-  const [rating, setRating] = useState({})
-  const [evaluating, setEvaluating] = useState(null)
-  const [reward, setReward] = useState(null)
-  const [showCreate, setShowCreate] = useState(false)
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [xpReward, setXpReward] = useState(200)
-  const [goldReward, setGoldReward] = useState(75)
+  const [loadError, setLoadError] = useState(null)
+  const [refreshVersion, setRefreshVersion] = useState(0)
+  const [showForm, setShowForm] = useState(false)
+  const [evaluation, setEvaluation] = useState(null)
+  const [busyGoalId, setBusyGoalId] = useState(null)
+  const [deletingGoalId, setDeletingGoalId] = useState(null)
+  const [rewardToast, setRewardToast] = useState(null)
+  const [now, setNow] = useState(0)
+  const [formDefaults, setFormDefaults] = useState(null)
+
+  const refresh = useCallback(() => setRefreshVersion((version) => version + 1), [])
 
   useEffect(() => {
     let cancelled = false
-    getJson("/api/players/me/goals")
-      .then((loadedGoals) => {
-        if (!cancelled) setGoals(loadedGoals)
+    Promise.all([getGoals(false), getGoals(true), getGoalQuota()])
+      .then(([active, completed, currentQuota]) => {
+        if (cancelled) return
+        setActiveGoals(active)
+        setHistoryGoals(completed)
+        setQuota(currentQuota)
+        setLoadError(null)
       })
-      .catch((loadError) => {
-        if (!cancelled) setError(loadError.message)
+      .catch((error) => {
+        if (!cancelled) setLoadError(error)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -33,371 +49,525 @@ export default function Goals() {
     return () => {
       cancelled = true
     }
+  }, [refreshVersion])
+
+  useEffect(() => {
+    const tick = () => setNow(new Date().getTime())
+    const initial = window.setTimeout(tick, 0)
+    const interval = window.setInterval(tick, 60_000)
+    return () => {
+      window.clearTimeout(initial)
+      window.clearInterval(interval)
+    }
   }, [])
 
-  async function evaluate(goal, status) {
-    const goalRating = rating[goal.id]
-    if (status === "completed" && !goalRating) {
-      setError("Selecciona una valoración antes de completar el objetivo.")
-      return
-    }
-    setUpdatingGoal(goal.id)
-    setError("")
+  async function handleDelete(goal) {
+    const location = history ? 'del historial' : 'de tus objetivos activos'
+    if (!window.confirm(`¿Quieres eliminar este objetivo ${location}?`)) return
+    setDeletingGoalId(goal.id)
+    setLoadError(null)
     try {
-      const updatedGoal = await requestJson(
-        `/api/players/me/goals/${goal.id}/evaluate`,
-        {
-          method: "PATCH",
-          body: {
-            completed: status === "completed",
-            rating: status === "completed" ? goalRating : null,
-          },
-        },
-      )
-      setGoals((currentGoals) =>
-        currentGoals.map((currentGoal) =>
-          currentGoal.id === updatedGoal.id ? updatedGoal : currentGoal,
-        ),
-      )
-      setEvaluating(null)
-      if (status === "completed") {
-        setReward({ id: goal.id, xp: goal.xpReward, gold: goal.goldReward })
-        window.setTimeout(() => setReward(null), 3000)
-      }
-    } catch (updateError) {
-      setError(updateError.message)
+      await deleteGoal(goal.id)
+      refresh()
+    } catch (error) {
+      setLoadError(error)
     } finally {
-      setUpdatingGoal(null)
+      setDeletingGoalId(null)
     }
   }
 
-  async function createGoal(event) {
-    event.preventDefault()
-    if (!title.trim() || !startDate || !endDate || endDate < startDate) return
-    setSaving(true)
-    setError("")
+  async function handleClaim(goal) {
+    setBusyGoalId(goal.id)
+    setLoadError(null)
     try {
-      const createdGoal = await requestJson("/api/players/me/goals", {
-        method: "POST",
-        body: {
-          title: title.trim(),
-          description: description.trim(),
-          startDate,
-          endDate,
-          xpReward,
-          goldReward,
-        },
-      })
-      setGoals((currentGoals) => [createdGoal, ...currentGoals])
-    } catch (createError) {
-      setError(createError.message)
-      return
+      const claimed = await claimGoal(goal.id)
+      setRewardToast({ xp: claimed.xpReward, gold: claimed.goldReward })
+      refresh()
+    } catch (error) {
+      setLoadError(error)
     } finally {
-      setSaving(false)
+      setBusyGoalId(null)
     }
-    setTitle("")
-    setDescription("")
-    setStartDate("")
-    setEndDate("")
-    setXpReward(200)
-    setGoldReward(75)
-    setShowCreate(false)
   }
+
+  async function handleEvaluate(goal, completed, rating) {
+    setBusyGoalId(goal.id)
+    setLoadError(null)
+    try {
+      await evaluateGoal(goal.id, { completed, rating: completed ? rating : null })
+      setEvaluation(null)
+      setHistory(true)
+      refresh()
+      return true
+    } catch (error) {
+      setLoadError(error)
+      return false
+    } finally {
+      setBusyGoalId(null)
+    }
+  }
+
+  const goals = history ? historyGoals : activeGoals
+  const weeklyLimit = quota.weeklyLimit || WEEKLY_LIMIT
+  const quotaReached = quota.createdThisWeek >= weeklyLimit
+
   return (
-    <div className="goals-page" style={{ padding: "2rem", maxWidth: "1500px", margin: "0 auto" }}>
-      <div className="flex items-center justify-between mb-6">
-        <h1
-          className="text-2xl font-bold text-slate-1000"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Objetivos
-        </h1>
+    <main className="challenges-page">
+      <header className="challenges-header">
+        <div>
+          <h1>Objetivos</h1>
+          <p>Define una meta, cumple el plazo y gana recompensas.</p>
+        </div>
         <button
-          type="button" className="challenges-primary-button"
-          onClick={() => setShowCreate(true)}
-          style={{ background: "var(--color-primary)" , color: "#FFFFFF"}}
+          type="button"
+          className="challenges-primary-button"
+          onClick={() => {
+            setLoadError(null)
+            const start = new Date(new Date().getTime() + 60_000)
+            const end = new Date(start.getTime() + 13 * 60 * 60_000)
+            setFormDefaults({
+              minStart: localDateTimeInput(start),
+              startDate: localDateTimeInput(start),
+              endDate: localDateTimeInput(end),
+            })
+            setShowForm(true)
+          }}
+          disabled={quotaReached}
+          title={quotaReached ? 'Ya has creado tres objetivos esta semana' : undefined}
         >
-          + Nuevo objetivo
+          {quotaReached ? 'Límite semanal alcanzado' : '+ Nuevo objetivo'}
+        </button>
+      </header>
+
+      <section className="challenges-progress" aria-labelledby="goals-progress-title">
+        <div className="challenges-progress-heading">
+          <h2 id="goals-progress-title">Objetivos creados esta semana</h2>
+          <strong>{quota.createdThisWeek} / {weeklyLimit}</strong>
+        </div>
+        <div className="challenges-progress-track" aria-hidden="true">
+          <div
+            className="challenges-progress-value"
+            style={{ width: `${Math.min(100, (quota.createdThisWeek / weeklyLimit) * 100)}%` }}
+          />
+        </div>
+      </section>
+
+      <div className="challenges-tabs" role="tablist" aria-label="Objetivos">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={!history}
+          className={`challenges-tab${history ? '' : ' is-active'}`}
+          onClick={() => {
+            setLoadError(null)
+            setHistory(false)
+          }}
+        >
+          Objetivos <span>{activeGoals.length}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={history}
+          className={`challenges-tab${history ? ' is-active' : ''}`}
+          onClick={() => {
+            setLoadError(null)
+            setHistory(true)
+          }}
+        >
+          Historial <span>{historyGoals.length}</span>
         </button>
       </div>
 
-      {error && (
-        <div role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </div>
-      )}
-
-      {showCreate && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(30,27,75,0.65)" }}
-          onClick={() => setShowCreate(false)}
-        >
-          <div
-            className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-fade-up"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">
-                  Nuevo objetivo
-                </h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Define una meta y su recompensa.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500"
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={createGoal} className="p-6 space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Título
-                </span>
-                <input
-                  required
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Ej. Completar el curso de React"
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Descripción
-                </span>
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Describe qué quieres conseguir..."
-                  rows={3}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none resize-none focus:border-indigo-400"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className="text-sm font-semibold text-slate-700">
-                    Fecha de inicio
-                  </span>
-                  <input
-                    required
-                    type="date"
-                    value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
-                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400"
-                  />
-                </label>
-                <label>
-                  <span className="text-sm font-semibold text-slate-700">
-                    Fecha límite
-                  </span>
-                  <input
-                    required
-                    type="date"
-                    min={startDate}
-                    value={endDate}
-                    onChange={(event) => setEndDate(event.target.value)}
-                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400"
-                  />
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className="text-sm font-semibold text-slate-700">
-                    Recompensa XP
-                  </span>
-                  <input
-                    type="number"
-                    min={25}
-                    step={25}
-                    value={xpReward}
-                    onChange={(event) =>
-                      setXpReward(Math.max(25, Number(event.target.value)))
-                    }
-                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400"
-                  />
-                </label>
-                <label>
-                  <span className="text-sm font-semibold text-slate-700">
-                    Recompensa de oro
-                  </span>
-                  <input
-                    type="number"
-                    min={10}
-                    step={5}
-                    value={goldReward}
-                    onChange={(event) =>
-                      setGoldReward(Math.max(10, Number(event.target.value)))
-                    }
-                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400"
-                  />
-                </label>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold"
-                  style={{ background: "var(--color-primary)" }}
-                >
-                  {saving ? "Guardando…" : "Crear objetivo"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {reward && (
-        <div
-          className="mb-4 p-4 rounded-2xl flex items-center gap-4 animate-reward"
-          style={{
-            background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
-            border: "1px solid #c4b5fd",
-          }}
-        >
-          <span className="text-2xl">🎉</span>
-          <div>
-            <p className="font-bold text-indigo-700">¡Objetivo completado!</p>
-            <p className="text-sm text-indigo-500">
-              +{reward.xp} XP • +{reward.gold} oro
-            </p>
-          </div>
-        </div>
+      {loadError && (
+        <p className="challenges-error" role="alert">
+          {goalErrorMessage(loadError)}
+        </p>
       )}
 
       {loading ? (
-        <p className="py-8 text-center text-sm text-slate-500">Cargando objetivos…</p>
-      ) : goals.length === 0 ? (
-        <p className="rounded-2xl border border-slate-100 bg-white py-8 text-center text-sm text-slate-500">
-          Aún no tienes objetivos. Crea uno para empezar.
-        </p>
-      ) : (
-        <div className="space-y-4">
+        <section className="challenges-empty-state" aria-live="polite">
+          <p>Cargando objetivos…</p>
+        </section>
+      ) : goals.length > 0 ? (
+        <section className="challenges-list" aria-live="polite">
           {goals.map((goal) => (
-            <div
+            <GoalCard
               key={goal.id}
-              className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
-            >
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className="font-bold text-slate-800"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {goal.title}
-                      </h3>
-                      <StatusBadge status={goal.status} />
-                    </div>
-                    <p className="text-sm text-slate-500">{goal.description}</p>
-                  </div>
-                  <div className="text-right text-xs text-slate-400 flex-shrink-0">
-                    <p>{goal.startDate}</p>
-                    <p>→ {goal.endDate}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 mt-3 text-xs">
-                  <span style={{ color: "#8b5cf6" }}>⭐ {goal.xpReward} XP</span>
-                  <span style={{ color: "#d97706" }}>
-                    💰 {goal.goldReward} oro
-                  </span>
-                </div>
-              </div>
-
-              {goal.status === "pending" && !evaluating && (
-                <div className="px-5 pb-4">
-                  <button
-                    onClick={() => setEvaluating(goal.id)}
-                    className="text-sm font-semibold text-indigo-600 hover:underline"
-                  >
-                    Finalizar objetivo →
-                  </button>
-                </div>
-              )}
-
-              {evaluating === goal.id && (
-                <div className="border-t border-slate-100 px-5 py-4 bg-slate-50">
-                  <p className="font-semibold text-slate-700 mb-3 text-sm">
-                    ¿Has cumplido este objetivo?
-                  </p>
-                  <div className="flex gap-3 mb-4">
-                    <button
-                      onClick={() => evaluate(goal, "completed")}
-                      disabled={updatingGoal === goal.id || !rating[goal.id]}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition"
-                      style={{
-                        background: "#10b981",
-                        opacity: updatingGoal === goal.id || !rating[goal.id] ? 0.5 : 1,
-                      }}
-                    >
-                      {updatingGoal === goal.id ? "Guardando…" : "✓ Cumplido"}
-                    </button>
-                    <button
-                      onClick={() => evaluate(goal, "failed")}
-                      disabled={updatingGoal === goal.id}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold transition"
-                      style={{ background: "#fee2e2", color: "#ef4444" }}
-                    >
-                      ✗ No cumplido
-                    </button>
-                  </div>
-                  <p className="text-sm text-slate-600 mb-2">
-                    ¿Cómo valorarías tu rendimiento?
-                  </p>
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setRating((r) => ({ ...r, [goal.id]: n }))}
-                        className="w-8 h-8 rounded-lg text-xs font-bold transition"
-                        style={{
-                          background:
-                            rating[goal.id] === n
-                              ? "var(--color-primary)"
-                              : "#e2e8f0",
-                          color: rating[goal.id] === n ? "white" : "#64748b",
-                        }}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              goal={goal}
+              history={history}
+              now={now}
+              busy={busyGoalId === goal.id}
+              deleting={deletingGoalId === goal.id}
+              onEvaluate={() => setEvaluation(goal)}
+              onClaim={() => handleClaim(goal)}
+              onDelete={() => handleDelete(goal)}
+            />
           ))}
-        </div>
+        </section>
+      ) : !loadError ? (
+        <section className="challenges-empty-state" aria-live="polite">
+          <h2>{history ? 'Todavía no tienes objetivos en el historial' : 'Todavía no tienes objetivos activos'}</h2>
+          <p>{history ? 'Los objetivos completados o fallidos aparecerán aquí.' : 'Crea un objetivo para empezar.'}</p>
+        </section>
+      ) : null}
+
+      {showForm && (
+        <GoalFormModal
+          quotaReached={quotaReached}
+          defaults={formDefaults}
+          onClose={() => setShowForm(false)}
+          onCreated={() => {
+            setShowForm(false)
+            setHistory(false)
+            refresh()
+          }}
+        />
       )}
+      {evaluation && (
+        <GoalEvaluationModal
+          goal={evaluation}
+          busy={busyGoalId === evaluation.id}
+          onClose={() => setEvaluation(null)}
+          onSubmit={(completed, rating) => handleEvaluate(evaluation, completed, rating)}
+        />
+      )}
+      {rewardToast && (
+        <RewardToast
+          reward={rewardToast}
+          onClose={() => setRewardToast(null)}
+        />
+      )}
+    </main>
+  )
+}
+
+function GoalCard({ goal, history, now, busy, deleting, onEvaluate, onClaim, onDelete }) {
+  const isSuccessful = goal.completed && goal.rating !== null
+  const claimableAt = goal.rewardClaimableAt ? new Date(goal.rewardClaimableAt).getTime() : Infinity
+  const canClaim = history && isSuccessful && !goal.rewardClaimed && now >= claimableAt
+  const canEvaluate = !history && goal.endDate && now >= new Date(goal.endDate).getTime()
+  const tier = GOAL_REWARD_TIERS.find((option) => option.level === goal.rewardTier)
+  const hasReward = goal.xpReward > 0 || goal.goldReward > 0
+
+  return (
+    <article className="challenge-card">
+      <button
+        type="button"
+        className="challenge-delete-button"
+        onClick={onDelete}
+        disabled={deleting}
+        aria-label={`Eliminar objetivo ${history ? 'del historial' : 'activo'}`}
+      >
+        ×
+      </button>
+      <div className="challenge-card-heading">
+        <div>
+          <p className="challenge-task-name">
+            {goal.rewardTier > 0
+              ? `OBJETIVO · NIVEL ${goal.rewardTier}${tier ? ` · ${tier.name}` : ''}`
+              : 'OBJETIVO · RECOMPENSA ANTERIOR'}
+          </p>
+          <h2>{goal.title}</h2>
+        </div>
+        <span className={`challenge-status${isSuccessful ? ' is-completed' : ''}`}>
+          {goal.status === 'failed' ? 'No cumplido' : isSuccessful ? 'Completado' : 'Activo'}
+        </span>
+      </div>
+      <p className="challenge-description">{goal.description}</p>
+      <div className="challenge-card-meta">
+        <span>Inicio: <strong>{formatDateTime(goal.startDate)}</strong></span>
+        <span>Fin: <strong>{formatDateTime(goal.endDate)}</strong></span>
+        <span>✨ {goal.xpReward} XP</span>
+        <span>🪙 {goal.goldReward} oro</span>
+      </div>
+      <div className="challenge-card-actions">
+        {history ? (
+          isSuccessful ? (
+            !hasReward ? (
+              <span className="challenge-task-status">Sin recompensa configurada</span>
+            ) : goal.rewardClaimed ? (
+              <span className="challenge-task-status is-completed">Recompensa reclamada</span>
+            ) : canClaim ? (
+              <button type="button" className="challenge-action-button" onClick={onClaim} disabled={busy}>
+                {busy ? 'Reclamando…' : '🎁 Reclamar recompensa'}
+              </button>
+            ) : (
+              <span className="challenge-task-status">
+                Disponible para reclamar: {formatDateTime(goal.rewardClaimableAt)}
+              </span>
+            )
+          ) : (
+            <span className="challenge-task-status is-not_completed">Este objetivo no se completó</span>
+          )
+        ) : (
+          <button
+            type="button"
+            className="challenge-action-button"
+            onClick={onEvaluate}
+            disabled={!canEvaluate}
+            title={!canEvaluate ? 'Podrás evaluar el objetivo cuando llegue su fecha de fin' : undefined}
+          >
+            {canEvaluate ? '✓ Evaluar objetivo' : `Evaluable el ${formatDateTime(goal.endDate)}`}
+          </button>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function GoalFormModal({ quotaReached, defaults, onClose, onCreated }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [startDate, setStartDate] = useState(defaults.startDate)
+  const [endDate, setEndDate] = useState(defaults.endDate)
+  const [rewardTier, setRewardTier] = useState(1)
+  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const selectedTier = GOAL_REWARD_TIERS.find((tier) => tier.level === rewardTier)
+  const minStart = defaults.minStart
+  const minEnd = startDate
+    ? localDateTimeInput(new Date(new Date(startDate).getTime() + 12 * 60 * 60_000))
+    : minStart
+
+  async function submit(event) {
+    event.preventDefault()
+    if (!title.trim() || !startDate || !endDate) {
+      setError('Completa el título y las fechas del objetivo.')
+      return
+    }
+    if (new Date(startDate) < new Date(minStart) || new Date(endDate) < new Date(minEnd)) {
+      setError('El objetivo debe empezar ahora o más tarde y durar al menos 12 horas.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      await createGoal({
+        title: title.trim(),
+        description: description.trim(),
+        startDate,
+        endDate,
+        rewardTier,
+      })
+      onCreated()
+    } catch (requestError) {
+      setError(requestError.message || 'No se pudo crear el objetivo.')
+      setBusy(false)
+    }
+  }
+
+  const dialogRef = useRef(null)
+  useEffect(() => {
+    if (!dialogRef.current?.open) dialogRef.current?.showModal()
+  }, [])
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="challenge-modal"
+      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === dialogRef.current) dialogRef.current.close()
+      }}
+    >
+      <form className="challenge-form" onSubmit={submit} noValidate>
+        <header className="challenge-form-header">
+          <div>
+            <h2>Crear objetivo</h2>
+            <p>Máximo de tres objetivos por semana · duración mínima: 12 horas</p>
+          </div>
+          <button type="button" className="challenge-form-close" onClick={() => dialogRef.current.close()} aria-label="Cerrar">
+            ×
+          </button>
+        </header>
+
+        <label className="challenge-field">
+          <span>Título</span>
+          <input
+            type="text"
+            value={title}
+            maxLength={120}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Ej. Completar el curso de React"
+            required
+          />
+        </label>
+        <label className="challenge-field">
+          <span>Descripción</span>
+          <textarea
+            rows={3}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Describe qué quieres conseguir..."
+          />
+        </label>
+        <div className="challenge-custom-fields goal-date-fields">
+          <label className="challenge-field">
+            <span>Inicio</span>
+            <input
+              type="datetime-local"
+              value={startDate}
+              min={minStart}
+              onChange={(event) => {
+                const nextStart = event.target.value
+                setStartDate(nextStart)
+                if (nextStart && (!endDate || new Date(endDate) < new Date(new Date(nextStart).getTime() + 12 * 60 * 60_000))) {
+                  setEndDate(localDateTimeInput(new Date(new Date(nextStart).getTime() + 12 * 60 * 60_000)))
+                }
+              }}
+              required
+            />
+          </label>
+          <label className="challenge-field">
+            <span>Fin</span>
+            <input
+              type="datetime-local"
+              value={endDate}
+              min={minEnd}
+              onChange={(event) => setEndDate(event.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <fieldset className="challenge-field">
+          <legend>Nivel de recompensa</legend>
+          <div className="challenge-difficulty-grid">
+            {GOAL_REWARD_TIERS.map((tier) => (
+              <label
+                key={tier.level}
+                className={`challenge-difficulty-choice${rewardTier === tier.level ? ' is-selected' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="goal-reward-tier"
+                  value={tier.level}
+                  checked={rewardTier === tier.level}
+                  onChange={() => setRewardTier(tier.level)}
+                />
+                <span>
+                  <strong>Nivel {tier.level}</strong>
+                  <small>✨ {tier.xp} XP · 🪙 {tier.gold} oro</small>
+                    <small>Reclama tras {tier.claimWaitHours} h desde el fin</small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {selectedTier && (
+          <div className="challenge-reward-preview">
+            <span>Recompensa seleccionada</span>
+            <span>✨ {selectedTier.xp} XP · 🪙 {selectedTier.gold} oro</span>
+          </div>
+        )}
+        {quotaReached && <p className="challenge-form-error" role="alert">Ya has creado tres objetivos esta semana.</p>}
+        {error && <p className="challenge-form-error" role="alert">{error}</p>}
+
+        <footer className="challenge-form-actions">
+          <button type="button" className="challenge-form-cancel" onClick={() => dialogRef.current.close()} disabled={busy}>
+            Cancelar
+          </button>
+          <button type="submit" className="challenge-form-submit" disabled={busy || quotaReached}>
+            {busy ? 'Creando…' : 'Crear objetivo'}
+          </button>
+        </footer>
+      </form>
+    </dialog>
+  )
+}
+
+function GoalEvaluationModal({ goal, busy, onClose, onSubmit }) {
+  const [rating, setRating] = useState(5)
+  const [error, setError] = useState(null)
+
+  async function submit(completed) {
+    setError(null)
+    const saved = await onSubmit(completed, completed ? rating : null)
+    if (!saved) setError('No se pudo guardar la evaluación. Inténtalo de nuevo.')
+  }
+
+  return (
+    <dialog className="challenge-modal challenge-evaluation-modal" open>
+      <div className="challenge-evaluation">
+        <h2>Evaluar objetivo</h2>
+        <p>“{goal.title}”</p>
+        <h3>¿Has cumplido el objetivo?</h3>
+        <div className="challenge-evaluation-actions">
+          <button
+            type="button"
+            className="challenge-success-button"
+            onClick={() => submit(true)}
+            disabled={busy}
+          >
+            {busy ? 'Guardando…' : '✓ Sí, lo cumplí'}
+          </button>
+          <button
+            type="button"
+            className="challenge-failure-button"
+            onClick={() => submit(false)}
+            disabled={busy}
+          >
+            × No lo cumplí
+          </button>
+        </div>
+        <label className="challenge-rating">
+          Satisfacción: {rating}/10
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={rating}
+            onChange={(event) => setRating(Number(event.target.value))}
+          />
+        </label>
+        {error && <p className="challenge-form-error" role="alert">{error}</p>}
+        <button type="button" className="challenge-evaluation-cancel" onClick={onClose} disabled={busy}>
+          Cancelar
+        </button>
+      </div>
+    </dialog>
+  )
+}
+
+function RewardToast({ reward, onClose }) {
+  useEffect(() => {
+    const timer = window.setTimeout(onClose, 5000)
+    return () => window.clearTimeout(timer)
+  }, [onClose])
+
+  return (
+    <div className="reward-toast" role="status">
+      <div className="reward-toast-icon" aria-hidden="true">🎉</div>
+      <div>
+        <strong>¡Objetivo reclamado!</strong>
+        <p>La recompensa se ha añadido a tu personaje.</p>
+        <div className="reward-toast-values">
+          <span>✨ +{reward.xp} XP</span>
+          <span>🪙 +{reward.gold} oro</span>
+        </div>
+      </div>
+      <button type="button" onClick={onClose} aria-label="Cerrar">×</button>
     </div>
   )
 }
-function StatusBadge({ status }) {
-  const map = {
-    pending: { label: "Activo", bg: "#e0f2fe", color: "#0284c7" },
-    completed: { label: "Completado", bg: "#d1fae5", color: "#059669" },
-    failed: { label: "Fallido", bg: "#fee2e2", color: "#ef4444" },
-  }
-  const { label, bg, color } = map[status] ?? map.pending
-  return (
-    <span
-      className="text-xs px-2 py-0.5 rounded-full font-medium"
-      style={{ background: bg, color }}
-    >
-      {label}
-    </span>
-  )
+
+function goalErrorMessage(error) {
+  if (error.status === 401) return 'Tu sesión ha caducado. Vuelve a iniciar sesión.'
+  if (error.status === 404) return 'El backend todavía no tiene disponible la función de objetivos (404).'
+  if (error.status === 409) return error.message
+  if (error.status >= 500) return `El backend no pudo completar la operación (${error.status}). ${error.message || ''}`
+  return `No se pudieron cargar o actualizar los objetivos${error.status ? ` (${error.status})` : ''}.`
+}
+
+function localDateTimeInput(date) {
+  const offset = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
+function formatDateTime(value) {
+  if (!value) return '—'
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }

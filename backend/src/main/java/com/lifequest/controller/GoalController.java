@@ -5,17 +5,20 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lifequest.model.dto.GoalDto;
 import com.lifequest.model.dto.GoalEvaluationRequestDto;
+import com.lifequest.model.dto.GoalQuotaDto;
 import com.lifequest.model.dto.GoalRequestDto;
 import com.lifequest.service.GoalService;
 import com.lifequest.service.UserService;
@@ -33,8 +36,15 @@ public class GoalController {
 	}
 
 	@GetMapping
-	public List<GoalDto> list(@AuthenticationPrincipal Jwt jwt) {
-		return goalService.findForUser(userService.getIdByAuthSubject(jwt.getSubject()));
+	public List<GoalDto> list(
+			@AuthenticationPrincipal Jwt jwt,
+			@RequestParam(defaultValue = "false") boolean history) {
+		return goalService.findForUser(userService.getIdByAuthSubject(jwt.getSubject()), history);
+	}
+
+	@GetMapping("/quota")
+	public GoalQuotaDto quota(@AuthenticationPrincipal Jwt jwt) {
+		return goalService.getQuota(userService.getIdByAuthSubject(jwt.getSubject()));
 	}
 
 	@PostMapping
@@ -49,5 +59,16 @@ public class GoalController {
 			@PathVariable Long goalId,
 			@RequestBody GoalEvaluationRequestDto request) {
 		return goalService.evaluate(userService.getIdByAuthSubject(jwt.getSubject()), goalId, request);
+	}
+
+	@PostMapping("/{goalId}/claim")
+	public GoalDto claim(@AuthenticationPrincipal Jwt jwt, @PathVariable Long goalId) {
+		return goalService.claim(userService.getIdByAuthSubject(jwt.getSubject()), goalId);
+	}
+
+	@DeleteMapping("/{goalId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Long goalId) {
+		goalService.delete(userService.getIdByAuthSubject(jwt.getSubject()), goalId);
 	}
 }

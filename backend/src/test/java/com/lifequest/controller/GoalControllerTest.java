@@ -7,7 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDate;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.lifequest.config.CorsConfig;
 import com.lifequest.config.SecurityConfig;
 import com.lifequest.model.dto.GoalDto;
+import com.lifequest.model.dto.GoalQuotaDto;
 import com.lifequest.service.GoalService;
 import com.lifequest.service.UserService;
 
@@ -45,21 +47,37 @@ class GoalControllerTest {
 	}
 
 	@Test
-	void returnsGoalsForAuthenticatedUser() throws Exception {
+	void returnsActiveGoalsForAuthenticatedUser() throws Exception {
 		GoalDto goal = new GoalDto(4L, "Leer un libro", "Terminar el libro elegido",
-				LocalDate.parse("2026-11-01"), LocalDate.parse("2026-11-30"),
-				false, null, "pending", 200, 75);
-		when(goalService.findForUser(7L)).thenReturn(List.of(goal));
+				Instant.parse("2026-11-01T10:00:00Z"),
+				LocalDateTime.parse("2026-11-01T10:00:00"),
+				LocalDateTime.parse("2026-11-30T10:00:00"),
+				false, null, "pending", 1, 100, 50,
+				Instant.parse("2026-12-01T10:00:00Z"), false);
+		when(goalService.findForUser(7L, false)).thenReturn(List.of(goal));
 
 		mockMvc.perform(get("/api/players/me/goals")
+				.param("history", "false")
 				.with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].id").value(4))
 				.andExpect(jsonPath("$[0].title").value("Leer un libro"))
 				.andExpect(jsonPath("$[0].status").value("pending"))
-				.andExpect(jsonPath("$[0].xpReward").value(200));
+				.andExpect(jsonPath("$[0].xpReward").value(100))
+				.andExpect(jsonPath("$[0].rewardTier").value(1));
 
-		verify(goalService).findForUser(7L);
+		verify(goalService).findForUser(7L, false);
+	}
+
+	@Test
+	void returnsWeeklyQuota() throws Exception {
+		when(goalService.getQuota(7L)).thenReturn(new GoalQuotaDto(2, 3));
+
+		mockMvc.perform(get("/api/players/me/goals/quota")
+				.with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.createdThisWeek").value(2))
+				.andExpect(jsonPath("$.weeklyLimit").value(3));
 	}
 
 	@Test

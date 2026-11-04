@@ -1,13 +1,13 @@
 package com.lifequest.service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.Collection;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +17,10 @@ import com.lifequest.exception.InvalidStateException;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.GoalDto;
 import com.lifequest.model.dto.GoalEvaluationRequestDto;
+import com.lifequest.model.dto.GoalQuotaDto;
 import com.lifequest.model.dto.GoalRequestDto;
 import com.lifequest.model.entity.Goal;
+import com.lifequest.model.entity.GoalRewardTier;
 import com.lifequest.model.entity.Reward;
 import com.lifequest.repository.GoalRepository;
 
@@ -26,6 +28,9 @@ import com.lifequest.repository.GoalRepository;
 public class GoalService {
 	private static final String SHOWN = "SHOWN";
 	private static final String DELETED = "DELETED";
+	private static final int WEEKLY_LIMIT = 3;
+	private static final int MINIMUM_DURATION_HOURS = 12;
+	private static final int LEGACY_REWARD_WAIT_HOURS = 72;
 
 	private final GoalRepository goalRepository;
 	private final UserService userService;
@@ -47,35 +52,41 @@ public class GoalService {
 	}
 
 	@Transactional(readOnly = true)
-	public Map<Long, Goal> getGoalsByIds(Collection<Long> goalIds) {
-		if (goalIds.isEmpty()) {
-			return Map.of();
-		}
-		return goalRepository.findAllById(goalIds).stream()
-				.collect(Collectors.toMap(Goal::getId, goal -> goal));
-	}
-
-	@Transactional(readOnly = true)
-	public List<GoalDto> findForUser(Long userId) {
+	public List<GoalDto> findForUser(Long userId, boolean history) {
 		userService.getById(userId);
-		return goalRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+		return goalRepository.findByUserIdAndCompletedOrderByCreatedAtDesc(userId, history).stream()
 				.filter(goal -> !DELETED.equals(goal.getVisibility()))
 				.map(this::toDto)
 				.toList();
 	}
 
+	@Transactional(readOnly = true)
+	public GoalQuotaDto getQuota(Long userId) {
+		userService.getById(userId);
+		WeekWindow week = currentWeek();
+		long created = goalRepository.countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+				userId, week.start(), week.end());
+		return new GoalQuotaDto(created, WEEKLY_LIMIT);
+	}
+
 	@Transactional
 	public GoalDto create(Long userId, GoalRequestDto request) {
-		userService.getById(userId);
-		validateRequest(request);
+		userService.lockForUpdate(userId);
+		GoalRewardTier tier = validateRequest(request);
+		WeekWindow week = currentWeek();
+		long created = goalRepository.countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+				userId, week.start(), week.end());
+		if (created >= WEEKLY_LIMIT) {
+			throw new InvalidStateException("You can create at most three goals per week");
+		}
 
-		long rewardId = rewardService.create(userId, request.xpReward(), request.goldReward());
+		long rewardId = rewardService.create(userId, tier.xp(), tier.gold());
 		Goal goal = new Goal();
 		goal.setUserId(userId);
 		goal.setName(request.title().trim());
 		goal.setDescription(normalize(request.description()));
-		goal.setStartDate(atStartOfDay(request.startDate()));
-		goal.setEndDate(atStartOfDay(request.endDate()));
+		goal.setStartDate(toInstant(request.startDate()));
+		goal.setEndDate(toInstant(request.endDate()));
 		goal.setRewardId(rewardId);
 		goal.setCompleted(false);
 		goal.setVisibility(SHOWN);
@@ -84,48 +95,68 @@ public class GoalService {
 
 	@Transactional
 	public GoalDto evaluate(Long userId, Long goalId, GoalEvaluationRequestDto request) {
-		Goal goal = findOwned(userId, goalId);
+		Goal goal = findOwnedForUpdate(userId, goalId);
 		if (goal.isCompleted()) {
 			throw new InvalidStateException("Goal was already evaluated");
 		}
 		if (request == null || request.completed() == null) {
 			throw new InvalidRequestException("completed is required");
 		}
+		if (goal.getEndDate() == null) {
+			throw new InvalidStateException("Goal has no end date and cannot be evaluated");
+		}
+		if (clock.instant().isBefore(goal.getEndDate())) {
+			throw new InvalidStateException("Goal cannot be evaluated before its end date");
+		}
 
 		Short rating = request.rating();
-		if (request.completed() && (rating == null || rating < 1 || rating > 5)) {
-			throw new InvalidRequestException("rating must be between 1 and 5 for a completed goal");
+		if (request.completed() && (rating == null || rating < 1 || rating > 10)) {
+			throw new InvalidRequestException("rating must be between 1 and 10");
 		}
 		goal.setCompleted(true);
 		goal.setRating(request.completed() ? rating : null);
-		Goal saved = goalRepository.save(goal);
-
-		if (request.completed() && goal.getRewardId() != null) {
-			Reward reward = rewardService.getById(goal.getRewardId());
-			rewardService.claim(reward, reward.getXpReward(), clock.instant());
-			characterStatsService.addXp(userId, reward.getXpReward());
-			characterStatsService.addGold(userId, reward.getGoldReward());
-		}
-		return toDto(saved);
+		return toDto(goalRepository.save(goal));
 	}
 
 	@Transactional
-	public void updateVisibility(Long goalId, Long userId, String visibility) {
-		if (!"SHOWN".equals(visibility) && !"HIDDEN".equals(visibility) && !DELETED.equals(visibility)) {
-			throw new InvalidRequestException("visibility is invalid");
+	public GoalDto claim(Long userId, Long goalId) {
+		Goal goal = findOwnedForUpdate(userId, goalId);
+		if (!goal.isCompleted() || goal.getRating() == null) {
+			throw new InvalidStateException("Only successfully completed goals can be claimed");
 		}
-		Goal goal = findOwned(userId, goalId);
-		goal.setVisibility(visibility);
+		if (goal.getRewardId() == null) {
+			throw new InvalidStateException("Goal has no reward to claim");
+		}
+
+		Reward reward = rewardService.getById(goal.getRewardId());
+		if (reward.getClaimedAt() != null) {
+			throw new InvalidStateException("Goal reward was already claimed");
+		}
+		GoalRewardTier tier = GoalRewardTier.findByReward(
+				reward.getXpReward(), reward.getGoldReward()).orElse(null);
+		Instant claimableAt = claimableAt(goal, tier);
+		Instant now = clock.instant();
+		if (claimableAt == null) {
+			throw new InvalidStateException("Goal has no date from which its reward can become available");
+		}
+		if (now.isBefore(claimableAt)) {
+			throw new InvalidStateException("Goal reward is not available until " + claimableAt);
+		}
+
+		rewardService.claim(reward, reward.getXpReward(), now);
+		characterStatsService.addXp(userId, reward.getXpReward());
+		characterStatsService.addGold(userId, reward.getGoldReward());
+		return toDto(goal);
+	}
+
+	@Transactional
+	public void delete(Long userId, Long goalId) {
+		Goal goal = findOwnedForUpdate(userId, goalId);
+		goal.setVisibility(DELETED);
 		goalRepository.save(goal);
 	}
 
-	private Goal findOwned(Long userId, Long goalId) {
-		return goalRepository.findByIdAndUserId(goalId, userId)
-				.filter(goal -> !DELETED.equals(goal.getVisibility()))
-				.orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
-	}
-
-	private void validateRequest(GoalRequestDto request) {
+	private GoalRewardTier validateRequest(GoalRequestDto request) {
 		if (request == null) {
 			throw new InvalidRequestException("Goal is required");
 		}
@@ -136,45 +167,75 @@ public class GoalService {
 		if (request.startDate() == null || request.endDate() == null) {
 			throw new InvalidRequestException("startDate and endDate are required");
 		}
-		if (request.endDate().isBefore(request.startDate())) {
-			throw new InvalidRequestException("endDate must not be before startDate");
+		LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), clock.getZone());
+		if (request.startDate().isBefore(now) || request.endDate().isBefore(now)) {
+			throw new InvalidRequestException("Goal dates cannot be in the past");
 		}
-		if (request.xpReward() < 25 || request.goldReward() < 10) {
-			throw new InvalidRequestException("xpReward must be at least 25 and goldReward at least 10");
+		if (Duration.between(request.startDate(), request.endDate())
+				.compareTo(Duration.ofHours(MINIMUM_DURATION_HOURS)) < 0) {
+			throw new InvalidRequestException("A goal must last at least 12 hours");
 		}
+		return GoalRewardTier.fromLevel(request.rewardTier());
+	}
+
+	private Goal findOwnedForUpdate(Long userId, Long goalId) {
+		return goalRepository.findForUpdateByIdAndUserId(goalId, userId)
+				.filter(goal -> !DELETED.equals(goal.getVisibility()))
+				.orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 	}
 
 	private GoalDto toDto(Goal goal) {
-		long xpReward = 0;
-		long goldReward = 0;
-		if (goal.getRewardId() != null) {
-			Reward reward = rewardService.getById(goal.getRewardId());
-			xpReward = reward.getXpReward();
-			goldReward = reward.getGoldReward();
-		}
+		Reward reward = goal.getRewardId() == null ? null : rewardService.getById(goal.getRewardId());
+		long xp = reward == null ? 0 : reward.getXpReward();
+		long gold = reward == null ? 0 : reward.getGoldReward();
+		Optional<GoalRewardTier> tier = reward == null
+				? Optional.empty()
+				: GoalRewardTier.findByReward(xp, gold);
 		String status = !goal.isCompleted() ? "pending" : goal.getRating() == null ? "failed" : "completed";
 		return new GoalDto(
 				goal.getId(),
 				goal.getName(),
 				goal.getDescription(),
-				toDate(goal.getStartDate()),
-				toDate(goal.getEndDate()),
+				goal.getCreatedAt() == null ? clock.instant() : goal.getCreatedAt(),
+				toLocalDateTime(goal.getStartDate()),
+				toLocalDateTime(goal.getEndDate()),
 				goal.isCompleted(),
 				goal.getRating(),
 				status,
-				xpReward,
-				goldReward);
+				tier.map(GoalRewardTier::level).orElse(0),
+				xp,
+				gold,
+				reward == null ? null : claimableAt(goal, tier.orElse(null)),
+				reward != null && reward.getClaimedAt() != null);
 	}
 
-	private static Instant atStartOfDay(LocalDate date) {
-		return date.atStartOfDay(ZoneOffset.UTC).toInstant();
+	private Instant claimableAt(Goal goal, GoalRewardTier tier) {
+		Instant reference = goal.getEndDate() == null ? goal.getCreatedAt() : goal.getEndDate();
+		int waitHours = tier == null ? LEGACY_REWARD_WAIT_HOURS : tier.claimWaitHours();
+		return reference == null ? null : reference.plus(Duration.ofHours(waitHours));
 	}
 
-	private static LocalDate toDate(Instant instant) {
-		return instant == null ? null : instant.atZone(ZoneOffset.UTC).toLocalDate();
+	private Instant toInstant(LocalDateTime dateTime) {
+		return dateTime.atZone(clock.getZone()).toInstant();
+	}
+
+	private LocalDateTime toLocalDateTime(Instant instant) {
+		return instant == null ? null : LocalDateTime.ofInstant(instant, clock.getZone());
+	}
+
+	private WeekWindow currentWeek() {
+		ZoneId zone = clock.getZone();
+		LocalDate today = LocalDate.now(clock);
+		LocalDate monday = today.minusDays(today.getDayOfWeek().getValue() - 1L);
+		return new WeekWindow(
+				monday.atStartOfDay(zone).toInstant(),
+				monday.plusWeeks(1).atStartOfDay(zone).toInstant());
 	}
 
 	private static String normalize(String value) {
 		return value == null || value.isBlank() ? "Sin descripción." : value.trim();
+	}
+
+	private record WeekWindow(Instant start, Instant end) {
 	}
 }
