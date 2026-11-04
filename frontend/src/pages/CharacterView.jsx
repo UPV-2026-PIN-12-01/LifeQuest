@@ -6,6 +6,8 @@ import {
   INITIAL_INVENTORY,
 } from "../data"
 import warriorImg from "../assets/warrior1.png"
+import archerImg from "../assets/archer1.png"
+import magicianImg from "../assets/magician1.png"
 import AvatarDisplay from "../components/AvatarDisplay"
 import { getJson } from "../services/http.js"
 const STAT_META = [
@@ -24,6 +26,11 @@ const CATEGORY_FILTERS = [
   "Accesorio",
   "Poción",
 ]
+const PLAYER_CLASS_META = {
+  knight: { name: "Guerrero", image: warriorImg },
+  archer: { name: "Arquero", image: archerImg },
+  magician: { name: "Mago", image: magicianImg },
+}
 function RarityBadge({ rarity }) {
   const meta = RARITY_META[rarity]
   return (
@@ -245,6 +252,8 @@ export default function Character({
 
   stats = loadedStats ?? INITIAL_STATS
   const displayName = loadedStats?.playerName ?? playerName
+  const playerClass =
+    PLAYER_CLASS_META[loadedStats?.playerClass] ?? PLAYER_CLASS_META.knight
 
   const [tab, setTab] = useState(initialTab)
   const [filter, setFilter] = useState("Todos")
@@ -413,15 +422,15 @@ export default function Character({
                 />
               ) : (
                 <img
-                  src={warriorImg}
-                  alt="Guerrero"
+                  src={playerClass.image}
+                  alt={playerClass.name}
                   className="w-full h-full object-contain drop-shadow-2xl"
                 />
               )}
             </div>
             <h2 className="text-xl font-bold text-slate-800">{displayName}</h2>
             <p className="text-sm text-slate-500 mb-4">
-              Caballero · Nivel {stats.level}
+              {playerClass.name} · Nivel {stats.level}
             </p>
             <div className="w-full">
               <div className="flex justify-between text-xs text-slate-500 mb-1.5">

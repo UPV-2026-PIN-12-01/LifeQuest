@@ -48,6 +48,20 @@ public class CharacterStatsService {
 		return characterStatsRepository.save(stats);
 	}
 
+	@Transactional
+	public CharacterStats addGold(Long userId, long gold) {
+		if (gold < 0) {
+			throw new InvalidRequestException("Gold increment must be non-negative");
+		}
+		CharacterStats stats = getByUserId(userId);
+		try {
+			stats.setGold(Math.addExact(stats.getGold(), gold));
+		} catch (ArithmeticException ex) {
+			throw new InvalidRequestException("Gold increment exceeds the supported range");
+		}
+		return characterStatsRepository.save(stats);
+	}
+
 
 	public void increaseCharacterStatsForLvlUp(Long userId) {
 		increaseCharacterStats(userId, 10, 5, 5, 5, 5);
