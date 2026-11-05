@@ -40,7 +40,7 @@ class ChallengeServiceTest {
 		reward.setGoldReward(10L);
 		TaskDto taskDto = new TaskDto(
 				1L, "Leer", "", "📘", "blue", "2026-11-05", "10:00", "11:00",
-				"pending", "low", 10L, ActivityType.STUDY, "none", null, false, 0);
+				"pending", "low", 10L, 5L, ActivityType.STUDY, "none", null, false, 0);
 		when(taskService.findOwned(7L, 1L)).thenReturn(task);
 		when(taskService.describe(task)).thenReturn(taskDto);
 		when(rewardService.create(7L, 25L, 10L, RewardSource.CHALLENGE)).thenReturn(9L);

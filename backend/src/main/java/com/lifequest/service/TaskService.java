@@ -28,6 +28,7 @@ import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.model.entity.RewardSource;
+import com.lifequest.model.entity.Reward;
 import com.lifequest.model.entity.User;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
@@ -84,14 +85,14 @@ public class TaskService {
 		User user = userService.getById(userId);
 
 		List<Task> tasks = findTasks(userId, from, to);
-		Map<Long, Long> xpByReward = rewardService.xpByRewardId(
+		Map<Long, Reward> rewardById = rewardService.rewardsById(
 				tasks.stream().map(Task::getRewardId).filter(Objects::nonNull).distinct().toList());
 		Map<Long, TaskSession> sessionByTask = tasks.isEmpty() ? Map.of()
 				: taskSessionRepository.findByTaskIdIn(tasks.stream().map(Task::getId).toList()).stream()
 						.collect(Collectors.toMap(TaskSession::getTaskId, Function.identity()));
 		Instant now = clock.instant();
 		return tasks.stream()
-				.map(task -> toDto(task, xpByReward, sessionByTask.get(task.getId()), now, user))
+				.map(task -> toDto(task, rewardById, sessionByTask.get(task.getId()), now, user))
 				.toList();
 	}
 
@@ -113,7 +114,7 @@ public class TaskService {
 		long xp = XP_BY_PRIORITY.get(request.priority());
 		long gold = GOLD_BY_PRIORITY.get(request.priority());
 		task.setRewardId(rewardService.create(userId, xp, gold, RewardSource.TASK));
-		return toDto(taskRepository.save(task), xp, user);
+		return toDto(taskRepository.save(task), xp, gold, null, clock.instant(), user);
 	}
 
 	// Status is not part of the form, so editing keeps it; the reward XP follows the new priority.
@@ -132,7 +133,7 @@ public class TaskService {
 		} else {
 			rewardService.updateTaskReward(task.getRewardId(), xp, gold, RewardSource.TASK);
 		}
-		return toDto(taskRepository.save(task), xp, userService.getById(userId));
+		return toDto(taskRepository.save(task), xp, gold, null, clock.instant(), userService.getById(userId));
 	}
 
 	// Deletes the row for real, and its reward unless another task still points to it.
@@ -202,17 +203,12 @@ public class TaskService {
 		return date.atTime(time).atZone(clock.getZone()).toInstant();
 	}
 
-	private TaskDto toDto(Task task, long xp, User user) {
-		return toDto(task, task.getRewardId() == null ? Map.of() : Map.of(task.getRewardId(), xp),
-				null, clock.instant(), user);
-	}
-
 	// The calendar shape of one task with its current reward and session, for the completion endpoints.
 	public TaskDto describe(Task task) {
-		Map<Long, Long> xpByReward = task.getRewardId() == null ? Map.of()
-				: rewardService.xpByRewardId(List.of(task.getRewardId()));
+		Map<Long, Reward> rewardById = task.getRewardId() == null ? Map.of()
+				: rewardService.rewardsById(List.of(task.getRewardId()));
 		TaskSession session = taskSessionRepository.findByTaskId(task.getId()).orElse(null);
-		return toDto(task, xpByReward, session, clock.instant(), userService.getById(task.getUserId()));
+		return toDto(task, rewardById, session, clock.instant(), userService.getById(task.getUserId()));
 	}
 
 	private List<Task> findTasks(Long userId, LocalDate from, LocalDate to) {
@@ -223,17 +219,23 @@ public class TaskService {
 				userId, start, endExclusive);
 	}
 
-	private TaskDto toDto(Task task, Map<Long, Long> xpByReward, TaskSession session, Instant now, User user) {
+	private TaskDto toDto(Task task, Map<Long, Reward> rewardById, TaskSession session, Instant now, User user) {
+		Reward reward = task.getRewardId() == null ? null : rewardById.get(task.getRewardId());
+		return toDto(task, reward == null ? 0 : reward.getXpReward(),
+				reward == null ? 0 : reward.getGoldReward(), session, now, user);
+	}
+
+	private TaskDto toDto(Task task, long xp, long gold, TaskSession session, Instant now, User user) {
 		ZoneId zone = clock.getZone();
 		ZonedDateTime start = task.getStartTime().atZone(zone);
 		ZonedDateTime end = task.getEndTime().atZone(zone);
-		long xp = task.getRewardId() == null ? 0 : xpByReward.getOrDefault(task.getRewardId(), 0L);
 		if (!DB_STATUS_DONE.equals(task.getStatus())) {
 			double streakMultiplier = UserStreakService.multiplierForNextTask(user.getTaskStreak());
 			double accountMultiplier = UserStreakService.accountMultiplier(user, LocalDate.now(clock));
-			xp = TaskVerification.of(task, session, now).apply(
-					xp, Duration.between(task.getStartTime(), task.getEndTime()), streakMultiplier);
+			Duration duration = Duration.between(task.getStartTime(), task.getEndTime());
+			xp = TaskVerification.of(task, session, now).apply(xp, duration, streakMultiplier);
 			xp = Math.round(xp * accountMultiplier);
+			gold = Math.round(gold * TaskDurationReward.multiplier(duration));
 		}
 		return new TaskDto(
 				task.getId(),
@@ -247,6 +249,7 @@ public class TaskService {
 				displayStatus(task, now),
 				displayPriority(task.getPriority()),
 				xp,
+				gold,
 				task.getActivityType(),
 				TaskVerification.of(task, session, now).id(),
 				session == null ? null : session.getStartedAt().toString(),

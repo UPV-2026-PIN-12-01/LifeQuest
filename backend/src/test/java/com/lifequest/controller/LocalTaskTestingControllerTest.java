@@ -50,7 +50,7 @@ class LocalTaskTestingControllerTest {
 	void instantlyCompletesAuthenticatedUsersTask() throws Exception {
 		TaskDto completed = new TaskDto(
 				5L, "Test task", "", "📘", "blue", "2026-11-05", "10:00", "11:00",
-				"completed", "low", 10L, null, "none", null, false, 0);
+				"completed", "low", 10L, 5L, null, "none", null, false, 0);
 		when(userService.getIdByAuthSubject(AUTH_SUBJECT)).thenReturn(7L);
 		when(taskCompletionService.completeInstantlyForTesting(7L, 5L)).thenReturn(completed);
 

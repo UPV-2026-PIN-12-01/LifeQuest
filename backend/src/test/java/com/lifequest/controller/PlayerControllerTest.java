@@ -54,14 +54,15 @@ class PlayerControllerTest {
 	void returnsWeekTasks() throws Exception {
 		when(taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11")))
 			.thenReturn(List.of(new TaskDto(1L, "Repasar test-can-delete-later", "Descripción test-can-delete-later", "📘", "purple",
-						"2026-10-05", "09:00", "10:30", "completed", "medium", 50, ActivityType.STUDY, "none", null, false, 0)));
+						"2026-10-05", "09:00", "10:30", "completed", "medium", 50, 8, ActivityType.STUDY, "none", null, false, 0)));
 
 		mockMvc.perform(get("/api/players/me/tasks").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))).param("from", "2026-10-05").param("to", "2026-10-11"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].title").value("Repasar test-can-delete-later"))
 				.andExpect(jsonPath("$[0].description").value("Descripción test-can-delete-later"))
 				.andExpect(jsonPath("$[0].startTime").value("09:00"))
-				.andExpect(jsonPath("$[0].xp").value(50));
+				.andExpect(jsonPath("$[0].xp").value(50))
+				.andExpect(jsonPath("$[0].gold").value(8));
 	}
 
 	@Test

@@ -30,6 +30,7 @@ import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.ActivityType;
+import com.lifequest.model.entity.Reward;
 import com.lifequest.model.entity.RewardSource;
 import com.lifequest.model.entity.User;
 import com.lifequest.exception.InvalidStateException;
@@ -71,7 +72,7 @@ class TaskServiceTest {
 		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
 				eq(7L), any(), any()))
 				.thenReturn(List.of(task));
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
 
 		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
 
@@ -84,6 +85,7 @@ class TaskServiceTest {
 		assertThat(dto.status()).isEqualTo("pending");
 		assertThat(dto.priority()).isEqualTo("medium");
 		assertThat(dto.xp()).isEqualTo(58L);
+		assertThat(dto.gold()).isEqualTo(7L);
 	}
 
 	@Test
@@ -97,11 +99,12 @@ class TaskServiceTest {
 		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
 				eq(7L), any(), any()))
 				.thenReturn(List.of(task));
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
 
 		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
 
 		assertThat(tasks.get(0).xp()).isEqualTo(70L);
+		assertThat(tasks.get(0).gold()).isEqualTo(7L);
 	}
 
 	@Test
@@ -115,11 +118,12 @@ class TaskServiceTest {
 		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
 				eq(7L), any(), any()))
 				.thenReturn(List.of(task));
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
 
 		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
 
 		assertThat(tasks.get(0).xp()).isEqualTo(58L);
+		assertThat(tasks.get(0).gold()).isEqualTo(7L);
 	}
 
 	@Test
@@ -175,6 +179,7 @@ class TaskServiceTest {
 		assertThat(dto.priority()).isEqualTo("high");
 		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
 		assertThat(dto.xp()).isEqualTo(46L);
+		assertThat(dto.gold()).isEqualTo(10L);
 		verify(rewardService).create(7L, 30L, 7L, RewardSource.TASK);
 	}
 
@@ -268,6 +273,13 @@ class TaskServiceTest {
 	private static TaskRequestDto request(String priority, String start, String end) {
 		return new TaskRequestDto("Repasar test-can-delete-later", "test-can-delete-later", "📘", "blue",
 				LocalDate.parse("2026-10-12"), LocalTime.parse(start), LocalTime.parse(end), priority, ActivityType.STUDY);
+	}
+
+	private static Reward reward(long xp, long gold) {
+		Reward reward = new Reward();
+		reward.setXpReward(xp);
+		reward.setGoldReward(gold);
+		return reward;
 	}
 
 	private static Task task(String status, String start, String end, Long rewardId) {

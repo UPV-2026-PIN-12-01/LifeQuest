@@ -69,9 +69,10 @@ class TaskCompletionServiceTest {
 		task.setRewardId(3L);
 		reward = new Reward();
 		reward.setXpReward(20L);
+		reward.setGoldReward(6L);
 		when(taskRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(task));
 		when(rewardService.getByIdForUpdate(3L)).thenReturn(reward);
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 20L));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward));
 		when(taskSessionRepository.findByTaskId(any())).thenReturn(Optional.empty());
 		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.0);
 		when(characterStatsService.recordXpActivityForTask(7L)).thenReturn(1.0);

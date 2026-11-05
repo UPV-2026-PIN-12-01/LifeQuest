@@ -16,6 +16,7 @@ public record TaskDto(
 		String status,
 		String priority,
 		long xp,
+		long gold,
 		ActivityType activityType,
 		String verification,
 		String sessionStartedAt,

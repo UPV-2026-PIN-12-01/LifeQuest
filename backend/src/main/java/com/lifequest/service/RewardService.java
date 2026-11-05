@@ -24,12 +24,12 @@ public class RewardService {
 	}
 
 	@Transactional(readOnly = true)
-	public Map<Long, Long> xpByRewardId(Collection<Long> rewardIds) {
+	public Map<Long, Reward> rewardsById(Collection<Long> rewardIds) {
 		if (rewardIds.isEmpty()) {
 			return Map.of();
 		}
 		return rewardRepository.findAllById(rewardIds).stream()
-				.collect(Collectors.toMap(Reward::getId, Reward::getXpReward));
+				.collect(Collectors.toMap(Reward::getId, reward -> reward));
 	}
 
 	@Transactional

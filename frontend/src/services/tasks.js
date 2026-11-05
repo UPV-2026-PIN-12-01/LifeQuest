@@ -2,6 +2,8 @@ import { getJson, playerUrl, requestJson } from './http.js'
 import { getCachedDataValue, setCachedDataValue } from './dataCache.js'
 import { addDays, toIsoDate } from '../utils/week.js'
 
+const TASKS_CACHE_VERSION = 'v2'
+
 export function tasksCacheKey(weekStart) {
   return playerUrl(`/tasks?${new URLSearchParams({
     from: toIsoDate(weekStart),
@@ -9,20 +11,24 @@ export function tasksCacheKey(weekStart) {
   })}`)
 }
 
+function tasksDataCacheKey(weekStart) {
+  return `${tasksCacheKey(weekStart)}:${TASKS_CACHE_VERSION}`
+}
+
 export async function getTasksForWeek(weekStart) {
   const url = tasksCacheKey(weekStart)
-  return getJson(url, { cacheKey: url })
+  return getJson(url, { cacheKey: tasksDataCacheKey(weekStart) })
 }
 
 export function getCachedTasksForWeek(weekStart) {
-  return getCachedDataValue(tasksCacheKey(weekStart))
+  return getCachedDataValue(tasksDataCacheKey(weekStart))
 }
 
 export function setCachedTasksForWeek(weekStart, tasks) {
-  setCachedDataValue(tasksCacheKey(weekStart), tasks)
+  setCachedDataValue(tasksDataCacheKey(weekStart), tasks)
 }
 
-// `task` has title, description, icon, color, date (yyyy-MM-dd), startTime, endTime (HH:mm) and priority.
+// `task` includes title, description, icon, color, date, startTime, endTime, priority, xp and gold.
 export async function createTask(task) {
   return requestJson(playerUrl('/tasks'), { method: 'POST', body: task })
 }

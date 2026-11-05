@@ -51,6 +51,7 @@ export default function HomePage() {
     done: completedTasks.length,
     total: tasks.length,
     xp: completedTasks.reduce((sum, task) => sum + task.xp, 0),
+    gold: completedTasks.reduce((sum, task) => sum + task.gold, 0),
   }
 
   useEffect(() => {

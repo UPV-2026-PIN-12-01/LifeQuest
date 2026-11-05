@@ -117,6 +117,10 @@ function TaskDetailsModal({ task, onClose, onTaskChanged, testingMode }) {
             <dt>Experiencia</dt>
             <dd className="tabular">+{task.xp} XP</dd>
           </div>
+          <div>
+            <dt>Oro</dt>
+            <dd className="tabular">+{task.gold} 💰</dd>
+          </div>
         </dl>
         {onTaskChanged && (
           <TaskActions task={task} testingMode={testingMode} onChanged={onTaskChanged} />
