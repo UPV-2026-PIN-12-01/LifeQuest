@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
 import com.lifequest.repository.TaskRepository;
@@ -87,23 +88,45 @@ public class TaskCompletionService {
 	// Early completion needs a check-in covering most of the task; otherwise only after the planned end.
 	@Transactional
 	public TaskDto complete(Long userId, Long taskId) {
-		Task task = pendingTask(userId, taskId);
+		return completeTask(userId, taskId, false);
+	}
+
+	@Transactional
+	public TaskDto completeInstantlyForTesting(Long userId, Long taskId) {
+		return completeTask(userId, taskId, true);
+	}
+
+	private TaskDto completeTask(Long userId, Long taskId, boolean skipTimingChecks) {
+		Task task = skipTimingChecks ? pendingTaskForTesting(userId, taskId) : pendingTask(userId, taskId);
 		Instant now = clock.instant();
 		TaskSession session = closeSession(task, now);
-		TaskVerification verification = TaskVerification.of(task, session, now);
-		if (now.isBefore(task.getEndTime()) && verification == TaskVerification.NONE) {
+		TaskVerification verification = skipTimingChecks
+				? TaskVerification.NONE
+				: TaskVerification.of(task, session, now);
+		if (!skipTimingChecks && now.isBefore(task.getEndTime()) && verification == TaskVerification.NONE) {
 			throw new InvalidStateException("Task can be completed only after it ends");
 		}
+		double taskStreakMultiplier = characterStatsService.recordTaskCompletion(userId);
 		if (task.getRewardId() != null) {
-			Reward reward = rewardService.getById(task.getRewardId());
+			Reward reward = rewardService.getByIdForUpdate(task.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Reward was already claimed");
 			}
-			long granted = capToDailyLimit(verification.apply(reward.getXpReward()), claimedToday(userId, now));
-			rewardService.claim(reward, granted, now);
-			if (granted > 0) {
-				characterStatsService.addXp(userId, granted);
+			long taskXp = verification.apply(
+					reward.getXpReward(), Duration.between(task.getStartTime(), task.getEndTime()),
+					taskStreakMultiplier);
+			long taskGold = Math.round(TaskService.GOLD_BY_PRIORITY
+					.get(TaskService.displayPriority(task.getPriority()))
+					* TaskDurationReward.multiplier(Duration.between(task.getStartTime(), task.getEndTime())));
+			long xpAvailableUnderDailyCap = claimedToday(userId, now);
+			long awardedXp = 0;
+			if (capToDailyLimit(taskXp, xpAvailableUnderDailyCap) > 0) {
+				double accountBoost = characterStatsService.recordXpActivityForTask(userId);
+				long granted = capToDailyLimit(Math.round(taskXp * accountBoost), xpAvailableUnderDailyCap);
+				awardedXp = characterStatsService.addAwardedXp(userId, granted);
 			}
+			characterStatsService.addGold(userId, taskGold);
+			rewardService.claim(reward, awardedXp, taskGold, now);
 		}
 		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_DONE);
@@ -115,6 +138,7 @@ public class TaskCompletionService {
 	public TaskDto skip(Long userId, Long taskId) {
 		Task task = pendingTask(userId, taskId);
 		closeSession(task, clock.instant());
+		characterStatsService.recordTaskMiss(userId);
 		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_NOT_DONE);
 		taskRepository.save(task);
@@ -132,7 +156,8 @@ public class TaskCompletionService {
 	private long claimedToday(Long userId, Instant now) {
 		ZoneId zone = clock.getZone();
 		LocalDate today = LocalDate.ofInstant(now, zone);
-		return rewardService.claimedXpBetween(userId, today.atStartOfDay(zone).toInstant(),
+		return rewardService.claimedXpForSourceBetween(
+				userId, RewardSource.TASK, today.atStartOfDay(zone).toInstant(),
 				today.plusDays(1).atStartOfDay(zone).toInstant());
 	}
 
@@ -144,6 +169,14 @@ public class TaskCompletionService {
 		}
 		if (TaskService.isConfirmWindowClosed(task, clock.instant())) {
 			throw new InvalidStateException("Task can no longer be confirmed");
+		}
+		return task;
+	}
+
+	private Task pendingTaskForTesting(Long userId, Long taskId) {
+		Task task = taskService.findOwned(userId, taskId);
+		if (TaskService.DB_STATUS_DONE.equals(task.getStatus()) || TaskService.DB_STATUS_NOT_DONE.equals(task.getStatus())) {
+			throw new InvalidStateException("Task was already answered");
 		}
 		return task;
 	}

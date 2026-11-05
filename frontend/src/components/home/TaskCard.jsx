@@ -1,7 +1,7 @@
 import { priorityById, statusById } from '../../utils/taskOptions.js'
 
 const STATUS_NOTES = {
-  in_progress: '▶ En curso',
+  in_progress: 'La misión está en marcha',
   finished: '¿La completaste?',
 }
 
@@ -44,12 +44,23 @@ export default function TaskCard({ task, onSelect }) {
           </span>
         )}
       </div>
-      {STATUS_NOTES[status.id] && <p className="task-note">{STATUS_NOTES[status.id]}</p>}
+      <div className="task-status-row">
+        <span className={`task-status-badge task-status-badge-${status.id}`}>
+          <span aria-hidden="true">{status.icon}</span>
+          {status.label}
+        </span>
+        {STATUS_NOTES[status.id] && <p className="task-note">{STATUS_NOTES[status.id]}</p>}
+      </div>
       <div className="task-meta">
         <span className="task-time tabular">
           {task.startTime}–{task.endTime}
         </span>
-        <span className="task-xp tabular">+{task.xp}</span>
+        <span
+          className="task-xp tabular"
+          title={isCompleted ? 'XP obtenida' : 'XP estimada con el bonus de duración; se suma el bonus de verificación al completar.'}
+        >
+          +{task.xp}
+        </span>
       </div>
       <span className="visually-hidden">
         {status.label}. Prioridad {priority.label.toLowerCase()}. {task.xp} XP.

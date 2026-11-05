@@ -6,8 +6,13 @@ public record PlayerProfileDto(
 		String playerName,
 		String playerClass,
 		String profileUrl,
+		String userIcon,
 		int level,
 		long xp,
 		long xpForNextLevel,
-		int streakDays) {
+		long gold,
+		int streakDays,
+		int dayStreak,
+		int taskStreak,
+		float xpAccBoost) {
 }

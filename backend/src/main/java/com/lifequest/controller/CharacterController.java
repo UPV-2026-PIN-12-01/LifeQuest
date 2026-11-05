@@ -25,6 +25,7 @@ public class CharacterController {
 	public CharacterController(CharacterStatsService characterStatsService, UserService userService) {
 		this.characterStatsService = characterStatsService;
 		this.userService = userService;
+		
 	}
 
 	@GetMapping("/stats")

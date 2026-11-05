@@ -49,7 +49,7 @@ class TaskControllerTest {
 	private static final TaskRequestDto REQUEST = new TaskRequestDto("Repasar test-can-delete-later", "", "📘", "blue",
 			LocalDate.parse("2026-10-12"), LocalTime.parse("09:00"), LocalTime.parse("10:30"), "high", ActivityType.STUDY);
 	private static final TaskDto SAVED = new TaskDto(5L, "Repasar test-can-delete-later", "", "📘", "blue",
-			"2026-10-12", "09:00", "10:30", "pending", "high", 30, ActivityType.STUDY, "none", null, false, 0);
+			"2026-10-12", "09:00", "10:30", "pending", "high", 30, 9, ActivityType.STUDY, "none", null, false, 0);
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -76,7 +76,8 @@ class TaskControllerTest {
 				.contentType(MediaType.APPLICATION_JSON).content(BODY))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.id").value(5))
-				.andExpect(jsonPath("$.xp").value(30));
+				.andExpect(jsonPath("$.xp").value(30))
+				.andExpect(jsonPath("$.gold").value(9));
 	}
 
 	@Test
@@ -124,14 +125,15 @@ class TaskControllerTest {
 	@Test
 	void completesTask() throws Exception {
 		TaskDto completed = new TaskDto(5L, "Repasar test-can-delete-later", "", "📘", "blue",
-				"2026-10-12", "09:00", "10:30", "completed", "high", 45, ActivityType.STUDY, "focus", null, false, 5400);
+				"2026-10-12", "09:00", "10:30", "completed", "high", 45, 13, ActivityType.STUDY, "focus", null, false, 5400);
 		when(taskCompletionService.complete(7L, 5L)).thenReturn(completed);
 
 		mockMvc.perform(post("/api/players/me/tasks/5/complete").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("completed"))
 				.andExpect(jsonPath("$.verification").value("focus"))
-				.andExpect(jsonPath("$.xp").value(45));
+				.andExpect(jsonPath("$.xp").value(45))
+				.andExpect(jsonPath("$.gold").value(13));
 	}
 
 	@Test
@@ -157,5 +159,12 @@ class TaskControllerTest {
 		mockMvc.perform(post("/api/players/me/tasks/5/complete").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.error").value("Task was already answered"));
+	}
+
+	@Test
+	void instantTestingCompletionEndpointIsUnavailableWithoutLocalProfile() throws Exception {
+		mockMvc.perform(post("/api/players/me/tasks/5/complete-instant")
+				.with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
+				.andExpect(status().isNotFound());
 	}
 }

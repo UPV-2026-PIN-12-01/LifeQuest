@@ -2,6 +2,7 @@ package com.lifequest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Map;
@@ -28,6 +30,7 @@ import com.lifequest.model.entity.Reward;
 import com.lifequest.model.entity.ActivityType;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
+import com.lifequest.model.entity.User;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
 
@@ -42,6 +45,7 @@ class TaskCompletionServiceTest {
 	private TaskSessionRepository taskSessionRepository;
 	private RewardService rewardService;
 	private CharacterStatsService characterStatsService;
+	private UserService userService;
 	private Task task;
 	private Reward reward;
 
@@ -51,7 +55,10 @@ class TaskCompletionServiceTest {
 		taskSessionRepository = mock(TaskSessionRepository.class);
 		rewardService = mock(RewardService.class);
 		characterStatsService = mock(CharacterStatsService.class);
+		userService = mock(UserService.class);
+		when(userService.getById(7L)).thenReturn(new User());
 		task = new Task();
+		task.setUserId(7L);
 		task.setName("Repasar test-can-delete-later");
 		task.setStatus("PENDING");
 		task.setActivityType(ActivityType.STUDY);
@@ -62,20 +69,73 @@ class TaskCompletionServiceTest {
 		task.setRewardId(3L);
 		reward = new Reward();
 		reward.setXpReward(20L);
+		reward.setGoldReward(6L);
 		when(taskRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(task));
-		when(rewardService.getById(3L)).thenReturn(reward);
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 20L));
+		when(rewardService.getByIdForUpdate(3L)).thenReturn(reward);
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward));
 		when(taskSessionRepository.findByTaskId(any())).thenReturn(Optional.empty());
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.0);
+		when(characterStatsService.recordXpActivityForTask(7L)).thenReturn(1.0);
+		when(characterStatsService.addAwardedXp(anyLong(), anyLong()))
+				.thenAnswer(invocation -> invocation.getArgument(1));
 	}
 
 	@Test
-	void completingAfterTheEndGrantsBaseXp() {
+	void completingAfterTheEndGrantsDurationAdjustedXp() {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
-		verify(rewardService).claim(eq(reward), eq(20L), eq(Instant.parse("2026-10-10T10:30:00Z")));
-		verify(characterStatsService).addXp(7L, 20L);
+		verify(rewardService).claim(eq(reward), eq(26L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(characterStatsService).addAwardedXp(7L, 26L);
+		verify(characterStatsService).addGold(7L, 8L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 		assertThat(task.getStatus()).isEqualTo("DONE");
+	}
+
+	@Test
+	void localTestingCompletionCanCompleteFutureTaskWithoutSession() {
+		TaskDto completed = serviceAt("2026-10-10T08:00:00Z").completeInstantlyForTesting(7L, 1L);
+
+		assertThat(task.getStatus()).isEqualTo("DONE");
+		verify(rewardService).claim(eq(reward), eq(26L), eq(8L), eq(Instant.parse("2026-10-10T08:00:00Z")));
+		verify(characterStatsService).addGold(7L, 8L);
+		verify(characterStatsService).addAwardedXp(7L, 26L);
+		verify(taskRepository).save(task);
+		assertThat(completed.status()).isEqualTo("completed");
+	}
+
+	@Test
+	void taskGoldUsesOnlyDurationBoostAndRoundsTheAward() {
+		task.setStartTime(START);
+		task.setEndTime(START.plus(Duration.ofMinutes(30)));
+		withSession("2026-10-10T09:00:00Z", 1260);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addGold(7L, 7L);
+		verify(rewardService).claim(
+				eq(reward), anyLong(), eq(7L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+	}
+
+	@Test
+	void taskStreakMultiplierIsAppliedOnlyWhenCompletingTasks() {
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.1);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addAwardedXp(7L, 28L);
+		verify(rewardService).claim(eq(reward), eq(28L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+	}
+
+	@Test
+	void taskAndAccountStreakMultipliersAreBothAppliedToTaskXp() {
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.1);
+		when(characterStatsService.recordXpActivityForTask(7L)).thenReturn(1.15);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addAwardedXp(7L, 32L);
+		verify(rewardService).claim(eq(reward), eq(32L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(characterStatsService).addGold(7L, 8L);
 	}
 
 	@Test
@@ -104,7 +164,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T10:00:30Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 30L);
+		verify(characterStatsService).addAwardedXp(7L, 38L);
 	}
 
 	@Test
@@ -113,7 +173,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T09:45:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 24L);
+		verify(characterStatsService).addAwardedXp(7L, 31L);
 	}
 
 	@Test
@@ -122,14 +182,14 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T11:00:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 20L);
+		verify(characterStatsService).addAwardedXp(7L, 26L);
 	}
 
 	@Test
 	void cannotCompleteEarlyWithoutCheckIn() {
 		assertThatThrownBy(() -> serviceAt("2026-10-10T09:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
 		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt());
 	}
 
@@ -151,17 +211,18 @@ class TaskCompletionServiceTest {
 
 		assertThatThrownBy(() -> serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
 	}
 
 	@Test
 	void dailyCapHalvesThenStopsXp() {
-		when(rewardService.claimedXpBetween(eq(7L), any(), any())).thenReturn(190L);
+		when(rewardService.claimedXpForSourceBetween(eq(7L), eq(com.lifequest.model.entity.RewardSource.TASK),
+				any(), any())).thenReturn(190L);
 
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		// 10 at full rate up to 200, then half of the other 10.
-		verify(characterStatsService).addXp(7L, 15L);
+		verify(characterStatsService).addAwardedXp(7L, 18L);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 0)).isEqualTo(30);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 390)).isEqualTo(10);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 400)).isZero();
@@ -172,7 +233,8 @@ class TaskCompletionServiceTest {
 		TaskDto dto = serviceAt("2026-10-10T10:30:00Z").skip(7L, 1L);
 
 		assertThat(dto.status()).isEqualTo("not_completed");
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
+		verify(characterStatsService).recordTaskMiss(7L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 	}
 
@@ -205,6 +267,15 @@ class TaskCompletionServiceTest {
 		assertThat(session.getLastHeartbeatAt()).isEqualTo(Instant.parse("2026-10-10T09:05:30Z"));
 	}
 
+	@Test
+	void durationMultiplierStartsAtThirtyMinutesAndCapsAtThreeHours() {
+		assertThat(TaskDurationReward.multiplier(Duration.ofMinutes(15))).isEqualTo(1.0);
+		assertThat(TaskDurationReward.multiplier(Duration.ofMinutes(30))).isCloseTo(1.1, within(0.000001));
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(1))).isCloseTo(1.28, within(0.000001));
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(3))).isEqualTo(2.0);
+		assertThat(TaskDurationReward.multiplier(Duration.ofHours(4))).isEqualTo(2.0);
+	}
+
 	private void withSession(String startedAt, long focusedSeconds) {
 		TaskSession session = new TaskSession();
 		session.setStartedAt(Instant.parse(startedAt));
@@ -215,7 +286,7 @@ class TaskCompletionServiceTest {
 
 	private TaskCompletionService serviceAt(String now) {
 		Clock clock = Clock.fixed(Instant.parse(now), MADRID);
-		TaskService taskService = new TaskService(taskRepository, rewardService, mock(UserService.class),
+		TaskService taskService = new TaskService(taskRepository, rewardService, userService,
 				taskSessionRepository, clock);
 		return new TaskCompletionService(taskService, taskRepository, taskSessionRepository, rewardService,
 				characterStatsService, clock);

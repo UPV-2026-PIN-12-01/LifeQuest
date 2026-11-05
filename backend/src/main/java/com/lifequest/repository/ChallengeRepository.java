@@ -12,4 +12,6 @@ public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
 	List<Challenge> findByUserIdOrderByCreatedAtDesc(Long userId);
 
 	Optional<Challenge> findByIdAndUserId(Long id, Long userId);
+
+	boolean existsByTaskId(Long taskId);
 }

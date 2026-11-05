@@ -1,6 +1,7 @@
 package com.lifequest.model.entity;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -45,8 +46,17 @@ public class User {
 	@Column(name = "player_id")
 	private Long playerId;
 
-	@Column(name = "task_streak", insertable = false, updatable = false)
-	private Integer taskStreak;
+	@Column(name = "task_streak", nullable = false)
+	private Integer taskStreak = 0;
+
+	@Column(name = "day_streak", nullable = false)
+	private Integer dayStreak = 0;
+
+	@Column(name = "last_activity_date")
+	private LocalDate lastActivityDate;
+
+	@Column(name = "xp_acc_boost", nullable = false)
+	private Float xpAccBoost = 1.0f;
 
 	public Long getId() {
 		return id;
@@ -114,5 +124,37 @@ public class User {
 
 	public Integer getTaskStreak() {
 		return taskStreak;
+	}
+
+	public void setTaskStreak(Integer taskStreak) {
+		this.taskStreak = taskStreak;
+	}
+
+	public Integer getDayStreak() {
+		return dayStreak;
+	}
+
+	public void setDayStreak(Integer dayStreak) {
+		this.dayStreak = dayStreak;
+	}
+
+	public LocalDate getLastActivityDate() {
+		return lastActivityDate;
+	}
+
+	public void setLastActivityDate(LocalDate lastActivityDate) {
+		this.lastActivityDate = lastActivityDate;
+	}
+
+	public Float getXpAccBoost() {
+		return xpAccBoost;
+	}
+
+	public void setXpAccBoost(Float xpAccBoost) {
+		this.xpAccBoost = xpAccBoost;
+	}
+
+	public int getStreakDays() {
+		return dayStreak == null ? 0 : dayStreak;
 	}
 }

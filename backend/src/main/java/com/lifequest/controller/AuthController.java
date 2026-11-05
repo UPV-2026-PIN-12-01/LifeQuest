@@ -52,8 +52,9 @@ public class AuthController {
 			@RequestParam String password,
 			@RequestParam(required = false) String playerClass,
 			@RequestParam(required = false) String playerName,
+			@RequestParam(required = false) String userIcon,
 			@RequestParam(required = false) MultipartFile photo) {
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(signupService.signup(username, email, password, playerClass, playerName, photo));
+				.body(signupService.signup(username, email, password, playerClass, playerName, userIcon, photo));
 	}
 }

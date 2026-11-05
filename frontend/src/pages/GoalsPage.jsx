@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { GOAL_REWARD_TIERS } from '../data.jsx'
 import {
   claimGoal,
@@ -10,9 +11,11 @@ import {
 } from '../services/goals.js'
 import '../styles/challenges.css'
 
+
 const WEEKLY_LIMIT = 3
 
 export default function GoalsPage() {
+  const { refreshPlayer } = useOutletContext()
   const [history, setHistory] = useState(false)
   const [activeGoals, setActiveGoals] = useState([])
   const [historyGoals, setHistoryGoals] = useState([])
@@ -82,6 +85,7 @@ export default function GoalsPage() {
     try {
       const claimed = await claimGoal(goal.id)
       setRewardToast({ xp: claimed.xpReward, gold: claimed.goldReward })
+      await refreshPlayer()
       refresh()
     } catch (error) {
       setLoadError(error)

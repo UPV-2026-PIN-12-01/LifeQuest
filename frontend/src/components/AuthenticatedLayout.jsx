@@ -9,12 +9,16 @@ import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 const EMPTY_PLAYER = {
   username: '',
   profileUrl: '',
+  userIcon: '⚔️',
   playerClass: DEFAULT_PLAYER_CLASS,
   level: 1,
   xp: 0,
   xpForNextLevel: 100,
   gold: 0,
   streakDays: 0,
+  dayStreak: 0,
+  taskStreak: 0,
+  xpAccBoost: 1,
 }
 
 export default function AuthenticatedLayout() {

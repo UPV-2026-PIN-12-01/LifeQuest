@@ -22,6 +22,7 @@ import com.lifequest.model.dto.GoalRequestDto;
 import com.lifequest.model.entity.Goal;
 import com.lifequest.model.entity.GoalRewardTier;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.repository.GoalRepository;
 
 @Service
@@ -80,7 +81,7 @@ public class GoalService {
 			throw new InvalidStateException("You can create at most three goals per week");
 		}
 
-		long rewardId = rewardService.create(userId, tier.xp(), tier.gold());
+		long rewardId = rewardService.create(userId, tier.xp(), tier.gold(), RewardSource.OBJECTIVE);
 		Goal goal = new Goal();
 		goal.setUserId(userId);
 		goal.setName(request.title().trim());
@@ -128,7 +129,7 @@ public class GoalService {
 			throw new InvalidStateException("Goal has no reward to claim");
 		}
 
-		Reward reward = rewardService.getById(goal.getRewardId());
+		Reward reward = rewardService.getByIdForUpdate(goal.getRewardId());
 		if (reward.getClaimedAt() != null) {
 			throw new InvalidStateException("Goal reward was already claimed");
 		}
@@ -143,8 +144,8 @@ public class GoalService {
 			throw new InvalidStateException("Goal reward is not available until " + claimableAt);
 		}
 
-		rewardService.claim(reward, reward.getXpReward(), now);
-		characterStatsService.addXp(userId, reward.getXpReward());
+		long awardedXp = characterStatsService.addXp(userId, reward.getXpReward());
+		rewardService.claim(reward, awardedXp, now);
 		characterStatsService.addGold(userId, reward.getGoldReward());
 		return toDto(goal);
 	}

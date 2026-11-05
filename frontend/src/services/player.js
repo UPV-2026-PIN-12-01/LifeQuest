@@ -7,12 +7,16 @@ export async function getPlayerProfile() {
   return {
     username: profile.playerName || profile.username,
     profileUrl: profile.profileUrl || '',
+    userIcon: profile.userIcon || '⚔️',
     playerClass: profile.playerClass,
     level: profile.level,
     xp: profile.xp,
     xpForNextLevel: profile.xpForNextLevel,
     gold: profile.gold,
-    streakDays: profile.streakDays,
+    streakDays: Number(profile.dayStreak ?? profile.streakDays) || 0,
+    dayStreak: Number(profile.dayStreak ?? profile.streakDays) || 0,
+    taskStreak: Number(profile.taskStreak) || 0,
+    xpAccBoost: Number(profile.xpAccBoost) || 1,
   }
 }
 

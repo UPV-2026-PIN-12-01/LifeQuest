@@ -21,6 +21,7 @@ import com.lifequest.model.dto.GoalDto;
 import com.lifequest.model.dto.GoalRequestDto;
 import com.lifequest.model.entity.Goal;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.repository.GoalRepository;
 
 class GoalServiceTest {
@@ -90,6 +91,33 @@ class GoalServiceTest {
 	}
 
 	@Test
+	void createsGoalRewardWithObjectiveSource() {
+		GoalRepository repository = mock(GoalRepository.class);
+		UserService userService = mock(UserService.class);
+		RewardService rewardService = mock(RewardService.class);
+		CharacterStatsService characterStatsService = mock(CharacterStatsService.class);
+		Clock clock = Clock.fixed(Instant.parse("2026-11-04T12:00:00Z"), ZoneOffset.UTC);
+		when(rewardService.create(7L, 100L, 50L, RewardSource.OBJECTIVE)).thenReturn(9L);
+		when(repository.save(any(Goal.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		Reward reward = new Reward();
+		reward.setXpReward(100L);
+		reward.setGoldReward(50L);
+		when(rewardService.getById(9L)).thenReturn(reward);
+		GoalService service = new GoalService(
+				repository, userService, rewardService, characterStatsService, clock);
+		GoalRequestDto request = new GoalRequestDto(
+				"Leer un libro",
+				"Terminar el libro elegido",
+				java.time.LocalDateTime.parse("2026-11-05T10:00"),
+				java.time.LocalDateTime.parse("2026-11-05T22:00"),
+				1);
+
+		service.create(7L, request);
+
+		verify(rewardService).create(7L, 100L, 50L, RewardSource.OBJECTIVE);
+	}
+
+	@Test
 	void preventsRewardClaimBeforeTierWaitHasElapsed() {
 		GoalRepository repository = mock(GoalRepository.class);
 		UserService userService = mock(UserService.class);
@@ -108,6 +136,7 @@ class GoalServiceTest {
 		reward.setXpReward(100L);
 		reward.setGoldReward(50L);
 		when(repository.findForUpdateByIdAndUserId(4L, 7L)).thenReturn(Optional.of(goal));
+		when(rewardService.getByIdForUpdate(9L)).thenReturn(reward);
 		when(rewardService.getById(9L)).thenReturn(reward);
 
 		GoalService service = new GoalService(
@@ -116,6 +145,37 @@ class GoalServiceTest {
 		assertThatThrownBy(() -> service.claim(7L, 4L))
 				.isInstanceOf(InvalidStateException.class)
 				.hasMessageContaining("not available");
+	}
+
+	@Test
+	void savesTheActualBoostedXpWhenClaimingAGoalReward() {
+		GoalRepository repository = mock(GoalRepository.class);
+		UserService userService = mock(UserService.class);
+		RewardService rewardService = mock(RewardService.class);
+		CharacterStatsService characterStatsService = mock(CharacterStatsService.class);
+		Clock clock = Clock.fixed(Instant.parse("2026-11-05T12:00:00Z"), ZoneOffset.UTC);
+
+		Goal goal = new Goal();
+		goal.setUserId(7L);
+		goal.setRewardId(9L);
+		goal.setCompleted(true);
+		goal.setRating((short) 8);
+		goal.setEndDate(Instant.parse("2026-11-01T12:00:00Z"));
+		goal.setVisibility("SHOWN");
+		Reward reward = new Reward();
+		reward.setXpReward(100L);
+		reward.setGoldReward(50L);
+		when(repository.findForUpdateByIdAndUserId(4L, 7L)).thenReturn(Optional.of(goal));
+		when(rewardService.getByIdForUpdate(9L)).thenReturn(reward);
+		when(rewardService.getById(9L)).thenReturn(reward);
+		when(characterStatsService.addXp(7L, 100L)).thenReturn(115L);
+
+		GoalService service = new GoalService(
+				repository, userService, rewardService, characterStatsService, clock);
+		service.claim(7L, 4L);
+
+		verify(rewardService).claim(reward, 115L, clock.instant());
+		verify(characterStatsService).addGold(7L, 50L);
 	}
 
 	@Test
