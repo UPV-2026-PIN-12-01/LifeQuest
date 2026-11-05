@@ -23,6 +23,9 @@ export default function ProfilePage() {
   const [name, setName] = useState('')
   const [accountName, setAccountName] = useState('')
   const [playerClass, setPlayerClass] = useState('')
+  const [streakDays, setStreakDays] = useState(0)
+  const [taskStreak, setTaskStreak] = useState(0)
+  const [xpAccBoost, setXpAccBoost] = useState(1)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -51,6 +54,9 @@ export default function ProfilePage() {
         setName(user.playerName ?? '')
         setAccountName(user.username ?? '')
         setPlayerClass(user.playerClass ?? '')
+        setStreakDays(Number(user.dayStreak ?? user.streakDays) || 0)
+        setTaskStreak(Number(user.taskStreak) || 0)
+        setXpAccBoost(Number(user.xpAccBoost) || 1)
         setEmail(user.email ?? '')
         setProfileUrl(user.profileUrl ?? '')
       })
@@ -233,7 +239,11 @@ export default function ProfilePage() {
                       aria-invalid={Boolean(errors.name)}
                       aria-describedby={errors.name ? `${nameId}-error` : undefined}
                     />
-                    {playerClass && <p className="settings-class">{playerClass}</p>}
+                    {playerClass && (
+                      <p className="settings-class">
+                        {playerClass} · Racha diaria: {streakDays} días · Tareas seguidas: {taskStreak} · Bonus XP: +{Math.max(0, Math.round((xpAccBoost - 1) * 100))}%
+                      </p>
+                    )}
                     {errors.name && (
                       <p className="profile-error" id={`${nameId}-error`} role="alert">
                         {errors.name}

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,5 +54,32 @@ class ChallengeServiceTest {
 		service.create(7L, new ChallengeRequestDto("Leer", "", "EASY", 1L, ""));
 
 		verify(rewardService).create(7L, 25L, 10L, RewardSource.CHALLENGE);
+	}
+
+	@Test
+	void savesTheActualBoostedXpWhenClaimingAChallengeReward() {
+		ChallengeRepository challengeRepository = mock(ChallengeRepository.class);
+		TaskService taskService = mock(TaskService.class);
+		RewardService rewardService = mock(RewardService.class);
+		CharacterStatsService characterStatsService = mock(CharacterStatsService.class);
+		UserService userService = mock(UserService.class);
+		Challenge challenge = new Challenge();
+		challenge.setUserId(7L);
+		challenge.setRewardId(9L);
+		challenge.setCompleted(true);
+		challenge.setRating((short) 8);
+		Reward reward = new Reward();
+		reward.setXpReward(100L);
+		reward.setGoldReward(50L);
+		when(challengeRepository.findByIdAndUserId(4L, 7L)).thenReturn(Optional.of(challenge));
+		when(rewardService.getById(9L)).thenReturn(reward);
+		when(characterStatsService.addXp(7L, 100L)).thenReturn(115L);
+		Clock clock = Clock.fixed(Instant.parse("2026-11-04T12:00:00Z"), ZoneOffset.UTC);
+		ChallengeService service = new ChallengeService(
+				challengeRepository, taskService, rewardService, characterStatsService, userService, clock);
+
+		service.claim(7L, 4L);
+
+		verify(rewardService).claim(reward, 115L, clock.instant());
 	}
 }

@@ -147,6 +147,36 @@ class GoalServiceTest {
 	}
 
 	@Test
+	void savesTheActualBoostedXpWhenClaimingAGoalReward() {
+		GoalRepository repository = mock(GoalRepository.class);
+		UserService userService = mock(UserService.class);
+		RewardService rewardService = mock(RewardService.class);
+		CharacterStatsService characterStatsService = mock(CharacterStatsService.class);
+		Clock clock = Clock.fixed(Instant.parse("2026-11-05T12:00:00Z"), ZoneOffset.UTC);
+
+		Goal goal = new Goal();
+		goal.setUserId(7L);
+		goal.setRewardId(9L);
+		goal.setCompleted(true);
+		goal.setRating((short) 8);
+		goal.setEndDate(Instant.parse("2026-11-01T12:00:00Z"));
+		goal.setVisibility("SHOWN");
+		Reward reward = new Reward();
+		reward.setXpReward(100L);
+		reward.setGoldReward(50L);
+		when(repository.findForUpdateByIdAndUserId(4L, 7L)).thenReturn(Optional.of(goal));
+		when(rewardService.getById(9L)).thenReturn(reward);
+		when(characterStatsService.addXp(7L, 100L)).thenReturn(115L);
+
+		GoalService service = new GoalService(
+				repository, userService, rewardService, characterStatsService, clock);
+		service.claim(7L, 4L);
+
+		verify(rewardService).claim(reward, 115L, clock.instant());
+		verify(characterStatsService).addGold(7L, 50L);
+	}
+
+	@Test
 	void listsLegacyRewardWithoutMislabelingItAsDiamondAndUsesMaximumWait() {
 		GoalRepository repository = mock(GoalRepository.class);
 		UserService userService = mock(UserService.class);

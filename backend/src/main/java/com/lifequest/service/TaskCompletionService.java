@@ -95,19 +95,23 @@ public class TaskCompletionService {
 		if (now.isBefore(task.getEndTime()) && verification == TaskVerification.NONE) {
 			throw new InvalidStateException("Task can be completed only after it ends");
 		}
+		double taskStreakMultiplier = characterStatsService.recordTaskCompletion(userId);
 		if (task.getRewardId() != null) {
 			Reward reward = rewardService.getById(task.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Reward was already claimed");
 			}
-			long granted = capToDailyLimit(
-					verification.apply(
-							reward.getXpReward(), Duration.between(task.getStartTime(), task.getEndTime())),
-					claimedToday(userId, now));
-			rewardService.claim(reward, granted, now);
-			if (granted > 0) {
-				characterStatsService.addXp(userId, granted);
+			long taskXp = verification.apply(
+					reward.getXpReward(), Duration.between(task.getStartTime(), task.getEndTime()),
+					taskStreakMultiplier);
+			long xpAvailableUnderDailyCap = claimedToday(userId, now);
+			long awardedXp = 0;
+			if (capToDailyLimit(taskXp, xpAvailableUnderDailyCap) > 0) {
+				double accountBoost = characterStatsService.recordXpActivityForTask(userId);
+				long granted = capToDailyLimit(Math.round(taskXp * accountBoost), xpAvailableUnderDailyCap);
+				awardedXp = characterStatsService.addAwardedXp(userId, granted);
 			}
+			rewardService.claim(reward, awardedXp, now);
 		}
 		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_DONE);
@@ -119,6 +123,7 @@ public class TaskCompletionService {
 	public TaskDto skip(Long userId, Long taskId) {
 		Task task = pendingTask(userId, taskId);
 		closeSession(task, clock.instant());
+		characterStatsService.recordTaskMiss(userId);
 		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_NOT_DONE);
 		taskRepository.save(task);

@@ -149,7 +149,11 @@ public class UserProfileService {
 				user.getUserIcon(),
 				stats.getPlayerName(),
 				stats.getPlayerClass().displayName(),
-				user.getProfileUrl()));
+				user.getProfileUrl(),
+				user.getStreakDays(),
+				user.getStreakDays(),
+				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
+				user.getXpAccBoost() == null ? 1.0f : user.getXpAccBoost()));
 	}
 
 	private static PhotoPayload resolvePhoto(MultipartFile photo) {

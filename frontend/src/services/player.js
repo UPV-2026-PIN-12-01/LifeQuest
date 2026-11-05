@@ -12,7 +12,10 @@ export async function getPlayerProfile() {
     xp: profile.xp,
     xpForNextLevel: profile.xpForNextLevel,
     gold: profile.gold,
-    streakDays: profile.streakDays,
+    streakDays: Number(profile.dayStreak ?? profile.streakDays) || 0,
+    dayStreak: Number(profile.dayStreak ?? profile.streakDays) || 0,
+    taskStreak: Number(profile.taskStreak) || 0,
+    xpAccBoost: Number(profile.xpAccBoost) || 1,
   }
 }
 

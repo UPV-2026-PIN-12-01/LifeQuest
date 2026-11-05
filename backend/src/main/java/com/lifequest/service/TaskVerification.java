@@ -40,7 +40,12 @@ public enum TaskVerification {
 	}
 
 	public long apply(long baseXp, Duration plannedDuration) {
-		return Math.round(baseXp * multiplier * TaskDurationReward.multiplier(plannedDuration));
+		return apply(baseXp, plannedDuration, 1.0);
+	}
+
+	public long apply(long baseXp, Duration plannedDuration, double additionalMultiplier) {
+		return Math.round(baseXp * multiplier * TaskDurationReward.multiplier(plannedDuration)
+				* additionalMultiplier);
 	}
 
 	// An open session is judged as if it were checked out now.

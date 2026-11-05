@@ -144,8 +144,8 @@ public class GoalService {
 			throw new InvalidStateException("Goal reward is not available until " + claimableAt);
 		}
 
-		rewardService.claim(reward, reward.getXpReward(), now);
-		characterStatsService.addXp(userId, reward.getXpReward());
+		long awardedXp = characterStatsService.addXp(userId, reward.getXpReward());
+		rewardService.claim(reward, awardedXp, now);
 		characterStatsService.addGold(userId, reward.getGoldReward());
 		return toDto(goal);
 	}

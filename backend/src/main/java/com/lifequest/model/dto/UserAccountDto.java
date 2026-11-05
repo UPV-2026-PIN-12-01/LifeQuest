@@ -7,5 +7,9 @@ public record UserAccountDto(
 		String userIcon,
 		String playerName,
 		String playerClass,
-		String profileUrl) {
+		String profileUrl,
+		int streakDays,
+		int dayStreak,
+		int taskStreak,
+		float xpAccBoost) {
 }

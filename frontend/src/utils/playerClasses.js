@@ -24,7 +24,7 @@ export const PLAYER_CLASSES = [
     name: 'Mago',
     icon: '🪄',
     description: 'Experto en conocimiento arcano, magia y sabiduría.',
-    stats: 'Conocimiento · Magia · IQ',
+    stats: 'Conocimiento · Magia · Evasión',
     image: mago,
   },
 ]

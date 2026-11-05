@@ -3,9 +3,14 @@ import { classById } from '../../utils/playerClasses.js'
 export default function PlayerHero({ player, weekStats }) {
   const playerClass = classById(player.playerClass)
   const xpPercent = Math.min(100, Math.round((player.xp / player.xpForNextLevel) * 100))
+  const streakDays = Number(player.dayStreak ?? player.streakDays) || 0
+  const taskStreak = Number(player.taskStreak) || 0
+  const xpBoostPercent = Math.max(0, Math.round(((Number(player.xpAccBoost) || 1) - 1) * 100))
 
   const chips = [
-    { id: 'streak', icon: '🔥', value: `${player.streakDays} días`, label: 'Racha' },
+    { id: 'streak', icon: '🔥', value: `${streakDays} días`, label: 'Racha' },
+    { id: 'task-streak', icon: '✅', value: `${taskStreak}`, label: 'Tareas seguidas' },
+    { id: 'xp-boost', icon: '✨', value: `+${xpBoostPercent}%`, label: 'Bonus XP' },
     { id: 'tasks', icon: '⚔️', value: `${weekStats.done} / ${weekStats.total}`, label: 'Tareas hechas' },
     { id: 'xp', icon: '💰', value: `+${weekStats.xp} XP`, label: 'Esta semana' },
   ]

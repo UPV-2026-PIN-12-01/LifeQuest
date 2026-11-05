@@ -74,7 +74,7 @@ class PlayerControllerTest {
 	void returnsProfile() throws Exception {
 		when(playerService.getProfile(7L))
 				.thenReturn(new PlayerProfileDto(7L, "test-can-delete-later", "Hero", "Mago",
-						"https://example.com/avatars/test-can-delete-later.png", 3, 4, 17, 2));
+						"https://example.com/avatars/test-can-delete-later.png", 3, 4, 17, 50, 2, 2, 1, 1.05f));
 
 		mockMvc.perform(get("/api/players/me").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
 				.andExpect(status().isOk())

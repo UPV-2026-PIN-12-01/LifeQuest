@@ -137,8 +137,8 @@ public class ChallengeService {
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Challenge reward was already claimed");
 			}
-			rewardService.claim(reward, reward.getXpReward(), now);
-			characterStatsService.addXp(userId, reward.getXpReward());
+			long awardedXp = characterStatsService.addXp(userId, reward.getXpReward());
+			rewardService.claim(reward, awardedXp, now);
 		}
 		return toDto(challenge);
 	}

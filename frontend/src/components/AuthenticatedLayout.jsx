@@ -15,6 +15,9 @@ const EMPTY_PLAYER = {
   xpForNextLevel: 100,
   gold: 0,
   streakDays: 0,
+  dayStreak: 0,
+  taskStreak: 0,
+  xpAccBoost: 1,
 }
 
 export default function AuthenticatedLayout() {

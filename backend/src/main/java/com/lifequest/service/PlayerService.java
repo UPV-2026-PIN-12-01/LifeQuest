@@ -41,7 +41,11 @@ public class PlayerService {
 				level,
 				stats.getXpCurrent() == null ? 0 : stats.getXpCurrent(),
 				CharacterStatsService.xpForNextLevel(level),
-				streakOf(user));
+				stats.getGold(),
+				user.getStreakDays(),
+				user.getStreakDays(),
+				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
+				user.getXpAccBoost() == null ? 1.0f : user.getXpAccBoost());
 	}
 
 	// Quests are not stored yet: progress is computed from today's tasks and the streak.
@@ -54,10 +58,6 @@ public class PlayerService {
 				new DailyQuestDto("tasks", "Completa " + DAILY_TASKS_GOAL + " tareas hoy", "📚", "purple",
 						Math.min(completedToday, DAILY_TASKS_GOAL), DAILY_TASKS_GOAL, 30),
 				new DailyQuestDto("streak", "Mantén la racha (" + STREAK_GOAL + " días)", "🔥", "orange",
-						Math.min(streakOf(user), STREAK_GOAL), STREAK_GOAL, 25));
-	}
-
-	private static int streakOf(User user) {
-		return user.getTaskStreak() == null ? 0 : user.getTaskStreak();
+						Math.min(user.getStreakDays(), STREAK_GOAL), STREAK_GOAL, 25));
 	}
 }

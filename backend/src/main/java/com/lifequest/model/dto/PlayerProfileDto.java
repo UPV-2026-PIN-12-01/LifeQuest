@@ -9,5 +9,9 @@ public record PlayerProfileDto(
 		int level,
 		long xp,
 		long xpForNextLevel,
-		int streakDays) {
+		long gold,
+		int streakDays,
+		int dayStreak,
+		int taskStreak,
+		float xpAccBoost) {
 }

@@ -106,6 +106,7 @@ export default function HomePage() {
               return { weekKey, tasks: next }
             })
             refreshPlayer()
+            getDailyQuests().then(setQuests).catch(setLoadError)
           }}
         />
       </div>

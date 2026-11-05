@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import ChallengeFormModal from '../components/challenges/ChallengeFormModal.jsx'
 import { claimChallenge, deleteChallenge, evaluateChallenge, getChallenges } from '../services/challenges.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import '../styles/challenges.css'
 
 export default function ChallengesPage() {
+  const { refreshPlayer } = useOutletContext()
   const [history, setHistory] = useState(false)
   const [challenges, setChallenges] = useState([])
   const [activeCount, setActiveCount] = useState(0)
@@ -55,6 +57,7 @@ export default function ChallengesPage() {
     try {
       const claimedChallenge = await claimChallenge(challenge.id)
       setRewardToast({ xp: claimedChallenge.xp, gold: claimedChallenge.gold })
+      await refreshPlayer()
       setRefreshVersion((version) => version + 1)
     } catch (error) {
       setLoadError(error)

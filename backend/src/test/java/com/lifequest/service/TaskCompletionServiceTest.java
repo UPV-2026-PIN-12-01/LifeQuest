@@ -68,6 +68,10 @@ class TaskCompletionServiceTest {
 		when(rewardService.getById(3L)).thenReturn(reward);
 		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 20L));
 		when(taskSessionRepository.findByTaskId(any())).thenReturn(Optional.empty());
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.0);
+		when(characterStatsService.recordXpActivityForTask(7L)).thenReturn(1.0);
+		when(characterStatsService.addAwardedXp(anyLong(), anyLong()))
+				.thenAnswer(invocation -> invocation.getArgument(1));
 	}
 
 	@Test
@@ -75,9 +79,19 @@ class TaskCompletionServiceTest {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		verify(rewardService).claim(eq(reward), eq(26L), eq(Instant.parse("2026-10-10T10:30:00Z")));
-		verify(characterStatsService).addXp(7L, 26L);
+		verify(characterStatsService).addAwardedXp(7L, 26L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 		assertThat(task.getStatus()).isEqualTo("DONE");
+	}
+
+	@Test
+	void taskStreakMultiplierIsAppliedOnlyWhenCompletingTasks() {
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.1);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addAwardedXp(7L, 28L);
+		verify(rewardService).claim(eq(reward), eq(28L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 	}
 
 	@Test
@@ -106,7 +120,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T10:00:30Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 38L);
+		verify(characterStatsService).addAwardedXp(7L, 38L);
 	}
 
 	@Test
@@ -115,7 +129,7 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T09:45:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 31L);
+		verify(characterStatsService).addAwardedXp(7L, 31L);
 	}
 
 	@Test
@@ -124,14 +138,14 @@ class TaskCompletionServiceTest {
 
 		serviceAt("2026-10-10T11:00:00Z").complete(7L, 1L);
 
-		verify(characterStatsService).addXp(7L, 26L);
+		verify(characterStatsService).addAwardedXp(7L, 26L);
 	}
 
 	@Test
 	void cannotCompleteEarlyWithoutCheckIn() {
 		assertThatThrownBy(() -> serviceAt("2026-10-10T09:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
 		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt());
 	}
 
@@ -153,7 +167,7 @@ class TaskCompletionServiceTest {
 
 		assertThatThrownBy(() -> serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L))
 				.isInstanceOf(InvalidStateException.class);
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
 	}
 
 	@Test
@@ -164,7 +178,7 @@ class TaskCompletionServiceTest {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		// 10 at full rate up to 200, then half of the other 10.
-		verify(characterStatsService).addXp(7L, 18L);
+		verify(characterStatsService).addAwardedXp(7L, 18L);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 0)).isEqualTo(30);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 390)).isEqualTo(10);
 		assertThat(TaskCompletionService.capToDailyLimit(30, 400)).isZero();
@@ -175,7 +189,8 @@ class TaskCompletionServiceTest {
 		TaskDto dto = serviceAt("2026-10-10T10:30:00Z").skip(7L, 1L);
 
 		assertThat(dto.status()).isEqualTo("not_completed");
-		verify(characterStatsService, never()).addXp(any(), anyLong());
+		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
+		verify(characterStatsService).recordTaskMiss(7L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 	}
 
