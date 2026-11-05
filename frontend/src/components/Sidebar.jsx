@@ -1,5 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { classById } from '../utils/playerClasses.js'
+import React, { useEffect, useState} from 'react'
+import { getJson } from '../services/http.js'
 
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
@@ -37,12 +39,34 @@ function AccountAvatar({ profileUrl, username }) {
   )
 }
 
-export default function Sidebar({ player, onLogout }) {
+export default function Sidebar({ player, onLogout, stats }) {
   const { pathname, hash } = useLocation()
   const playerClass = classById(player.playerClass)
   const xp = Number(player.xp) || 0
   const xpGoal = Number(player.xpForNextLevel) || 1
   const xpPercent = Math.min(100, Math.round((xp / xpGoal) * 100))
+  const [loadedStats, setLoadedStats] = useState(stats ?? null)
+
+  useEffect(() => {
+    let cancelled = false
+    getJson('/api/character/stats')
+      .then((data) => {
+        if (!cancelled) {
+          setLoadedStats((currentStats) => ({
+            ...currentStats,
+            ...data,
+          }))
+        }
+      })
+      .catch((error) => { 
+        if (!cancelled) { console.error('Error fetching player stats:', error) }
+       })
+    return () => { 
+      cancelled = true     
+    }
+  }, [])
+
+  stats = loadedStats ?? []
 
   return (
     <aside
@@ -97,8 +121,8 @@ export default function Sidebar({ player, onLogout }) {
           />
         </div>
         <div className="mt-3 flex gap-4 text-xs" style={{ color: 'var(--lq-violet-200)' }}>
-          <span>💰 {player.gold ?? 0}</span>
-          <span>🔥 {player.streakDays ?? 0} días</span>
+          <span>💰 {stats.gold ?? 0}</span>
+          <span>🔥 {0} días</span>
         </div>
       </div>
 
