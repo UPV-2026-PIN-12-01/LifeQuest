@@ -1,15 +1,18 @@
 import { useId } from 'react'
 import FieldError from './FieldError.jsx'
+import UserIconPicker from '../UserIconPicker.jsx'
 import { PLAYER_CLASSES } from '../../utils/playerClasses.js'
 
 export default function CharacterStep({
   playerClass,
   playerName,
+  userIcon,
   error,
   formError,
   submitting,
   onClassChange,
   onPlayerNameChange,
+  onUserIconChange,
   onBack,
   onSubmit,
 }) {
@@ -97,6 +100,12 @@ export default function CharacterStep({
         <p className="signup-hint" id={`${nameId}-hint`}>
           Este es el nombre de tu héroe dentro del juego.
         </p>
+        <UserIconPicker
+          value={userIcon}
+          onChange={onUserIconChange}
+          label="Icono del personaje"
+          disabled={submitting}
+        />
       </div>
       </div>
 

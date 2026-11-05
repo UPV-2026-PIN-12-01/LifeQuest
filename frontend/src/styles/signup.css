@@ -295,12 +295,14 @@
 .signup-character-pane {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 12px;
+  overflow-y: auto;
 }
 
 .signup-class-field {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .signup-character .signup-field {
@@ -342,6 +344,52 @@
 .signup-hint {
   color: #9aa3b2;
   font-size: 0.75rem;
+}
+
+.signup-character .user-icon-picker {
+  min-width: 0;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  color: #6b7280;
+}
+
+.signup-character .user-icon-picker legend {
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.signup-character .user-icon-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.signup-character .user-icon-option {
+  box-sizing: border-box;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.signup-character .user-icon-option:disabled {
+  cursor: wait;
+}
+
+.signup-character .user-icon-option.is-selected {
+  border-color: #6d5efc;
+  background: #f3f1ff;
+  box-shadow: 0 0 0 2px #6d5efc;
 }
 
 .signup-control {
@@ -508,19 +556,19 @@
 .signup-class-list {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  gap: 6px;
+  flex: 0 0 auto;
+  gap: 4px;
 }
 
 .signup-class-card {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
-  flex: 1 1 0;
-  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 46px;
+  gap: 7px;
   width: 100%;
-  padding: 8px;
+  padding: 5px 7px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #fff;
@@ -546,16 +594,16 @@
 }
 
 .signup-class-portrait {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   object-fit: cover;
 }
 
 .signup-class-copy {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   min-width: 0;
 }
 
@@ -564,7 +612,7 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #111827;
 }
@@ -575,19 +623,20 @@
   border-radius: 999px;
   background: #e11d48;
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
 }
 
 .signup-class-description {
   color: #4b5563;
-  font-size: 0.72rem;
-  line-height: 1.25;
+  font-size: 0.65rem;
+  line-height: 1.1;
 }
 
 .signup-class-stats {
   color: #9aa3b2;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
+  line-height: 1.1;
   font-weight: 600;
 }
 
@@ -617,6 +666,7 @@
 
 .signup-actions {
   display: flex;
+  flex: 0 0 auto;
   gap: 12px;
   margin-top: auto;
 }
@@ -686,12 +736,8 @@
     gap: 8px;
   }
 
-  .signup-class-list {
-    gap: 4px;
-  }
-
   .signup-class-card {
-    padding: 5px 8px;
+    padding: 4px 7px;
   }
 
   .signup-page h1 {

@@ -24,6 +24,7 @@ class PlayerServiceTest {
 		when(userService.getById(7L)).thenReturn(user);
 		when(user.getId()).thenReturn(7L);
 		when(user.getUsername()).thenReturn("test-can-delete-later");
+		when(user.getUserIcon()).thenReturn("🪄");
 		when(user.getStreakDays()).thenReturn(6);
 		when(user.getTaskStreak()).thenReturn(4);
 		when(streakService.synchronizeAccountBoost(7L)).thenReturn(1.3);
@@ -41,6 +42,7 @@ class PlayerServiceTest {
 		assertThat(profile.taskStreak()).isEqualTo(4);
 		assertThat(profile.xpAccBoost()).isEqualTo(1.3f);
 		assertThat(profile.gold()).isEqualTo(75L);
+		assertThat(profile.userIcon()).isEqualTo("🪄");
 	}
 
 	@Test

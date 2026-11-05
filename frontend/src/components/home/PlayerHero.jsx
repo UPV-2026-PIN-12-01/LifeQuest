@@ -21,7 +21,7 @@ export default function PlayerHero({ player, weekStats }) {
         {player.profileUrl ? (
           <img className="player-avatar-photo" src={player.profileUrl} alt="" />
         ) : (
-          <span className="player-avatar-icon">{playerClass.icon}</span>
+          <span className="player-avatar-icon">{player.userIcon || playerClass.icon}</span>
         )}
         <span className="player-avatar-level">Nv. {player.level}</span>
       </div>

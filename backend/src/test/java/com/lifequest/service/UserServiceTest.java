@@ -33,6 +33,19 @@ class UserServiceTest {
 	}
 
 	@Test
+	void storesSelectedUserIconWhenCreatingUser() {
+		UserRepository repository = mock(UserRepository.class);
+		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		UserService service = service(repository);
+
+		User created = service.create(
+				"test-can-delete-later", "test@example.com", UUID.randomUUID(), "🪄");
+
+		assertThat(created.getUserIcon()).isEqualTo("🪄");
+		verify(repository).save(created);
+	}
+
+	@Test
 	void synchronizesStoredAccountBoostWhenUpdatingUser() {
 		UserRepository repository = mock(UserRepository.class);
 		User user = new User();

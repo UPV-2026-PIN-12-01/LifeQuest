@@ -94,6 +94,7 @@
 .player-avatar-photo {
   position: relative;
   z-index: 1;
+  display: block;
   width: 58px;
   height: 58px;
   border-radius: 50%;

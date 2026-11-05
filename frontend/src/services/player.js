@@ -7,6 +7,7 @@ export async function getPlayerProfile() {
   return {
     username: profile.playerName || profile.username,
     profileUrl: profile.profileUrl || '',
+    userIcon: profile.userIcon || '⚔️',
     playerClass: profile.playerClass,
     level: profile.level,
     xp: profile.xp,

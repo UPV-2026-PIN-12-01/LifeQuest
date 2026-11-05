@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { getJson, patchForm, patchJson } from '../services/http.js'
+import UserIconPicker from '../components/UserIconPicker.jsx'
 import { classById } from '../utils/playerClasses.js'
 import { validatePhoto, validateProfile } from '../utils/validation.js'
 import '../styles/profile.css'
@@ -30,6 +31,7 @@ export default function ProfilePage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [profileUrl, setProfileUrl] = useState('')
+  const [userIcon, setUserIcon] = useState('⚔️')
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState('')
   const [errors, setErrors] = useState({})
@@ -59,6 +61,7 @@ export default function ProfilePage() {
         setXpAccBoost(Number(user.xpAccBoost) || 1)
         setEmail(user.email ?? '')
         setProfileUrl(user.profileUrl ?? '')
+        setUserIcon(user.userIcon || '⚔️')
       })
       .catch((error) => {
         if (!cancelled) setLoadError(error)
@@ -124,6 +127,7 @@ export default function ProfilePage() {
     }
     const body = {
       playerName: name.trim(),
+      userIcon,
       email: email.trim().toLowerCase(),
     }
     if (password) body.password = password
@@ -135,6 +139,7 @@ export default function ProfilePage() {
       setName(payload.user?.playerName ?? body.playerName)
       setEmail(payload.user?.email ?? body.email)
       setProfileUrl(payload.user?.profileUrl ?? '')
+      setUserIcon(payload.user?.userIcon || userIcon)
       setPassword('')
       setConfirmPassword('')
       if (photoFile) {
@@ -182,8 +187,8 @@ export default function ProfilePage() {
     }
   }
 
-  const classIcon = classById(playerClass).icon
-  const faceUrl = photoPreview || profileUrl
+  const classIcon = userIcon || classById(playerClass).icon
+  const faceUrl = profileUrl || photoPreview
 
   return (
     <main className="profile-page">
@@ -249,6 +254,14 @@ export default function ProfilePage() {
                         {errors.name}
                       </p>
                     )}
+                    <UserIconPicker
+                      value={userIcon}
+                      disabled={saving}
+                      onChange={(icon) => {
+                        setUserIcon(icon)
+                        forgetSaved()
+                      }}
+                    />
                   </div>
                 </div>
                 <input

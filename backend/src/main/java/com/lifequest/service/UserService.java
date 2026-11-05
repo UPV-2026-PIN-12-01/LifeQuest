@@ -124,10 +124,18 @@ public class UserService {
 
 	@Transactional
 	public User create(String username, String email, UUID innerId) {
+		return create(username, email, innerId, null);
+	}
+
+	@Transactional
+	public User create(String username, String email, UUID innerId, String userIcon) {
 		User user = new User();
 		user.setUsername(username);
 		user.setEmail(email);
 		user.setInnerId(innerId);
+		if (userIcon != null) {
+			user.setUserIcon(userIcon);
+		}
 		userStreakService.synchronizeAccountBoost(user);
 		return userRepository.save(user);
 	}

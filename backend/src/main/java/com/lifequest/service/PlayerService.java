@@ -44,6 +44,7 @@ public class PlayerService {
 				stats.getPlayerName(),
 				stats.getPlayerClass().displayName(),
 				user.getProfileUrl(),
+				user.getUserIcon(),
 				level,
 				stats.getXpCurrent() == null ? 0 : stats.getXpCurrent(),
 				CharacterStatsService.xpForNextLevel(level),

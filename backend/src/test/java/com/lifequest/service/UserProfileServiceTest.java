@@ -41,6 +41,7 @@ class UserProfileServiceTest {
 				userService, statsService, streakService, authService, storageService).currentUser("auth-subject");
 
 		assertThat(response.user().streakDays()).isEqualTo(4);
+		assertThat(response.user().userIcon()).isEqualTo("⚔️");
 		assertThat(response.user().dayStreak()).isEqualTo(4);
 		assertThat(response.user().taskStreak()).isEqualTo(3);
 		assertThat(response.user().xpAccBoost()).isEqualTo(1.2f);

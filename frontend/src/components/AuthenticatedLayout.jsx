@@ -9,6 +9,7 @@ import { DEFAULT_PLAYER_CLASS } from '../utils/playerClasses.js'
 const EMPTY_PLAYER = {
   username: '',
   profileUrl: '',
+  userIcon: '⚔️',
   playerClass: DEFAULT_PLAYER_CLASS,
   level: 1,
   xp: 0,
