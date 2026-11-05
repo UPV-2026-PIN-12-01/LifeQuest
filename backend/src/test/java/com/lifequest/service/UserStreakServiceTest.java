@@ -75,7 +75,7 @@ class UserStreakServiceTest {
 		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		UserStreakService service = service(repository, TODAY);
 
-		assertThat(service.recordTaskCompletion(7L)).isEqualTo(1.5);
+		assertThat(service.recordTaskCompletion(7L)).isEqualTo(1.45);
 		assertThat(user.getTaskStreak()).isEqualTo(10);
 		assertThat(service.recordTaskCompletion(7L)).isEqualTo(1.5);
 		assertThat(user.getTaskStreak()).isEqualTo(11);
@@ -84,6 +84,30 @@ class UserStreakServiceTest {
 
 		assertThat(user.getTaskStreak()).isZero();
 		verify(repository, org.mockito.Mockito.atLeast(3)).save(user);
+	}
+
+	@Test
+	void taskStreakFiveGrantsTwentyFivePercentAndThenAdvances() {
+		UserRepository repository = mock(UserRepository.class);
+		User user = user(0, null, 1.0f);
+		user.setTaskStreak(5);
+		when(repository.findByIdForUpdate(7L)).thenReturn(Optional.of(user));
+		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		assertThat(service(repository, TODAY).recordTaskCompletion(7L)).isEqualTo(1.25);
+		assertThat(user.getTaskStreak()).isEqualTo(6);
+	}
+
+	@Test
+	void currentAccountBoostUsesTheDayStreakEvenWhenNoActivityDateHasBeenRecordedYet() {
+		UserRepository repository = mock(UserRepository.class);
+		User user = user(99, null, 1.0f);
+		when(repository.findByIdForUpdate(7L)).thenReturn(Optional.of(user));
+		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		assertThat(service(repository, TODAY).synchronizeAccountBoost(7L)).isEqualTo(1.35);
+		assertThat(user.getXpAccBoost()).isEqualTo(1.35f);
+		verify(repository).save(user);
 	}
 
 	private static UserStreakService service(UserRepository repository, LocalDate today) {

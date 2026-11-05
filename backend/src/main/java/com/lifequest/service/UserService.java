@@ -20,10 +20,15 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final CharacterStatsService characterStatsService;
+	private final UserStreakService userStreakService;
 
-	public UserService(UserRepository userRepository, CharacterStatsService characterStatsService) {
+	public UserService(
+			UserRepository userRepository,
+			CharacterStatsService characterStatsService,
+			UserStreakService userStreakService) {
 		this.userRepository = userRepository;
 		this.characterStatsService = characterStatsService;
+		this.userStreakService = userStreakService;
 	}
 
 	@Transactional(readOnly = true)
@@ -81,6 +86,7 @@ public class UserService {
 		if (userIcon != null) {
 			user.setUserIcon(userIcon);
 		}
+		userStreakService.synchronizeAccountBoost(user);
 		try {
 			return userRepository.saveAndFlush(user);
 		} catch (DataIntegrityViolationException ex) {
@@ -122,6 +128,7 @@ public class UserService {
 		user.setUsername(username);
 		user.setEmail(email);
 		user.setInnerId(innerId);
+		userStreakService.synchronizeAccountBoost(user);
 		return userRepository.save(user);
 	}
 
@@ -129,6 +136,7 @@ public class UserService {
 	public User linkCharacter(User user, CharacterStats characterStats) {
 		user.setPlayerName(characterStats.getPlayerName());
 		user.setPlayerId(characterStats.getId());
+		userStreakService.synchronizeAccountBoost(user);
 		return userRepository.save(user);
 	}
 
@@ -136,6 +144,7 @@ public class UserService {
 	public void updateProfileUrl(Long userId, String profileUrl) {
 		User user = userRepository.findById(userId).orElseThrow();
 		user.setProfileUrl(profileUrl);
+		userStreakService.synchronizeAccountBoost(user);
 		userRepository.save(user);
 	}
 }

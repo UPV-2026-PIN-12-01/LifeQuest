@@ -20,14 +20,20 @@ public class PlayerService {
 	private final UserService userService;
 	private final CharacterStatsService characterStatsService;
 	private final TaskService taskService;
+	private final UserStreakService userStreakService;
 
-	public PlayerService(UserService userService, CharacterStatsService characterStatsService, TaskService taskService) {
+	public PlayerService(
+			UserService userService,
+			CharacterStatsService characterStatsService,
+			TaskService taskService,
+			UserStreakService userStreakService) {
 		this.userService = userService;
 		this.characterStatsService = characterStatsService;
 		this.taskService = taskService;
+		this.userStreakService = userStreakService;
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public PlayerProfileDto getProfile(Long userId) {
 		User user = userService.getById(userId);
 		CharacterStats stats = characterStatsService.getByUserId(userId);
@@ -45,7 +51,7 @@ public class PlayerService {
 				user.getStreakDays(),
 				user.getStreakDays(),
 				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
-				user.getXpAccBoost() == null ? 1.0f : user.getXpAccBoost());
+				(float) userStreakService.synchronizeAccountBoost(userId));
 	}
 
 	// Quests are not stored yet: progress is computed from today's tasks and the streak.

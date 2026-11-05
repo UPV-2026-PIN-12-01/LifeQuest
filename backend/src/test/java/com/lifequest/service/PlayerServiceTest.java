@@ -18,6 +18,7 @@ class PlayerServiceTest {
 		UserService userService = mock(UserService.class);
 		CharacterStatsService statsService = mock(CharacterStatsService.class);
 		TaskService taskService = mock(TaskService.class);
+		UserStreakService streakService = mock(UserStreakService.class);
 		User user = mock(User.class);
 		CharacterStats stats = mock(CharacterStats.class);
 		when(userService.getById(7L)).thenReturn(user);
@@ -25,7 +26,7 @@ class PlayerServiceTest {
 		when(user.getUsername()).thenReturn("test-can-delete-later");
 		when(user.getStreakDays()).thenReturn(6);
 		when(user.getTaskStreak()).thenReturn(4);
-		when(user.getXpAccBoost()).thenReturn(1.3f);
+		when(streakService.synchronizeAccountBoost(7L)).thenReturn(1.3);
 		when(statsService.getByUserId(7L)).thenReturn(stats);
 		when(stats.getLevel()).thenReturn(2);
 		when(stats.getXpCurrent()).thenReturn(4L);
@@ -33,7 +34,7 @@ class PlayerServiceTest {
 		when(stats.getPlayerName()).thenReturn("Hero");
 		when(stats.getPlayerClass()).thenReturn(PlayerClass.knight);
 
-		PlayerProfileDto profile = new PlayerService(userService, statsService, taskService).getProfile(7L);
+		PlayerProfileDto profile = new PlayerService(userService, statsService, taskService, streakService).getProfile(7L);
 
 		assertThat(profile.streakDays()).isEqualTo(6);
 		assertThat(profile.dayStreak()).isEqualTo(6);
@@ -47,12 +48,13 @@ class PlayerServiceTest {
 		UserService userService = mock(UserService.class);
 		CharacterStatsService statsService = mock(CharacterStatsService.class);
 		TaskService taskService = mock(TaskService.class);
+		UserStreakService streakService = mock(UserStreakService.class);
 		User user = mock(User.class);
 		when(userService.getById(7L)).thenReturn(user);
 		when(user.getStreakDays()).thenReturn(3);
 		when(taskService.countCompletedToday(7L)).thenReturn(1L);
 
-		var quests = new PlayerService(userService, statsService, taskService).getDailyQuests(7L);
+		var quests = new PlayerService(userService, statsService, taskService, streakService).getDailyQuests(7L);
 
 		assertThat(quests).filteredOn(quest -> quest.id().equals("streak"))
 				.singleElement()

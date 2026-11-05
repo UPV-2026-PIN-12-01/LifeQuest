@@ -19,6 +19,7 @@ class UserProfileServiceTest {
 	void currentUserResponseIncludesStreakFromUser() {
 		UserService userService = mock(UserService.class);
 		CharacterStatsService statsService = mock(CharacterStatsService.class);
+		UserStreakService streakService = mock(UserStreakService.class);
 		SupabaseAuthService authService = mock(SupabaseAuthService.class);
 		SupabaseStorageService storageService = mock(SupabaseStorageService.class);
 		User user = mock(User.class);
@@ -31,13 +32,13 @@ class UserProfileServiceTest {
 		when(user.getProfileUrl()).thenReturn("");
 		when(user.getStreakDays()).thenReturn(4);
 		when(user.getTaskStreak()).thenReturn(3);
-		when(user.getXpAccBoost()).thenReturn(1.2f);
+		when(streakService.synchronizeAccountBoost(7L)).thenReturn(1.2);
 		when(statsService.getByUserId(7L)).thenReturn(stats);
 		when(stats.getPlayerName()).thenReturn("Hero");
 		when(stats.getPlayerClass()).thenReturn(PlayerClass.archer);
 
 		UserAccountResponse response = new UserProfileService(
-				userService, statsService, authService, storageService).currentUser("auth-subject");
+				userService, statsService, streakService, authService, storageService).currentUser("auth-subject");
 
 		assertThat(response.user().streakDays()).isEqualTo(4);
 		assertThat(response.user().dayStreak()).isEqualTo(4);

@@ -30,6 +30,7 @@ import com.lifequest.model.entity.Reward;
 import com.lifequest.model.entity.ActivityType;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.TaskSession;
+import com.lifequest.model.entity.User;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
 
@@ -44,6 +45,7 @@ class TaskCompletionServiceTest {
 	private TaskSessionRepository taskSessionRepository;
 	private RewardService rewardService;
 	private CharacterStatsService characterStatsService;
+	private UserService userService;
 	private Task task;
 	private Reward reward;
 
@@ -53,7 +55,10 @@ class TaskCompletionServiceTest {
 		taskSessionRepository = mock(TaskSessionRepository.class);
 		rewardService = mock(RewardService.class);
 		characterStatsService = mock(CharacterStatsService.class);
+		userService = mock(UserService.class);
+		when(userService.getById(7L)).thenReturn(new User());
 		task = new Task();
+		task.setUserId(7L);
 		task.setName("Repasar test-can-delete-later");
 		task.setStatus("PENDING");
 		task.setActivityType(ActivityType.STUDY);
@@ -92,6 +97,17 @@ class TaskCompletionServiceTest {
 
 		verify(characterStatsService).addAwardedXp(7L, 28L);
 		verify(rewardService).claim(eq(reward), eq(28L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+	}
+
+	@Test
+	void taskAndAccountStreakMultipliersAreBothAppliedToTaskXp() {
+		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.1);
+		when(characterStatsService.recordXpActivityForTask(7L)).thenReturn(1.15);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addAwardedXp(7L, 32L);
+		verify(rewardService).claim(eq(reward), eq(32L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 	}
 
 	@Test
@@ -242,7 +258,7 @@ class TaskCompletionServiceTest {
 
 	private TaskCompletionService serviceAt(String now) {
 		Clock clock = Clock.fixed(Instant.parse(now), MADRID);
-		TaskService taskService = new TaskService(taskRepository, rewardService, mock(UserService.class),
+		TaskService taskService = new TaskService(taskRepository, rewardService, userService,
 				taskSessionRepository, clock);
 		return new TaskCompletionService(taskService, taskRepository, taskSessionRepository, rewardService,
 				characterStatsService, clock);

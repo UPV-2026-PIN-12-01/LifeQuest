@@ -31,6 +31,7 @@ import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.ActivityType;
 import com.lifequest.model.entity.RewardSource;
+import com.lifequest.model.entity.User;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
@@ -43,13 +44,15 @@ class TaskServiceTest {
 
 	private TaskRepository taskRepository;
 	private RewardService rewardService;
+	private UserService userService;
 	private TaskService taskService;
 
 	@BeforeEach
 	void setUp() {
 		taskRepository = mock(TaskRepository.class);
 		rewardService = mock(RewardService.class);
-		UserService userService = mock(UserService.class);
+		userService = mock(UserService.class);
+		when(userService.getById(7L)).thenReturn(new User());
 		taskService = new TaskService(taskRepository, rewardService, userService, mock(TaskSessionRepository.class),
 				Clock.fixed(NOW, MADRID));
 	}
@@ -80,7 +83,43 @@ class TaskServiceTest {
 		assertThat(dto.endTime()).isEqualTo("01:00");
 		assertThat(dto.status()).isEqualTo("pending");
 		assertThat(dto.priority()).isEqualTo("medium");
-		assertThat(dto.xp()).isEqualTo(55L);
+		assertThat(dto.xp()).isEqualTo(58L);
+	}
+
+	@Test
+	void pendingTaskEstimateIncludesTaskAndAccountStreakBonuses() {
+		User user = new User();
+		user.setTaskStreak(2);
+		user.setDayStreak(2);
+		user.setLastActivityDate(LocalDate.of(2026, 10, 9));
+		when(userService.getById(7L)).thenReturn(user);
+		Task task = task("PENDING", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
+		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
+				eq(7L), any(), any()))
+				.thenReturn(List.of(task));
+		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+
+		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
+
+		assertThat(tasks.get(0).xp()).isEqualTo(70L);
+	}
+
+	@Test
+	void pendingTaskEstimateDropsExpiredAccountStreakBonus() {
+		User user = new User();
+		user.setDayStreak(6);
+		user.setLastActivityDate(LocalDate.of(2026, 10, 8));
+		user.setXpAccBoost(1.3f);
+		when(userService.getById(7L)).thenReturn(user);
+		Task task = task("PENDING", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
+		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
+				eq(7L), any(), any()))
+				.thenReturn(List.of(task));
+		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+
+		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
+
+		assertThat(tasks.get(0).xp()).isEqualTo(58L);
 	}
 
 	@Test
@@ -135,7 +174,7 @@ class TaskServiceTest {
 		assertThat(dto.startTime()).isEqualTo("09:00");
 		assertThat(dto.priority()).isEqualTo("high");
 		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
-		assertThat(dto.xp()).isEqualTo(44L);
+		assertThat(dto.xp()).isEqualTo(46L);
 		verify(rewardService).create(7L, 30L, RewardSource.TASK);
 	}
 
@@ -233,6 +272,7 @@ class TaskServiceTest {
 
 	private static Task task(String status, String start, String end, Long rewardId) {
 		Task task = new Task();
+		task.setUserId(7L);
 		task.setName("Repasar test-can-delete-later");
 		task.setDescription("test-can-delete-later");
 		task.setIcon("📘");

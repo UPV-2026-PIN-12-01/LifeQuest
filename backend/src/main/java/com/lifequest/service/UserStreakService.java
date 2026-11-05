@@ -28,20 +28,13 @@ public class UserStreakService {
 	public double recordXpActivity(Long userId) {
 		User user = lockUser(userId);
 		LocalDate today = LocalDate.now(clock);
-		LocalDate lastActivity = user.getLastActivityDate();
-		int dayStreak = valueOrZero(user.getDayStreak());
-
-		if (lastActivity == null) {
-			dayStreak = 1;
-			user.setLastActivityDate(today);
-		} else if (today.isAfter(lastActivity)) {
-			dayStreak = lastActivity.plusDays(1).equals(today) ? increment(dayStreak) : 1;
+		int dayStreak = dayStreakForActivity(user, today);
+		if (user.getLastActivityDate() == null || today.isAfter(user.getLastActivityDate())) {
 			user.setLastActivityDate(today);
 		}
 
 		user.setDayStreak(dayStreak);
-		float accountBoost = (float) multiplier(dayStreak, DAY_STREAK_BOOST_CAP);
-		user.setXpAccBoost(accountBoost);
+		double accountBoost = synchronizeAccountBoost(user);
 		userRepository.save(user);
 		return accountBoost;
 	}
@@ -49,17 +42,33 @@ public class UserStreakService {
 	@Transactional
 	public double recordTaskCompletion(Long userId) {
 		User user = lockUser(userId);
-		int taskStreak = increment(valueOrZero(user.getTaskStreak()));
-		user.setTaskStreak(taskStreak);
+		int completedTasks = valueOrZero(user.getTaskStreak());
+		user.setTaskStreak(increment(completedTasks));
+		synchronizeAccountBoost(user);
 		userRepository.save(user);
-		return multiplier(taskStreak, TASK_STREAK_BOOST_CAP);
+		return multiplier(completedTasks, TASK_STREAK_BOOST_CAP);
 	}
 
 	@Transactional
 	public void recordTaskMiss(Long userId) {
 		User user = lockUser(userId);
 		user.setTaskStreak(0);
+		synchronizeAccountBoost(user);
 		userRepository.save(user);
+	}
+
+	@Transactional
+	public double synchronizeAccountBoost(Long userId) {
+		User user = lockUser(userId);
+		double accountBoost = synchronizeAccountBoost(user);
+		userRepository.save(user);
+		return accountBoost;
+	}
+
+	double synchronizeAccountBoost(User user) {
+		double accountBoost = multiplier(valueOrZero(user.getDayStreak()), DAY_STREAK_BOOST_CAP);
+		user.setXpAccBoost((float) accountBoost);
+		return accountBoost;
 	}
 
 	private User lockUser(Long userId) {
@@ -77,5 +86,31 @@ public class UserStreakService {
 
 	private static double multiplier(int streak, int cap) {
 		return 1.0 + BOOST_PER_STREAK * Math.min(streak, cap);
+	}
+
+	static double multiplierForNextTask(Integer completedTasks) {
+		return multiplier(valueOrZero(completedTasks), TASK_STREAK_BOOST_CAP);
+	}
+
+	static double accountMultiplier(User user, LocalDate activityDate) {
+		return multiplier(dayStreakForActivity(user, activityDate), DAY_STREAK_BOOST_CAP);
+	}
+
+	private static int dayStreakForActivity(User user, LocalDate activityDate) {
+		int currentStreak = valueOrZero(user.getDayStreak());
+		LocalDate lastActivity = user.getLastActivityDate();
+		if (lastActivity == null) {
+			return currentStreak > 0 ? currentStreak : 1;
+		}
+		if (activityDate.equals(lastActivity)) {
+			return currentStreak;
+		}
+		if (activityDate.isBefore(lastActivity)) {
+			return currentStreak;
+		}
+		if (activityDate.isAfter(lastActivity) && lastActivity.plusDays(1).equals(activityDate)) {
+			return increment(currentStreak);
+		}
+		return 1;
 	}
 }
