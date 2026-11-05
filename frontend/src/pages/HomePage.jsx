@@ -115,6 +115,7 @@ export default function HomePage() {
         <TaskFormModal
           task={editor.task}
           defaultDate={toIsoDate(new Date())}
+          player={player}
           onClose={() => setEditor(null)}
           onSaved={() => {
             setEditor(null)

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { createTask, deleteTask, updateTask } from '../../services/tasks.js'
-import { getPlayerProfile } from '../../services/player.js'
 import {
   TASK_ACTIVITY_TYPES,
   TASK_COLORS,
@@ -26,27 +25,24 @@ const SERVER_ERRORS = {
 }
 
 // Create a task when `task` is null, otherwise edit or delete it. Calls onSaved after any change.
-export default function TaskFormModal({ task, defaultDate, onClose, onSaved, player}) {
+export default function TaskFormModal({ task, defaultDate, onClose, onSaved, player }) {
   const dialogRef = useRef(null)
   const [form, setForm] = useState(() => initialForm(task, defaultDate))
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [playerProfile, setPlayerProfile] = useState(player || { xpAccBoost: 1 });
+  const taskStreak = Math.min(Math.max(Number(player?.taskStreak) || 0, 0), 10)
+  const accountXpBoost = Math.min(Math.max(Number(player?.xpAccBoost) || 1, 1), 1.35)
   const isEdit = Boolean(task)
   const durationMinutes = getDurationMinutes(form.startTime, form.endTime)
   const durationMultiplier = taskDurationMultiplier(durationMinutes)
+  const estimatedXp = Math.round(
+    XP_BY_PRIORITY[form.priority] * durationMultiplier * accountXpBoost * (1 + taskStreak * 0.05),
+  )
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (dialog && !dialog.open) dialog.showModal()
-    
-    getPlayerProfile().then((profile) => {
-      setPlayerProfile(profile)
-      //console.log('Player profile fetched:', profile)
-    }).catch((error) => {
-      console.error('Failed to fetch player profile:', error)
-    })
   }, [])
 
   function update(field, value) {
@@ -90,10 +86,6 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved, pla
       setBusy(false)
     }
   }
-
-  let taskStreakFactor = (1 + (playerProfile.taskStreak < 10 ? playerProfile.taskStreak * 0.05 : 0.5)) || 1;
-  var estimatedXp = Math.round(XP_BY_PRIORITY[form.priority] * durationMultiplier * (Number(playerProfile.xpAccBoost) || 1) * taskStreakFactor);
-  //console.log('Estimated XP:', estimatedXp, 'Duration Multiplier:', durationMultiplier, 'XP Boost:', playerProfile.xpAccBoost);
 
   return (
     
