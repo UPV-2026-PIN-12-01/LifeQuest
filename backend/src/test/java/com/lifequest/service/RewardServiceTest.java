@@ -52,6 +52,7 @@ class RewardServiceTest {
 		RewardRepository repository = mock(RewardRepository.class);
 		Reward reward = new Reward();
 		reward.setXpReward(30L);
+		reward.setGoldReward(0L);
 		Instant claimedAt = Instant.parse("2026-11-05T15:00:00Z");
 		RewardService service = new RewardService(repository);
 
@@ -71,10 +72,11 @@ class RewardServiceTest {
 		when(repository.findByIdForUpdate(9L)).thenReturn(java.util.Optional.of(reward));
 		RewardService service = new RewardService(repository);
 
-		service.updateXp(9L, 40L, RewardSource.TASK);
+		service.updateTaskReward(9L, 40L, 6L, RewardSource.TASK);
 
 		verify(repository).findByIdForUpdate(9L);
 		assertThat(reward.getXpReward()).isEqualTo(40L);
+		assertThat(reward.getGoldReward()).isEqualTo(6L);
 		assertThat(reward.getClaimedAt()).isEqualTo(claimedAt);
 	}
 }

@@ -47,6 +47,8 @@ public class TaskService {
 	static final Set<String> COLORS = Set.of("purple", "red", "blue", "yellow", "green");
 	// XP of the reward created with each task, by form priority.
 	static final Map<String, Long> XP_BY_PRIORITY = Map.of("low", 10L, "medium", 20L, "high", 30L);
+	// Base gold is deliberately modest; task duration is applied when the task is completed.
+	static final Map<String, Long> GOLD_BY_PRIORITY = Map.of("low", 5L, "medium", 6L, "high", 7L);
 	static final Map<String, String> DB_PRIORITY_BY_FORM = Map.of("low", "LOW", "medium", "MID", "high", "HIGH");
 	// A task may be planned a little late (the form was slow), but not backdated to claim XP.
 	static final Duration PAST_START_GRACE = Duration.ofMinutes(15);
@@ -109,7 +111,8 @@ public class TaskService {
 		task.setStatus(DB_STATUS_PENDING);
 		apply(task, request);
 		long xp = XP_BY_PRIORITY.get(request.priority());
-		task.setRewardId(rewardService.create(userId, xp, RewardSource.TASK));
+		long gold = GOLD_BY_PRIORITY.get(request.priority());
+		task.setRewardId(rewardService.create(userId, xp, gold, RewardSource.TASK));
 		return toDto(taskRepository.save(task), xp, user);
 	}
 
@@ -123,10 +126,11 @@ public class TaskService {
 		}
 		apply(task, request);
 		long xp = XP_BY_PRIORITY.get(request.priority());
+		long gold = GOLD_BY_PRIORITY.get(request.priority());
 		if (task.getRewardId() == null) {
-			task.setRewardId(rewardService.create(userId, xp, RewardSource.TASK));
+			task.setRewardId(rewardService.create(userId, xp, gold, RewardSource.TASK));
 		} else {
-			rewardService.updateXp(task.getRewardId(), xp, RewardSource.TASK);
+			rewardService.updateTaskReward(task.getRewardId(), xp, gold, RewardSource.TASK);
 		}
 		return toDto(taskRepository.save(task), xp, userService.getById(userId));
 	}

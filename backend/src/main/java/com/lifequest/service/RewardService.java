@@ -48,10 +48,11 @@ public class RewardService {
 	}
 
 	@Transactional
-	public void updateXp(Long rewardId, long xp, RewardSource source) {
+	public void updateTaskReward(Long rewardId, long xp, long gold, RewardSource source) {
 		Reward reward = rewardRepository.findByIdForUpdate(rewardId)
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 		reward.setXpReward(xp);
+		reward.setGoldReward(gold);
 		reward.setSource(Objects.requireNonNull(source, "Reward source is required"));
 	}
 
@@ -82,7 +83,13 @@ public class RewardService {
 	// The reward keeps the XP actually granted, so the card shows what the user got.
 	@Transactional
 	public void claim(Reward reward, long grantedXp, Instant now) {
+		claim(reward, grantedXp, reward.getGoldReward(), now);
+	}
+
+	@Transactional
+	public void claim(Reward reward, long grantedXp, long grantedGold, Instant now) {
 		reward.setXpReward(grantedXp);
+		reward.setGoldReward(grantedGold);
 		reward.setClaimedAt(now);
 		rewardRepository.saveAndFlush(reward);
 	}

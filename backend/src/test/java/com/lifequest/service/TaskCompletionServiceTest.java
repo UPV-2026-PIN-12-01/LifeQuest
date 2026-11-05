@@ -83,8 +83,9 @@ class TaskCompletionServiceTest {
 	void completingAfterTheEndGrantsDurationAdjustedXp() {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
-		verify(rewardService).claim(eq(reward), eq(26L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(rewardService).claim(eq(reward), eq(26L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 		verify(characterStatsService).addAwardedXp(7L, 26L);
+		verify(characterStatsService).addGold(7L, 8L);
 		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
 		assertThat(task.getStatus()).isEqualTo("DONE");
 	}
@@ -94,10 +95,24 @@ class TaskCompletionServiceTest {
 		TaskDto completed = serviceAt("2026-10-10T08:00:00Z").completeInstantlyForTesting(7L, 1L);
 
 		assertThat(task.getStatus()).isEqualTo("DONE");
-		verify(rewardService).claim(eq(reward), eq(26L), eq(Instant.parse("2026-10-10T08:00:00Z")));
+		verify(rewardService).claim(eq(reward), eq(26L), eq(8L), eq(Instant.parse("2026-10-10T08:00:00Z")));
+		verify(characterStatsService).addGold(7L, 8L);
 		verify(characterStatsService).addAwardedXp(7L, 26L);
 		verify(taskRepository).save(task);
 		assertThat(completed.status()).isEqualTo("completed");
+	}
+
+	@Test
+	void taskGoldUsesOnlyDurationBoostAndRoundsTheAward() {
+		task.setStartTime(START);
+		task.setEndTime(START.plus(Duration.ofMinutes(30)));
+		withSession("2026-10-10T09:00:00Z", 1260);
+
+		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
+
+		verify(characterStatsService).addGold(7L, 7L);
+		verify(rewardService).claim(
+				eq(reward), anyLong(), eq(7L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 	}
 
 	@Test
@@ -107,7 +122,7 @@ class TaskCompletionServiceTest {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		verify(characterStatsService).addAwardedXp(7L, 28L);
-		verify(rewardService).claim(eq(reward), eq(28L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(rewardService).claim(eq(reward), eq(28L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
 	}
 
 	@Test
@@ -118,7 +133,8 @@ class TaskCompletionServiceTest {
 		serviceAt("2026-10-10T10:30:00Z").complete(7L, 1L);
 
 		verify(characterStatsService).addAwardedXp(7L, 32L);
-		verify(rewardService).claim(eq(reward), eq(32L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(rewardService).claim(eq(reward), eq(32L), eq(8L), eq(Instant.parse("2026-10-10T10:30:00Z")));
+		verify(characterStatsService).addGold(7L, 8L);
 	}
 
 	@Test

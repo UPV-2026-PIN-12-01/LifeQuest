@@ -115,6 +115,9 @@ public class TaskCompletionService {
 			long taskXp = verification.apply(
 					reward.getXpReward(), Duration.between(task.getStartTime(), task.getEndTime()),
 					taskStreakMultiplier);
+			long taskGold = Math.round(TaskService.GOLD_BY_PRIORITY
+					.get(TaskService.displayPriority(task.getPriority()))
+					* TaskDurationReward.multiplier(Duration.between(task.getStartTime(), task.getEndTime())));
 			long xpAvailableUnderDailyCap = claimedToday(userId, now);
 			long awardedXp = 0;
 			if (capToDailyLimit(taskXp, xpAvailableUnderDailyCap) > 0) {
@@ -122,7 +125,8 @@ public class TaskCompletionService {
 				long granted = capToDailyLimit(Math.round(taskXp * accountBoost), xpAvailableUnderDailyCap);
 				awardedXp = characterStatsService.addAwardedXp(userId, granted);
 			}
-			rewardService.claim(reward, awardedXp, now);
+			characterStatsService.addGold(userId, taskGold);
+			rewardService.claim(reward, awardedXp, taskGold, now);
 		}
 		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_DONE);
