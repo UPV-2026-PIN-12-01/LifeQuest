@@ -5,6 +5,7 @@ const NAV = [
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
+  
 ]
 export default function BottomNav() {
   const { pathname, hash } = useLocation()
