@@ -96,6 +96,7 @@ class ChallengeServiceTest {
 		reward.setXpReward(100L);
 		reward.setGoldReward(50L);
 		when(challengeRepository.findByIdAndUserId(4L, 7L)).thenReturn(Optional.of(challenge));
+		when(rewardService.getByIdForUpdate(9L)).thenReturn(reward);
 		when(rewardService.getById(9L)).thenReturn(reward);
 		when(characterStatsService.addXp(7L, 100L)).thenReturn(115L);
 		Clock clock = Clock.fixed(Instant.parse("2026-11-04T12:00:00Z"), ZoneOffset.UTC);

@@ -97,7 +97,7 @@ public class TaskCompletionService {
 		}
 		double taskStreakMultiplier = characterStatsService.recordTaskCompletion(userId);
 		if (task.getRewardId() != null) {
-			Reward reward = rewardService.getById(task.getRewardId());
+			Reward reward = rewardService.getByIdForUpdate(task.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Reward was already claimed");
 			}

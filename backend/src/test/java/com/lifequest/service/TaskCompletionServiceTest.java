@@ -70,7 +70,7 @@ class TaskCompletionServiceTest {
 		reward = new Reward();
 		reward.setXpReward(20L);
 		when(taskRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(task));
-		when(rewardService.getById(3L)).thenReturn(reward);
+		when(rewardService.getByIdForUpdate(3L)).thenReturn(reward);
 		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 20L));
 		when(taskSessionRepository.findByTaskId(any())).thenReturn(Optional.empty());
 		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.0);

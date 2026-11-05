@@ -49,7 +49,7 @@ public class RewardService {
 
 	@Transactional
 	public void updateXp(Long rewardId, long xp, RewardSource source) {
-		Reward reward = rewardRepository.findById(rewardId)
+		Reward reward = rewardRepository.findByIdForUpdate(rewardId)
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 		reward.setXpReward(xp);
 		reward.setSource(Objects.requireNonNull(source, "Reward source is required"));
@@ -58,6 +58,12 @@ public class RewardService {
 	@Transactional(readOnly = true)
 	public Reward getById(Long rewardId) {
 		return rewardRepository.findById(rewardId)
+				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
+	}
+
+	@Transactional
+	public Reward getByIdForUpdate(Long rewardId) {
+		return rewardRepository.findByIdForUpdate(rewardId)
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 	}
 
@@ -78,7 +84,7 @@ public class RewardService {
 	public void claim(Reward reward, long grantedXp, Instant now) {
 		reward.setXpReward(grantedXp);
 		reward.setClaimedAt(now);
-		rewardRepository.save(reward);
+		rewardRepository.saveAndFlush(reward);
 	}
 
 	@Transactional

@@ -154,7 +154,7 @@ public class ChallengeService {
 			throw new InvalidStateException("You can claim only three challenges per day");
 		}
 		if (challenge.getRewardId() != null) {
-			Reward reward = rewardService.getById(challenge.getRewardId());
+			Reward reward = rewardService.getByIdForUpdate(challenge.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Challenge reward was already claimed");
 			}

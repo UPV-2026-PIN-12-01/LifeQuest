@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -43,5 +45,36 @@ class RewardServiceTest {
 			assertThat(converter.convertToDatabaseColumn(source)).isEqualTo(source.databaseValue());
 			assertThat(converter.convertToEntityAttribute(source.databaseValue())).isEqualTo(source);
 		}
+	}
+
+	@Test
+	void persistsClaimedAtAndGrantedXpImmediately() {
+		RewardRepository repository = mock(RewardRepository.class);
+		Reward reward = new Reward();
+		reward.setXpReward(30L);
+		Instant claimedAt = Instant.parse("2026-11-05T15:00:00Z");
+		RewardService service = new RewardService(repository);
+
+		service.claim(reward, 35L, claimedAt);
+
+		verify(repository).saveAndFlush(reward);
+		assertThat(reward.getClaimedAt()).isEqualTo(claimedAt);
+		assertThat(reward.getXpReward()).isEqualTo(35L);
+	}
+
+	@Test
+	void updatesXpUnderLockWithoutClearingAnExistingClaimTimestamp() {
+		RewardRepository repository = mock(RewardRepository.class);
+		Reward reward = new Reward();
+		Instant claimedAt = Instant.parse("2026-11-05T15:00:00Z");
+		reward.setClaimedAt(claimedAt);
+		when(repository.findByIdForUpdate(9L)).thenReturn(java.util.Optional.of(reward));
+		RewardService service = new RewardService(repository);
+
+		service.updateXp(9L, 40L, RewardSource.TASK);
+
+		verify(repository).findByIdForUpdate(9L);
+		assertThat(reward.getXpReward()).isEqualTo(40L);
+		assertThat(reward.getClaimedAt()).isEqualTo(claimedAt);
 	}
 }

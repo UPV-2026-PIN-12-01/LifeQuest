@@ -129,7 +129,7 @@ public class GoalService {
 			throw new InvalidStateException("Goal has no reward to claim");
 		}
 
-		Reward reward = rewardService.getById(goal.getRewardId());
+		Reward reward = rewardService.getByIdForUpdate(goal.getRewardId());
 		if (reward.getClaimedAt() != null) {
 			throw new InvalidStateException("Goal reward was already claimed");
 		}

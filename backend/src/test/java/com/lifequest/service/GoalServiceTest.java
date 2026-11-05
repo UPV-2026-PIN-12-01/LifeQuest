@@ -136,6 +136,7 @@ class GoalServiceTest {
 		reward.setXpReward(100L);
 		reward.setGoldReward(50L);
 		when(repository.findForUpdateByIdAndUserId(4L, 7L)).thenReturn(Optional.of(goal));
+		when(rewardService.getByIdForUpdate(9L)).thenReturn(reward);
 		when(rewardService.getById(9L)).thenReturn(reward);
 
 		GoalService service = new GoalService(
@@ -165,6 +166,7 @@ class GoalServiceTest {
 		reward.setXpReward(100L);
 		reward.setGoldReward(50L);
 		when(repository.findForUpdateByIdAndUserId(4L, 7L)).thenReturn(Optional.of(goal));
+		when(rewardService.getByIdForUpdate(9L)).thenReturn(reward);
 		when(rewardService.getById(9L)).thenReturn(reward);
 		when(characterStatsService.addXp(7L, 100L)).thenReturn(115L);
 
