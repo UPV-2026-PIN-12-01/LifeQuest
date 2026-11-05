@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { priorityById, statusById } from '../../utils/taskOptions.js'
+import {
+  activityById,
+  activityStatsLabel,
+  priorityById,
+  statusById,
+} from '../../utils/taskOptions.js'
 import TaskActions from './TaskActions.jsx'
 
 // onTaskChanged receives the task the server returns after a check-in, completion or skip.
@@ -28,6 +33,7 @@ export default function TaskTable({ id, tasks, onTaskChanged, testingMode = fals
                 <th scope="col">Tarea</th>
                 <th scope="col">Fecha</th>
                 <th scope="col">Horario</th>
+                <th scope="col">Actividad / atributos</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Prioridad</th>
               </tr>
@@ -50,7 +56,10 @@ export default function TaskTable({ id, tasks, onTaskChanged, testingMode = fals
                     </td>
                     <td>{formatDate(task.date)}</td>
                     <td className="tabular">{task.startTime}–{task.endTime}</td>
-                    <td>{statusById(task.status).label}</td>
+                    <td>
+                      <ActivitySummary activityType={task.activityType} />
+                    </td>
+                    <td><TaskStatusBadge status={task.status} /></td>
                     <td>{priorityById(task.priority).label}</td>
                   </tr>
                 ))}
@@ -107,11 +116,15 @@ function TaskDetailsModal({ task, onClose, onTaskChanged, testingMode }) {
           </div>
           <div>
             <dt>Estado</dt>
-            <dd>{statusById(task.status).label}</dd>
+            <dd><TaskStatusBadge status={task.status} /></dd>
           </div>
           <div>
             <dt>Prioridad</dt>
             <dd>{priorityById(task.priority).label}</dd>
+          </div>
+          <div>
+            <dt>Actividad / atributos</dt>
+            <dd><ActivitySummary activityType={task.activityType} /></dd>
           </div>
           <div>
             <dt>Experiencia</dt>
@@ -130,6 +143,26 @@ function TaskDetailsModal({ task, onClose, onTaskChanged, testingMode }) {
         </button>
       </section>
     </div>
+  )
+}
+
+function TaskStatusBadge({ status: statusId }) {
+  const status = statusById(statusId)
+  return (
+    <span className={`task-status-badge task-status-badge-${status.id}`}>
+      <span aria-hidden="true">{status.icon}</span>
+      {status.label}
+    </span>
+  )
+}
+
+function ActivitySummary({ activityType }) {
+  const activity = activityById(activityType)
+  return (
+    <span className="task-activity-summary">
+      <strong>{activity.label}</strong>
+      <small>{activityStatsLabel(activityType)}</small>
+    </span>
   )
 }
 

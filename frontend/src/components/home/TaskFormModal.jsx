@@ -5,6 +5,8 @@ import {
   TASK_COLORS,
   TASK_ICONS,
   TASK_PRIORITIES,
+  activityById,
+  activityStatsLabel,
   taskDurationMultiplier,
   XP_BY_PRIORITY,
 } from '../../utils/taskOptions.js'
@@ -39,6 +41,7 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved, pla
   const estimatedXp = Math.round(
     XP_BY_PRIORITY[form.priority] * durationMultiplier * accountXpBoost * (1 + taskStreak * 0.05),
   )
+  const activity = activityById(form.activityType)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -172,6 +175,9 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved, pla
               </option>
             ))}
           </select>
+          <p className="task-activity-preview" aria-live="polite">
+            <strong>{activity.label}:</strong> {activityStatsLabel(form.activityType)}
+          </p>
         </fieldset>
 
         <fieldset className="task-field">

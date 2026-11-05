@@ -13,16 +13,29 @@ export const TASK_PRIORITIES = [
 ]
 
 export const TASK_ACTIVITY_TYPES = [
-  { id: 'EXERCISE', label: 'Ejercicio' },
-  { id: 'STUDY', label: 'Estudio' },
-  { id: 'WORK', label: 'Trabajo' },
-  { id: 'SOCIAL', label: 'Social' },
-  { id: 'SPORTS', label: 'Deporte' },
-  { id: 'ENTERTAINMENT', label: 'Entretenimiento' },
+  { id: 'EXERCISE', label: 'Ejercicio', stats: [['Fuerza', 2], ['Estamina', 1]] },
+  { id: 'STUDY', label: 'Estudio', stats: [['Conocimiento', 3]] },
+  { id: 'WORK', label: 'Trabajo', stats: [['Vida', 1], ['Fuerza', 1], ['Conocimiento', 1]] },
+  { id: 'SOCIAL', label: 'Social', stats: [['Vida', 2], ['Velocidad', 1]] },
+  { id: 'SPORTS', label: 'Deporte', stats: [['Velocidad', 1], ['Estamina', 2]] },
+  { id: 'ENTERTAINMENT', label: 'Entretenimiento', stats: [['Velocidad', 2]] },
 ]
+
+const NO_ACTIVITY_TYPE = { id: 'UNDEFINED', label: 'Sin tipo', stats: [] }
 
 export function statusById(id) {
   return TASK_STATUSES.find((status) => status.id === id) ?? TASK_STATUSES[0]
+}
+
+export function activityById(id) {
+  return TASK_ACTIVITY_TYPES.find((activity) => activity.id === id) ?? NO_ACTIVITY_TYPE
+}
+
+export function activityStatsLabel(activityType) {
+  const { stats } = activityById(activityType)
+  return stats.length > 0
+    ? stats.map(([name, value]) => `+${value} ${name}`).join(' · ')
+    : 'Sin aumento de atributos'
 }
 
 export function priorityById(id) {
