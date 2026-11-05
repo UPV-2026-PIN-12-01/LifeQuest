@@ -14,6 +14,13 @@ cd backend
 
 Windows: `mvnw.cmd spring-boot:run`
 
+For local manual testing, start the backend with the `local` profile to enable the temporary
+instant task-completion action. Without this profile, task behavior is unchanged:
+
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
 If port 8080 is already in use (PowerShell):
 ```powershell
 Stop-Process -Id (Get-NetTCPConnection -LocalPort 8080 -State Listen).OwningProcess -Force

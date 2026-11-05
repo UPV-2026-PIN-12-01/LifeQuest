@@ -3,7 +3,7 @@ import { priorityById, statusById } from '../../utils/taskOptions.js'
 import TaskActions from './TaskActions.jsx'
 
 // onTaskChanged receives the task the server returns after a check-in, completion or skip.
-export default function TaskTable({ id, tasks, onTaskChanged }) {
+export default function TaskTable({ id, tasks, onTaskChanged, testingMode = false }) {
   // The id, not a copy, so the details follow the latest task from the server.
   const [selectedId, setSelectedId] = useState(null)
   const selectedTask = tasks.find((task) => task.id === selectedId) ?? null
@@ -61,6 +61,7 @@ export default function TaskTable({ id, tasks, onTaskChanged }) {
       {selectedTask && (
         <TaskDetailsModal
           task={selectedTask}
+          testingMode={testingMode}
           onClose={() => setSelectedId(null)}
           onTaskChanged={onTaskChanged}
         />
@@ -69,7 +70,7 @@ export default function TaskTable({ id, tasks, onTaskChanged }) {
   )
 }
 
-function TaskDetailsModal({ task, onClose, onTaskChanged }) {
+function TaskDetailsModal({ task, onClose, onTaskChanged, testingMode }) {
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape') onClose()
@@ -117,7 +118,9 @@ function TaskDetailsModal({ task, onClose, onTaskChanged }) {
             <dd className="tabular">+{task.xp} XP</dd>
           </div>
         </dl>
-        {onTaskChanged && <TaskActions task={task} onChanged={onTaskChanged} />}
+        {onTaskChanged && (
+          <TaskActions task={task} testingMode={testingMode} onChanged={onTaskChanged} />
+        )}
         <button className="task-modal-action task-modal-action-secondary" type="button" onClick={onClose}>
           Cerrar
         </button>

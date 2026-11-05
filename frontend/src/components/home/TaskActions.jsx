@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { completeTask, skipTask, startTask } from '../../services/tasks.js'
+import {
+  completeTask,
+  completeTaskInstantly,
+  skipTask,
+  startTask,
+} from '../../services/tasks.js'
 
 // Mirrors the backend rules so the right buttons show; the server still checks every one.
 const EARLY_CHECKIN_MS = 5 * 60_000
@@ -11,7 +16,7 @@ const VERIFICATION_LABELS = {
 }
 
 // Check-in, check-out and the final answer of a task. Calls onChanged with the task the server returns.
-export default function TaskActions({ task, onChanged }) {
+export default function TaskActions({ task, onChanged, testingMode = false }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const now = useNow(task.sessionOpen ? 1000 : 30_000)
@@ -39,7 +44,7 @@ export default function TaskActions({ task, onChanged }) {
       </p>
     )
   }
-  if (!isOpenTask) return null
+  if (!isOpenTask && !(testingMode && task.status === 'pending')) return null
 
   return (
     <div className="task-actions">
@@ -79,6 +84,17 @@ export default function TaskActions({ task, onChanged }) {
             No la hice
           </button>
         </div>
+      )}
+
+      {testingMode && task.status !== 'not_completed' && (
+        <button
+          className="task-modal-action task-modal-action-secondary"
+          type="button"
+          disabled={busy}
+          onClick={() => run(completeTaskInstantly)}
+        >
+          Terminar ya (solo pruebas locales)
+        </button>
       )}
 
       {error && (

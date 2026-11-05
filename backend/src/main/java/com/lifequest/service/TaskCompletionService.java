@@ -88,11 +88,22 @@ public class TaskCompletionService {
 	// Early completion needs a check-in covering most of the task; otherwise only after the planned end.
 	@Transactional
 	public TaskDto complete(Long userId, Long taskId) {
-		Task task = pendingTask(userId, taskId);
+		return completeTask(userId, taskId, false);
+	}
+
+	@Transactional
+	public TaskDto completeInstantlyForTesting(Long userId, Long taskId) {
+		return completeTask(userId, taskId, true);
+	}
+
+	private TaskDto completeTask(Long userId, Long taskId, boolean skipTimingChecks) {
+		Task task = skipTimingChecks ? pendingTaskForTesting(userId, taskId) : pendingTask(userId, taskId);
 		Instant now = clock.instant();
 		TaskSession session = closeSession(task, now);
-		TaskVerification verification = TaskVerification.of(task, session, now);
-		if (now.isBefore(task.getEndTime()) && verification == TaskVerification.NONE) {
+		TaskVerification verification = skipTimingChecks
+				? TaskVerification.NONE
+				: TaskVerification.of(task, session, now);
+		if (!skipTimingChecks && now.isBefore(task.getEndTime()) && verification == TaskVerification.NONE) {
 			throw new InvalidStateException("Task can be completed only after it ends");
 		}
 		double taskStreakMultiplier = characterStatsService.recordTaskCompletion(userId);
@@ -154,6 +165,14 @@ public class TaskCompletionService {
 		}
 		if (TaskService.isConfirmWindowClosed(task, clock.instant())) {
 			throw new InvalidStateException("Task can no longer be confirmed");
+		}
+		return task;
+	}
+
+	private Task pendingTaskForTesting(Long userId, Long taskId) {
+		Task task = taskService.findOwned(userId, taskId);
+		if (TaskService.DB_STATUS_DONE.equals(task.getStatus()) || TaskService.DB_STATUS_NOT_DONE.equals(task.getStatus())) {
+			throw new InvalidStateException("Task was already answered");
 		}
 		return task;
 	}

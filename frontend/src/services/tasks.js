@@ -49,6 +49,14 @@ export async function completeTask(id) {
   return requestJson(playerUrl(`/tasks/${id}/complete`), { method: 'POST' })
 }
 
+export async function getTaskTestingMode() {
+  return requestJson(playerUrl('/tasks/testing-mode'))
+}
+
+export async function completeTaskInstantly(id) {
+  return requestJson(playerUrl(`/tasks/${id}/complete-instant`), { method: 'POST' })
+}
+
 export async function skipTask(id) {
   return requestJson(playerUrl(`/tasks/${id}/skip`), { method: 'POST' })
 }

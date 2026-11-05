@@ -158,4 +158,11 @@ class TaskControllerTest {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.error").value("Task was already answered"));
 	}
+
+	@Test
+	void instantTestingCompletionEndpointIsUnavailableWithoutLocalProfile() throws Exception {
+		mockMvc.perform(post("/api/players/me/tasks/5/complete-instant")
+				.with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
+				.andExpect(status().isNotFound());
+	}
 }

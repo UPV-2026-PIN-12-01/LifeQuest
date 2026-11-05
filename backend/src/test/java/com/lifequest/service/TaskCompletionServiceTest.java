@@ -90,6 +90,17 @@ class TaskCompletionServiceTest {
 	}
 
 	@Test
+	void localTestingCompletionCanCompleteFutureTaskWithoutSession() {
+		TaskDto completed = serviceAt("2026-10-10T08:00:00Z").completeInstantlyForTesting(7L, 1L);
+
+		assertThat(task.getStatus()).isEqualTo("DONE");
+		verify(rewardService).claim(eq(reward), eq(26L), eq(Instant.parse("2026-10-10T08:00:00Z")));
+		verify(characterStatsService).addAwardedXp(7L, 26L);
+		verify(taskRepository).save(task);
+		assertThat(completed.status()).isEqualTo("completed");
+	}
+
+	@Test
 	void taskStreakMultiplierIsAppliedOnlyWhenCompletingTasks() {
 		when(characterStatsService.recordTaskCompletion(7L)).thenReturn(1.1);
 
