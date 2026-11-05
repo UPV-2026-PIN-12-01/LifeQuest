@@ -1,9 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
-  { to: '/home#week', icon: '📅', label: 'Semana' },
-  { to: '/home#tasks', icon: '✅', label: 'Tareas' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
+  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/goals', icon: '🚩', label: 'Objetivos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
 export default function BottomNav() {

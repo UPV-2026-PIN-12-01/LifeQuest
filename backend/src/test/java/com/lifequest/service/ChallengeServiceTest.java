@@ -1,7 +1,9 @@
 package com.lifequest.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.dto.ChallengeRequestDto;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.ActivityType;
@@ -30,7 +33,8 @@ class ChallengeServiceTest {
 		RewardService rewardService = mock(RewardService.class);
 		CharacterStatsService characterStatsService = mock(CharacterStatsService.class);
 		UserService userService = mock(UserService.class);
-		Task task = new Task();
+		Task task = mock(Task.class);
+		when(task.getId()).thenReturn(1L);
 		Reward reward = new Reward();
 		reward.setXpReward(25L);
 		reward.setGoldReward(10L);
@@ -41,7 +45,7 @@ class ChallengeServiceTest {
 		when(taskService.describe(task)).thenReturn(taskDto);
 		when(rewardService.create(7L, 25L, 10L, RewardSource.CHALLENGE)).thenReturn(9L);
 		when(rewardService.getById(9L)).thenReturn(reward);
-		when(challengeRepository.save(any(Challenge.class)))
+		when(challengeRepository.saveAndFlush(any(Challenge.class)))
 				.thenAnswer(invocation -> invocation.getArgument(0));
 		ChallengeService service = new ChallengeService(
 				challengeRepository,
@@ -57,7 +61,27 @@ class ChallengeServiceTest {
 	}
 
 	@Test
-	void savesTheActualBoostedXpWhenClaimingAChallengeReward() {
+	void rejectsTasksAlreadyAssignedToAChallenge() {
+		ChallengeRepository challengeRepository = mock(ChallengeRepository.class);
+		TaskService taskService = mock(TaskService.class);
+		RewardService rewardService = mock(RewardService.class);
+		UserService userService = mock(UserService.class);
+		Task task = mock(Task.class);
+		when(task.getId()).thenReturn(1L);
+		when(taskService.findOwned(7L, 1L)).thenReturn(task);
+		when(challengeRepository.existsByTaskId(1L)).thenReturn(true);
+		ChallengeService service = new ChallengeService(
+				challengeRepository, taskService, rewardService, mock(CharacterStatsService.class),
+				userService, Clock.fixed(Instant.parse("2026-11-04T12:00:00Z"), ZoneOffset.UTC));
+
+		assertThrows(InvalidStateException.class,
+				() -> service.create(7L, new ChallengeRequestDto("Leer", "", "EASY", 1L, "")));
+
+		verify(rewardService, never()).create(7L, 25L, 10L, RewardSource.CHALLENGE);
+	}
+
+	@Test
+	void awardsXpAndGoldWhenClaimingAChallengeReward() {
 		ChallengeRepository challengeRepository = mock(ChallengeRepository.class);
 		TaskService taskService = mock(TaskService.class);
 		RewardService rewardService = mock(RewardService.class);
@@ -81,5 +105,6 @@ class ChallengeServiceTest {
 		service.claim(7L, 4L);
 
 		verify(rewardService).claim(reward, 115L, clock.instant());
+		verify(characterStatsService).addGold(7L, 50L);
 	}
 }

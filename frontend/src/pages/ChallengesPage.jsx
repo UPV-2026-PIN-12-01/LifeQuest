@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import ChallengeFormModal from '../components/challenges/ChallengeFormModal.jsx'
-import { claimChallenge, deleteChallenge, evaluateChallenge, getChallenges } from '../services/challenges.js'
+import {
+  claimChallenge,
+  deleteChallenge,
+  evaluateChallenge,
+  getAssignedChallengeTaskIds,
+  getChallenges,
+} from '../services/challenges.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import '../styles/challenges.css'
 
@@ -43,7 +49,12 @@ export default function ChallengesPage() {
     setShowForm(true)
     setTasksLoading(true)
     try {
-      setTasks(await getTasksForWeek(new Date()))
+      const [weekTasks, assignedTaskIds] = await Promise.all([
+        getTasksForWeek(new Date()),
+        getAssignedChallengeTaskIds(),
+      ])
+      const assignedTaskIdSet = new Set(assignedTaskIds.map(String))
+      setTasks(weekTasks.filter((task) => !assignedTaskIdSet.has(String(task.id))))
     } catch (error) {
       setLoadError(error)
     } finally {
