@@ -30,6 +30,8 @@ export default function HomePage() {
   })
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
+  const [questsError, setQuestsError] = useState(null)
+  const [testingModeError, setTestingModeError] = useState(null)
   const [testingMode, setTestingMode] = useState(false)
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
@@ -37,8 +39,10 @@ export default function HomePage() {
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
-    if (loadError?.status === 401) navigate('/login', { replace: true })
-  }, [loadError, navigate])
+    if ([loadError, questsError, testingModeError].some((error) => error?.status === 401)) {
+      navigate('/login', { replace: true })
+    }
+  }, [loadError, questsError, testingModeError, navigate])
 
   const weekStart = addDays(startOfWeek(new Date()), weekOffset * 7)
   const weekKey = weekStart.getTime()
@@ -59,8 +63,9 @@ export default function HomePage() {
     getDailyQuests().then((dailyQuests) => {
       if (cancelled) return
       setQuests(dailyQuests)
+      setQuestsError(null)
     }).catch((error) => {
-      if (!cancelled) setLoadError(error)
+      if (!cancelled) setQuestsError(error)
     })
     return () => {
       cancelled = true
@@ -70,10 +75,13 @@ export default function HomePage() {
   useEffect(() => {
     let cancelled = false
     getTaskTestingMode().then(({ enabled }) => {
-      if (!cancelled) setTestingMode(enabled)
+      if (!cancelled) {
+        setTestingMode(enabled)
+        setTestingModeError(null)
+      }
     }).catch((error) => {
       if (error.status === 404) return
-      if (!cancelled) setLoadError(error)
+      if (!cancelled) setTestingModeError(error)
     })
     return () => {
       cancelled = true
@@ -87,6 +95,7 @@ export default function HomePage() {
       if (!cancelled) {
         setTaskData({ weekKey, tasks: weekTasks })
         setCachedTasksForWeek(requestedWeekStart, weekTasks)
+        setLoadError(null)
       }
     }).catch((error) => {
       if (!cancelled) setLoadError(error)
@@ -127,10 +136,23 @@ export default function HomePage() {
               return { weekKey, tasks: next }
             })
             refreshPlayer()
-            getDailyQuests().then(setQuests).catch(setLoadError)
+            getDailyQuests().then((dailyQuests) => {
+              setQuests(dailyQuests)
+              setQuestsError(null)
+            }).catch(setQuestsError)
           }}
         />
       </div>
+      {testingModeError && (
+        <p className="home-error" role="alert">
+          No se pudo comprobar el modo de pruebas local.
+        </p>
+      )}
+      {questsError && (
+        <p className="home-error" role="alert">
+          No se pudieron cargar los desafíos diarios. Inténtalo de nuevo más tarde.
+        </p>
+      )}
       {quests.length > 0 && <DailyQuests quests={quests} />}
       {editor && (
         <TaskFormModal
