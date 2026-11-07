@@ -1,0 +1,197 @@
+.friends-add,
+.friends-section,
+.friend-profile-card {
+  max-width: 1072px;
+  margin: 0 auto 24px;
+}
+
+.friends-add,
+.friend-profile-card {
+  padding: 24px 30px;
+  border-radius: 24px;
+  background: white;
+}
+
+.friends-add label {
+  display: block;
+  margin-bottom: 10px;
+  color: #617492;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.friends-add-row {
+  display: flex;
+  gap: 12px;
+}
+
+.friends-add-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #dbe2ef;
+  border-radius: 10px;
+  color: #34425c;
+}
+
+.friends-add-row button:disabled,
+.friends-secondary-button:disabled {
+  opacity: 0.6;
+}
+
+.friends-success {
+  margin: 12px 0 0;
+  color: var(--lq-success-ink);
+}
+
+.friends-add .challenges-error {
+  margin: 12px 0 0;
+}
+
+.friends-section h2 {
+  margin: 0 0 12px;
+  color: #202b42;
+  font-size: 1.25rem;
+}
+
+.friends-section h2 span {
+  color: #6d7f9e;
+  font-weight: 600;
+}
+
+.friends-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 18px;
+  background: white;
+  color: inherit;
+  text-decoration: none;
+}
+
+.friend-row.is-link:hover,
+.friend-row.is-link:focus-visible {
+  outline: 2px solid var(--lq-violet-200);
+}
+
+.friend-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.friend-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.friend-summary strong {
+  display: block;
+  color: #202b42;
+}
+
+.friends-muted {
+  display: block;
+  color: #6d7f9e;
+  font-size: 0.95rem;
+}
+
+.friends-secondary-button {
+  padding: 11px 16px;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  color: #34425c;
+  background: white;
+  font-weight: 700;
+}
+
+.friends-back {
+  display: inline-block;
+  max-width: 1072px;
+  margin: 0 auto 16px;
+  color: var(--lq-violet-500);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.friend-profile-streaks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+  color: #34425c;
+  font-weight: 700;
+}
+
+.friend-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friend-stats li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--lq-violet-50);
+}
+
+.friend-stats strong {
+  margin-left: auto;
+  color: var(--lq-violet-500);
+}
+
+.friend-task-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--lq-success-soft);
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.friends-remove {
+  display: block;
+  margin: 8px auto 0;
+  color: var(--lq-danger);
+}
+
+.challenges-tab span.friends-badge {
+  color: white;
+  background: var(--lq-danger);
+}
+
+@media (max-width: 640px) {
+  .friends-add,
+  .friend-profile-card {
+    padding: 20px;
+  }
+
+  .friends-add-row,
+  .friend-row {
+    flex-wrap: wrap;
+  }
+
+  .friends-add-row button {
+    width: 100%;
+  }
+}
