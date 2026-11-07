@@ -169,6 +169,7 @@
   border-radius: 16px;
   padding: 12px 14px;
   font-size: 14px;
+  white-space: pre-wrap;
 }
 
 .guide-bubble.assistant {
@@ -181,6 +182,22 @@
   border-bottom-right-radius: 4px;
   background: var(--lq-violet-500);
   color: white;
+}
+
+.guide-bubble.error {
+  border: 1px solid var(--lq-danger);
+  background: var(--lq-danger-soft);
+}
+
+.guide-bubble.pending {
+  color: var(--lq-ink-muted);
+}
+
+.guide-send:disabled,
+.guide-chip:disabled,
+.guide-new-chat:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .guide-proposal {

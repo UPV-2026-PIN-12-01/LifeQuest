@@ -54,6 +54,11 @@ public class GlobalExceptionHandler {
 		return error(HttpStatus.UNAUTHORIZED, ex.getMessage());
 	}
 
+	@ExceptionHandler(ChatUnavailableException.class)
+	public ResponseEntity<Map<String, String>> chatUnavailable(ChatUnavailableException ex) {
+		return error(HttpStatus.BAD_GATEWAY, "Chat is unavailable");
+	}
+
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public ResponseEntity<Map<String, String>> photoTooLarge(MaxUploadSizeExceededException ex) {
 		return error(HttpStatus.BAD_REQUEST, "Photo must be jpeg, png, webp, or gif and 2MB or smaller");
