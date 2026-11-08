@@ -1,4 +1,4 @@
-package com.lifequest.service;
+package com.lifequest.service.context;
 
 import java.util.List;
 
@@ -6,6 +6,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.lifequest.model.dto.ChallengeDto;
+import com.lifequest.service.ChallengeService;
 
 @Component
 @Order(4)

@@ -1,9 +1,10 @@
-package com.lifequest.service;
+package com.lifequest.service.context;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.lifequest.model.dto.PlayerProfileDto;
+import com.lifequest.service.PlayerService;
 
 @Component
 @Order(1)

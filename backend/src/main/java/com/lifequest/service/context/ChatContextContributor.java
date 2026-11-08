@@ -1,4 +1,4 @@
-package com.lifequest.service;
+package com.lifequest.service.context;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.lifequest.service;
+package com.lifequest.service.context;
 
 import java.time.Clock;
 import java.time.DayOfWeek;
@@ -10,6 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.lifequest.model.dto.TaskDto;
+import com.lifequest.service.TaskService;
 
 @Component
 @Order(2)

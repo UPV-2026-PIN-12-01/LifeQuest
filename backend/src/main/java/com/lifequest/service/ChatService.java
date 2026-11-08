@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.model.dto.ChatMessageRequest;
 import com.lifequest.model.dto.ChatReplyResponse;
+import com.lifequest.service.context.ChatContextContributor;
 
 // One reply. The client does not send prior messages, and nothing is stored.
 @Service
