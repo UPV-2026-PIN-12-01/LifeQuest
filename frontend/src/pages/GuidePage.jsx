@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { loadChatSession, saveChatSession, sendChatMessage } from '../services/chat.js'
 import { getTasksForWeek } from '../services/tasks.js'
@@ -17,6 +18,26 @@ function newThread(id) {
     preview: 'Sin mensajes todavía',
     messages: [{ role: 'assistant', text: GREETING }],
   }
+}
+
+function plainPreview(text) {
+  return text.replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function MarkdownText({ text }) {
+  return (
+    <div className="guide-markdown">
+      <ReactMarkdown
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noreferrer">{children}</a>
+          ),
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    </div>
+  )
 }
 
 function chatErrorText(error) {
@@ -118,7 +139,7 @@ export default function GuidePage() {
         if (item.id !== threadId) return item
         return {
           ...item,
-          preview: reply.replace(/\s+/g, ' ').slice(0, 80),
+          preview: plainPreview(reply).slice(0, 80),
           messages: [...item.messages, { role: 'assistant', text: reply }],
         }
       }))
@@ -150,7 +171,7 @@ export default function GuidePage() {
               onClick={() => selectThread(item.id)}
             >
               <strong>{item.title}</strong>
-              <span>{item.preview}</span>
+              <span>{plainPreview(item.preview)}</span>
             </button>
           ))}
         </div>
@@ -170,7 +191,9 @@ export default function GuidePage() {
         <div className="guide-messages" ref={messagesRef} aria-live="polite">
           {thread.messages.map((message, index) => (
             <div key={`${message.role}-${index}`} className={`guide-bubble ${message.role}`}>
-              {message.text}
+              {message.role === 'assistant'
+                ? <MarkdownText text={message.text} />
+                : message.text}
             </div>
           ))}
           {pendingId === thread.id && (

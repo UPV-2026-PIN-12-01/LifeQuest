@@ -175,6 +175,66 @@
 .guide-bubble.assistant {
   border-bottom-left-radius: 4px;
   background: var(--lq-violet-50);
+  white-space: normal;
+}
+
+.guide-markdown > :first-child {
+  margin-top: 0;
+}
+
+.guide-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.guide-markdown p,
+.guide-markdown ul,
+.guide-markdown ol,
+.guide-markdown pre {
+  margin: 0.45em 0;
+}
+
+.guide-markdown ul,
+.guide-markdown ol {
+  padding-left: 1.25em;
+}
+
+.guide-markdown ul {
+  list-style: disc;
+}
+
+.guide-markdown ol {
+  list-style: decimal;
+}
+
+.guide-markdown li + li {
+  margin-top: 0.2em;
+}
+
+.guide-markdown strong {
+  font-weight: 700;
+}
+
+.guide-markdown h1,
+.guide-markdown h2,
+.guide-markdown h3 {
+  margin: 0.6em 0 0.25em;
+  font-size: 14px;
+}
+
+.guide-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.guide-markdown pre {
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--lq-surface);
+}
+
+.guide-markdown a {
+  color: var(--lq-violet-700);
 }
 
 .guide-bubble.user {
