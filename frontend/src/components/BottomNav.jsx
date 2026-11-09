@@ -4,6 +4,7 @@ const NAV = [
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
+  { to: '/friends', icon: '👥', label: 'Amigos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
   
 ]

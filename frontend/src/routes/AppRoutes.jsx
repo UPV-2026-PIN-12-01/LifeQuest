@@ -6,6 +6,8 @@ import HomePage from '../pages/HomePage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 import SignupPage from '../pages/SignupPage.jsx';
 import GoalsPage from '../pages/GoalsPage.jsx';
+import FriendsPage from '../pages/FriendsPage.jsx';
+import FriendProfilePage from '../pages/FriendProfilePage.jsx';
 
 import { hasSession } from '../services/session.js';
 
@@ -20,6 +22,8 @@ export default function AppRoutes() {
           <Route path="/character" element={<CharacterView />} />
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/friends/:friendUserId" element={<FriendProfilePage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/settings" element={<ProfilePage />} />
         </Route>

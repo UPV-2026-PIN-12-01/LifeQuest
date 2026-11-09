@@ -8,7 +8,7 @@ const ALL_NAV = [
   { to: "/character/shop", icon: "🏪", label: "Tienda" },
   { to: "/combat", icon: "🗡️", label: "Combate" },
   { to: "/ranking", icon: "🏅", label: "Clasificación" },
-  { to: "/ranking/friends", icon: "👥", label: "Amigos" },
+  { to: "/friends", icon: "👥", label: "Amigos" },
   { to: "/dashboard", icon: "📊", label: "Dashboard" },
   { to: "/challenges", icon: "🎯", label: "Desafíos" },
   { to: "/achievements", icon: "🏆", label: "Logros" },
