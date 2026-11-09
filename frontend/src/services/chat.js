@@ -1,17 +1,15 @@
 import { requestJson } from './http.js'
 
-// One turn. The server does not receive earlier messages and does not store the thread.
-export async function sendChatMessage(message) {
-  return requestJson('/api/chat/messages', { method: 'POST', body: { message } })
+export function listChatThreads() {
+  return requestJson('/api/chat/threads')
 }
 
-// Kept while this tab stays open. A reload starts over; the server has no threads yet.
-let chatSession = null
-
-export function loadChatSession() {
-  return chatSession
+export function loadChatThread(threadId) {
+  return requestJson(`/api/chat/threads/${threadId}`)
 }
 
-export function saveChatSession(session) {
-  chatSession = session
+// A new chat omits threadId. The server id comes back with the first reply.
+export function sendChatMessage(message, threadId) {
+  const body = threadId == null ? { message } : { message, threadId }
+  return requestJson('/api/chat/messages', { method: 'POST', body })
 }

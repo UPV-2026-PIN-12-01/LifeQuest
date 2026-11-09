@@ -1,5 +1,6 @@
 package com.lifequest.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,8 @@ public class GroqClient {
 		this.properties = properties;
 	}
 
-	public String reply(String system, String userMessage) {
+	// history is this thread only, oldest first, and does not include userMessage.
+	public String reply(String system, List<Turn> history, String userMessage) {
 		if (isBlank(properties.apiKey()) || isBlank(properties.model()) || isBlank(properties.url())) {
 			log.warn("Groq is not configured");
 			throw new ChatUnavailableException();
@@ -44,9 +46,7 @@ public class GroqClient {
 					.contentType(MediaType.APPLICATION_JSON)
 					.body(Map.of(
 							"model", properties.model(),
-							"messages", List.of(
-									Map.of("role", "system", "content", system),
-									Map.of("role", "user", "content", userMessage)),
+							"messages", messages(system, history, userMessage),
 							"max_tokens", MAX_TOKENS,
 							"temperature", TEMPERATURE,
 							"reasoning_effort", "low"))
@@ -69,6 +69,18 @@ public class GroqClient {
 		}
 	}
 
+	private static List<Map<String, String>> messages(String system, List<Turn> history, String userMessage) {
+		List<Map<String, String>> messages = new ArrayList<>();
+		messages.add(Map.of("role", "system", "content", system));
+		if (history != null) {
+			for (Turn turn : history) {
+				messages.add(Map.of("role", turn.role(), "content", turn.content()));
+			}
+		}
+		messages.add(Map.of("role", "user", "content", userMessage));
+		return messages;
+	}
+
 	private static String replyText(GroqResponse response) {
 		if (response == null || response.choices() == null || response.choices().isEmpty()) {
 			return "";
@@ -82,6 +94,9 @@ public class GroqClient {
 
 	private static boolean isBlank(String value) {
 		return value == null || value.isBlank();
+	}
+
+	public record Turn(String role, String content) {
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)

@@ -103,15 +103,7 @@
 
 .guide-history-list {
   overflow: auto;
-  padding: 0 8px 12px;
-}
-
-.guide-history-list h3 {
-  margin: 8px 8px 4px;
-  color: var(--lq-ink-faint);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 8px 8px 12px;
 }
 
 .guide-thread {
