@@ -3,6 +3,7 @@ import { classById } from '../utils/playerClasses.js'
 
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
