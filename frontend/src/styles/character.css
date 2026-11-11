@@ -1,0 +1,82 @@
+.character-view .character-rarity-badge {
+  color: var(--character-rarity-color);
+  background-color: var(--character-rarity-bg);
+}
+
+.character-view .character-item-card {
+  border-color: var(--character-item-border-color);
+}
+
+.character-view .character-item-icon {
+  background-color: var(--character-item-rarity-bg);
+}
+
+.character-view .character-buy-button {
+  color: #ffffff;
+  background-color: var(--color-primary);
+}
+
+.character-view .character-equip-button {
+  color: #4f46e5;
+  background-color: #e0e7ff;
+}
+
+.character-view .character-equip-button.is-equipped {
+  color: #475569;
+  background-color: #e2e8f0;
+}
+
+.character-view .character-upgrade-button {
+  color: #d97706;
+  background-color: #fef3c7;
+}
+
+.character-view .character-sell-backdrop {
+  background-color: rgba(30, 27, 75, 0.65);
+}
+
+.character-view .character-tab-button {
+  color: #64748b;
+  background-color: transparent;
+}
+
+.character-view .character-tab-button.is-active {
+  color: #fff;
+  background-color: var(--color-primary);
+}
+
+.character-view .character-avatar-frame {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+}
+
+.character-view .character-xp-bar {
+  width: var(--character-xp-progress);
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.character-view .character-stat-icon {
+  background-color: color-mix(
+    in srgb,
+    var(--character-stat-color) 9.4%,
+    transparent
+  );
+}
+
+.character-view .character-stat-value {
+  color: var(--character-stat-color);
+}
+
+.character-view .character-stat-bar {
+  width: var(--character-stat-progress);
+  background-color: var(--character-stat-color);
+}
+
+.character-view .character-filter-button {
+  color: #64748b;
+  background-color: #fff;
+}
+
+.character-view .character-filter-button.is-active {
+  color: #4f46e5;
+  background-color: #e0e7ff;
+}

@@ -15,33 +15,45 @@ function RarityBadge({ rarity }) {
   const meta = RARITY_META[rarity]
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded-full font-semibold"
-      style={{ color: meta.color, background: meta.bg }}
+      className="character-rarity-badge text-xs px-2 py-0.5 rounded-full font-semibold"
+      style={{
+        "--character-rarity-color": meta.color,
+        "--character-rarity-bg": meta.bg,
+      }}
     >
       {rarity}
     </span>
   )
 }
 
-function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade }) {
+function ItemCard({
+  item,
+  mode,
+  gold,
+  onBuy,
+  onSell,
+  onToggleEquip,
+  onUpgrade,
+  busy,
+}) {
   const [confirmSell, setConfirmSell] = useState(false)
-  const upgradeCost = item.level * 55
+  const upgradeCost = item.level * item.baseUpgradePrice
   const salePrice = Math.floor(item.buyPrice * 0.7)
   const isPotion = item.category === "Poción"
 
   return (
     <div
-      className="bg-white rounded-2xl border p-4 flex flex-col"
+      className="character-item-card bg-white rounded-2xl border p-4 flex flex-col"
       style={{
-        borderColor: item.equipped
+        "--character-item-border-color": item.equipped
           ? RARITY_META[item.rarity].border
           : "#e2e8f0",
       }}
     >
       <div className="flex items-start gap-3">
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
-          style={{ background: RARITY_META[item.rarity].bg }}
+          className="character-item-icon w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+          style={{ "--character-item-rarity-bg": RARITY_META[item.rarity].bg }}
         >
           {item.icon}
         </div>
@@ -80,9 +92,8 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
           </div>
           <button
             onClick={() => onBuy(item)}
-            disabled={gold < item.buyPrice}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "var(--color-primary)" }}
+            disabled={busy || gold < item.buyPrice}
+            className="character-buy-button px-4 py-2 rounded-xl text-xs font-semibold text-black disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {gold < item.buyPrice ? "Oro insuficiente" : "Comprar"}
           </button>
@@ -98,19 +109,17 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
               <>
                 <button
                   onClick={() => onToggleEquip(item.id)}
-                  className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold"
-                  style={{
-                    background: item.equipped ? "#e2e8f0" : "#e0e7ff",
-                    color: item.equipped ? "#475569" : "#4f46e5",
-                  }}
+                  disabled={busy}
+                  className={`character-equip-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold${item.equipped ? " is-equipped" : ""}`}
                 >
                   {item.equipped ? "Desequipar" : "Equipar"}
                 </button>
                 <button
-                  onClick={() => onUpgrade(item.id, upgradeCost)}
-                  disabled={gold < upgradeCost}
-                  className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40"
-                  style={{ background: "#fef3c7", color: "#d97706" }}
+                  onClick={() => onUpgrade(item.id)}
+                  disabled={
+                    busy || gold < upgradeCost || item.level >= item.maxLevel
+                  }
+                  className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40"
                 >
                   Mejorar · {upgradeCost}
                 </button>
@@ -118,12 +127,13 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
             )}
             <button
               onClick={() => setConfirmSell(true)}
+              disabled={busy}
               className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-600"
             >
               Vender
             </button>
           </div>
-          {!isPotion && (
+          {!isPotion && item.level < item.maxLevel && (
             <div className="text-xs text-slate-400 mt-2">
               <p>
                 Nivel {item.level} → {item.level + 1}
@@ -141,8 +151,7 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
 
       {confirmSell && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(30,27,75,0.65)" }}
+          className="character-sell-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setConfirmSell(false)}
         >
           <div
@@ -176,6 +185,7 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
                   onSell(item.id)
                   setConfirmSell(false)
                 }}
+                disabled={busy}
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold"
               >
                 Confirmar venta
@@ -190,17 +200,21 @@ function ItemCard({ item, mode, gold, onBuy, onSell, onToggleEquip, onUpgrade })
 
 export default function CharacterInventoryView({
   tab,
-  stats,
-  inventory,
-  shopItems,
+  market,
+  marketLoading,
+  gold,
+  filter,
+  setFilter,
   onBuy,
   onSell,
   onToggleEquip,
   onUpgrade,
+  busy,
 }) {
-  const [filter, setFilter] = useState("Todos")
-  const equipment = inventory.filter((item) => item.category !== "Poción")
-  const potions = inventory.filter((item) => item.category === "Poción")
+  const items = market?.inventory ?? []
+  const equipment = items.filter((item) => item.category !== "Poción")
+  const potions = items.filter((item) => item.category === "Poción")
+  const shopItems = market?.shopItems ?? []
   const filtered = equipment.filter(
     (item) => filter === "Todos" || item.category === filter,
   )
@@ -241,6 +255,12 @@ export default function CharacterInventoryView({
                   </div>
                 </div>
               ))}
+            {market && equipment.every((item) => !item.equipped) && (
+              <p className="text-sm text-slate-500 sm:col-span-2 lg:col-span-4">
+                Aún no tienes objetos equipados. Compra equipo en la tienda y
+                equípalo desde tu inventario.
+              </p>
+            )}
           </div>
         </section>
         <section>
@@ -257,11 +277,7 @@ export default function CharacterInventoryView({
                   <button
                     key={category}
                     onClick={() => setFilter(category)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap"
-                    style={{
-                      background: filter === category ? "#e0e7ff" : "white",
-                      color: filter === category ? "#4f46e5" : "#64748b",
-                    }}
+                    className={`character-filter-button px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap${filter === category ? " is-active" : ""}`}
                   >
                     {category}
                   </button>
@@ -275,13 +291,19 @@ export default function CharacterInventoryView({
                 key={item.id}
                 item={item}
                 mode="inventory"
-                gold={stats.gold}
+                gold={gold}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}
                 onUpgrade={onUpgrade}
+                busy={busy}
               />
             ))}
+            {market && filtered.length === 0 && (
+              <p className="text-sm text-slate-500 sm:col-span-2 xl:col-span-3">
+                Aún no tienes objetos en esta categoría.
+              </p>
+            )}
           </div>
         </section>
         <section>
@@ -297,13 +319,19 @@ export default function CharacterInventoryView({
                 key={item.id}
                 item={item}
                 mode="inventory"
-                gold={stats.gold}
+                gold={gold}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}
                 onUpgrade={onUpgrade}
+                busy={busy}
               />
             ))}
+            {market && potions.length === 0 && (
+              <p className="text-sm text-slate-500 sm:col-span-2 xl:col-span-3">
+                Todavía no has comprado pociones.
+              </p>
+            )}
           </div>
         </section>
       </div>
@@ -326,7 +354,7 @@ export default function CharacterInventoryView({
         </div>
         <div className="bg-white/10 rounded-2xl px-4 py-3 self-start">
           <p className="text-xs text-indigo-200">Tu saldo</p>
-          <p className="text-xl font-bold text-amber-300">💰 {stats.gold}</p>
+          <p className="text-xl font-bold text-amber-300">💰 {gold}</p>
         </div>
       </div>
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -335,13 +363,19 @@ export default function CharacterInventoryView({
             key={item.id}
             item={item}
             mode="shop"
-            gold={stats.gold}
+            gold={gold}
             onBuy={onBuy}
             onSell={onSell}
             onToggleEquip={onToggleEquip}
             onUpgrade={onUpgrade}
+            busy={busy}
           />
         ))}
+        {marketLoading && (
+          <p className="text-sm text-slate-500 sm:col-span-2 xl:col-span-3">
+            Cargando mercado...
+          </p>
+        )}
       </div>
     </div>
   )

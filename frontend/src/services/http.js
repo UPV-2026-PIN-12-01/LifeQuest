@@ -135,6 +135,10 @@ export async function patchForm(url, formData) {
 
 function invalidateAfterMutation(url) {
   const path = url.split('?')[0]
+  if (path.startsWith('/api/players/me/market')) {
+    invalidateCachedData('/api/players/me/market', '/api/players/me', '/api/character/stats')
+    return
+  }
   if (path.startsWith('/api/players/me/challenges')) {
     invalidateCachedData('/api/players/me/challenges', '/api/players/me', '/api/character/stats')
     return

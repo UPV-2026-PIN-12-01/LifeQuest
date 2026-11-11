@@ -10,19 +10,17 @@ const STAT_META = [
 
 export default function CharacterOverviewView({
   stats,
+  objectStats,
+  avatar,
   displayName,
   playerClass,
-  avatar,
 }) {
   const xpPct = Math.round((stats.xp / stats.xpToNext) * 100)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-up">
       <div className="bg-white rounded-3xl border border-slate-100 p-6 flex flex-col items-center">
-        <div
-          className="w-40 h-40 rounded-3xl overflow-hidden flex items-center justify-center mb-4"
-          style={{ background: "linear-gradient(135deg, #1e1b4b, #312e81)" }}
-        >
+        <div className="character-avatar-frame w-40 h-40 rounded-3xl overflow-hidden flex items-center justify-center mb-4">
           {avatar?.startsWith("data:") ? (
             <AvatarDisplay avatar={avatar} size={160} className="rounded-3xl" />
           ) : (
@@ -46,11 +44,8 @@ export default function CharacterOverviewView({
           </div>
           <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full xp-bar-fill"
-              style={{
-                width: `${xpPct}%`,
-                background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
-              }}
+              className="character-xp-bar h-full rounded-full xp-bar-fill"
+              style={{ "--character-xp-progress": `${xpPct}%` }}
             />
           </div>
         </div>
@@ -66,32 +61,38 @@ export default function CharacterOverviewView({
         </div>
       </div>
       <div className="lg:col-span-2 grid sm:grid-cols-2 gap-3">
-        {STAT_META.map(({ key, label, color , icon}) => {
-          const value = Number(stats[key] ?? 0)
+        {STAT_META.map(({ key, label, icon, color }) => {
+          const baseValue = Number(stats[key] ?? 0)
+          const bonus = Number(objectStats[key] ?? 0)
+          const total = baseValue + bonus
           return (
             <div
               key={key}
               className="bg-white rounded-2xl p-4 border border-slate-100 flex items-center gap-4"
             >
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-                style={{ background: `${color}18` }}
+                className="character-stat-icon w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+                style={{ "--character-stat-color": color }}
               >
                 {icon}
               </div>
               <div className="flex-1">
                 <div className="flex justify-between mb-1.5">
                   <p className="text-sm font-semibold text-slate-700">{label}</p>
-                  <p className="text-sm font-bold" style={{ color }}>
-                    {value}
+                  <p
+                    className="character-stat-value text-sm font-bold"
+                    style={{ "--character-stat-color": color }}
+                  >
+                    {baseValue}
+                    {bonus > 1 ? ` (+${bonus})` : ""}
                   </p>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full"
+                    className="character-stat-bar h-full rounded-full"
                     style={{
-                      width: `${Math.min(value, 100)}%`,
-                      background: color,
+                      "--character-stat-progress": `${Math.min(total, 100)}%`,
+                      "--character-stat-color": color,
                     }}
                   />
                 </div>
