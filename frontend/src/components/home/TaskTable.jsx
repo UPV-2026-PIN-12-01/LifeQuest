@@ -57,7 +57,7 @@ export default function TaskTable({ id, tasks, onTaskChanged, testingMode = fals
                     <td>{formatDate(task.date)}</td>
                     <td className="tabular">{task.startTime}–{task.endTime}</td>
                     <td>
-                      <ActivitySummary activityType={task.activityType} />
+                      <ActivitySummary activityType={task.activityType} status={task.status} />
                     </td>
                     <td><TaskStatusBadge status={task.status} /></td>
                     <td>{priorityById(task.priority).label}</td>
@@ -124,7 +124,7 @@ function TaskDetailsModal({ task, onClose, onTaskChanged, testingMode }) {
           </div>
           <div>
             <dt>Actividad / atributos</dt>
-            <dd><ActivitySummary activityType={task.activityType} /></dd>
+            <dd><ActivitySummary activityType={task.activityType} status={task.status} /></dd>
           </div>
           <div>
             <dt>Experiencia</dt>
@@ -156,12 +156,12 @@ function TaskStatusBadge({ status: statusId }) {
   )
 }
 
-function ActivitySummary({ activityType }) {
+function ActivitySummary({ activityType, status }) {
   const activity = activityById(activityType)
   return (
     <span className="task-activity-summary">
       <strong>{activity.label}</strong>
-      <small>{activityStatsLabel(activityType)}</small>
+      <small>{status !== 'not_completed' ? activityStatsLabel(activityType) : 'No se obtuvieron beneficios'}</small>
     </span>
   )
 }
