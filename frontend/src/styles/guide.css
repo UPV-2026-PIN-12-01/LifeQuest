@@ -254,6 +254,7 @@
 
 .guide-proposal {
   max-width: 460px;
+  margin-top: 12px;
   border: 1px solid var(--lq-line);
   border-radius: 14px;
   background: var(--lq-surface);
@@ -322,6 +323,11 @@
   color: var(--lq-success-ink);
   font-size: 13px;
   font-weight: 600;
+}
+
+.guide-done-label a {
+  color: inherit;
+  font-weight: 700;
 }
 
 .guide-composer {

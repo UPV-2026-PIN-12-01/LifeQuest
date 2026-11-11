@@ -1,4 +1,6 @@
 package com.lifequest.model.dto;
 
-public record ChatLine(String role, String text) {
+import java.util.List;
+
+public record ChatLine(String role, String text, List<ChatProposalView> proposals) {
 }

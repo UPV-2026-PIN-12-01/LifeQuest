@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { useNavigate, useOutletContext } from 'react-router-dom'
-import { listChatThreads, loadChatThread, sendChatMessage } from '../services/chat.js'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
+import { confirmChatProposal, discardChatProposal, listChatThreads, loadChatThread, sendChatMessage } from '../services/chat.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import { startOfWeek, toIsoDate, weekRangeLabel } from '../utils/week.js'
 import '../styles/guide.css'
@@ -36,6 +36,7 @@ function threadFromDetail(detail) {
   const messages = (Array.isArray(detail.messages) ? detail.messages : []).map((message) => ({
     role: message.role,
     text: message.text,
+    proposals: Array.isArray(message.proposals) ? message.proposals : [],
   }))
   const last = messages[messages.length - 1]
   return {
@@ -50,6 +51,37 @@ function threadFromDetail(detail) {
 
 function plainPreview(text) {
   return String(text ?? '').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function ProposalCard({ proposal, busy, onConfirm, onDiscard }) {
+  const created = proposal.status === 'created'
+  const kind = proposal.kind === 'challenge' ? 'challenge' : 'task'
+  return (
+    <article className={`guide-proposal${created ? ' done' : ''}`}>
+      <header>
+        <span className={`guide-kind ${kind}`}>{kind === 'challenge' ? 'Desafío' : 'Misión'}</span>
+      </header>
+      <h3>{proposal.title}</h3>
+      {proposal.whenLabel ? <p className="meta">{proposal.whenLabel}</p> : null}
+      {proposal.why ? <p className="why">{proposal.why}</p> : null}
+      {proposal.status === 'pending' && (
+        <div className="guide-actions">
+          <button className="guide-btn-primary" type="button" disabled={busy} onClick={() => onConfirm(proposal.id)}>Crear</button>
+          <button className="guide-btn-ghost" type="button" disabled={busy} onClick={() => onDiscard(proposal.id)}>Descartar</button>
+        </div>
+      )}
+      {created && (
+        <p className="guide-done-label">
+          Creada
+          {' · '}
+          <Link to={kind === 'challenge' ? '/challenges' : '/home'}>
+            {kind === 'challenge' ? 'Ver desafíos' : 'Ver misiones'}
+          </Link>
+        </p>
+      )}
+      {proposal.status === 'discarded' && <p className="meta">Descartada</p>}
+    </article>
+  )
 }
 
 function MarkdownText({ text }) {
@@ -96,6 +128,8 @@ export default function GuidePage() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [taskCount, setTaskCount] = useState(null)
   const [pendingId, setPendingId] = useState(null)
+  const [proposalBusyId, setProposalBusyId] = useState(null)
+  const [proposalError, setProposalError] = useState('')
   const messagesRef = useRef(null)
   const localSeq = useRef(0)
   const weekStart = startOfWeek(new Date())
@@ -221,6 +255,27 @@ export default function GuidePage() {
     setActiveId((current) => (current === sentFrom ? detail.id : current))
   }
 
+  async function settleProposal(proposalId, request) {
+    if (!thread || thread.local || proposalBusyId != null) return
+    setProposalBusyId(proposalId)
+    setProposalError('')
+    try {
+      await request(proposalId)
+      const detail = await loadChatThread(thread.id)
+      setThreads((current) => current.map((item) => (
+        item.id === thread.id ? threadFromDetail(detail) : item
+      )))
+    } catch (error) {
+      if (error?.status === 401) {
+        navigate('/login', { replace: true })
+        return
+      }
+      setProposalError(error?.message || 'No se pudo actualizar la propuesta.')
+    } finally {
+      setProposalBusyId(null)
+    }
+  }
+
   async function sendMessage(event) {
     event.preventDefault()
     const text = draft.trim()
@@ -337,12 +392,26 @@ export default function GuidePage() {
             <div className="guide-bubble assistant pending">Cargando…</div>
           )}
           {(thread?.messages ?? []).map((message, index) => (
-            <div key={`${message.role}-${index}`} className={`guide-bubble ${message.role}`}>
-              {message.role === 'assistant'
-                ? <MarkdownText text={message.text} />
-                : message.text}
+            <div key={`${message.role}-${index}`}>
+              <div className={`guide-bubble ${message.role}`}>
+                {message.role === 'assistant'
+                  ? <MarkdownText text={message.text} />
+                  : message.text}
+              </div>
+              {message.role === 'assistant' && (message.proposals ?? []).map((proposal) => (
+                <ProposalCard
+                  key={proposal.id}
+                  proposal={proposal}
+                  busy={proposalBusyId === proposal.id}
+                  onConfirm={(id) => settleProposal(id, confirmChatProposal)}
+                  onDiscard={(id) => settleProposal(id, discardChatProposal)}
+                />
+              ))}
             </div>
           ))}
+          {proposalError && (
+            <div className="guide-bubble error">{proposalError}</div>
+          )}
           {pendingId === thread?.id && (
             <div className="guide-bubble assistant pending">Pensando…</div>
           )}

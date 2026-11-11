@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lifequest.model.dto.ChatMessageRequest;
+import com.lifequest.model.dto.ChatProposalView;
 import com.lifequest.model.dto.ChatReplyResponse;
 import com.lifequest.model.dto.ChatThreadDetail;
 import com.lifequest.model.dto.ChatThreadSummary;
@@ -43,6 +44,16 @@ public class ChatController {
 	@PostMapping("/messages")
 	public ChatReplyResponse messages(@AuthenticationPrincipal Jwt jwt, @RequestBody ChatMessageRequest request) {
 		return chatService.reply(userId(jwt), request);
+	}
+
+	@PostMapping("/proposals/{proposalId}/confirm")
+	public ChatProposalView confirm(@AuthenticationPrincipal Jwt jwt, @PathVariable Long proposalId) {
+		return chatService.confirm(userId(jwt), proposalId);
+	}
+
+	@PostMapping("/proposals/{proposalId}/discard")
+	public ChatProposalView discard(@AuthenticationPrincipal Jwt jwt, @PathVariable Long proposalId) {
+		return chatService.discard(userId(jwt), proposalId);
 	}
 
 	private Long userId(Jwt jwt) {

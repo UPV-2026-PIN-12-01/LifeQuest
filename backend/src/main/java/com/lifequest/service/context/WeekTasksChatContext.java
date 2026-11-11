@@ -39,7 +39,7 @@ public class WeekTasksChatContext implements ChatContextContributor {
 	}
 
 	private static String line(TaskDto task) {
-		return task.date() + " " + task.startTime() + "–" + task.endTime() + " " + task.title()
+		return "id " + task.id() + " " + task.date() + " " + task.startTime() + "–" + task.endTime() + " " + task.title()
 				+ " (" + statusInSpanish(task.status()) + ")";
 	}
 

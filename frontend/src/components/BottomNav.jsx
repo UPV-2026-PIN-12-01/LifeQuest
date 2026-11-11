@@ -4,6 +4,7 @@ const NAV = [
   { to: '/chat', icon: '✨', label: 'Asistente IA' },
   { to: '/home#week', icon: '📅', label: 'Semana' },
   { to: '/home#tasks', icon: '✅', label: 'Tareas' },
+  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
