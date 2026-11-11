@@ -4,6 +4,7 @@ import warriorImg from "../assets/warrior1.png"
 import archerImg from "../assets/archer1.png"
 import magicianImg from "../assets/magician1.png"
 import { getJson } from "../services/http.js"
+import deafultImg from "../assets/placeholder.png"
 import {
   buyMarketItem,
   getMarket,
@@ -19,6 +20,7 @@ const PLAYER_CLASS_META = {
   knight: { name: "Guerrero", image: warriorImg },
   archer: { name: "Arquero", image: archerImg },
   magician: { name: "Mago", image: magicianImg },
+  default: { name: "Aventurero", image: deafultImg }
 }
 
 export default function CharacterView({
@@ -90,7 +92,7 @@ export default function CharacterView({
   const currentStats = loadedStats ?? INITIAL_STATS
   const displayName = loadedStats?.playerName ?? playerName
   const playerClass =
-    PLAYER_CLASS_META[loadedStats?.playerClass] ?? PLAYER_CLASS_META.knight
+    PLAYER_CLASS_META[loadedStats?.playerClass] ?? PLAYER_CLASS_META.default
   const objectStats = market?.objectStats ?? {}
 
   function showFeedback(message) {
@@ -208,7 +210,8 @@ export default function CharacterView({
           {marketError}
         </div>
       )}
-
+      
+      {/*Character Overview or Inventory View*/}
       {tab === "character" ? (
         <CharacterOverviewView
           stats={currentStats}
