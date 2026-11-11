@@ -20,14 +20,20 @@ public class PlayerService {
 	private final UserService userService;
 	private final CharacterStatsService characterStatsService;
 	private final TaskService taskService;
+	private final UserStreakService userStreakService;
 
-	public PlayerService(UserService userService, CharacterStatsService characterStatsService, TaskService taskService) {
+	public PlayerService(
+			UserService userService,
+			CharacterStatsService characterStatsService,
+			TaskService taskService,
+			UserStreakService userStreakService) {
 		this.userService = userService;
 		this.characterStatsService = characterStatsService;
 		this.taskService = taskService;
+		this.userStreakService = userStreakService;
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public PlayerProfileDto getProfile(Long userId) {
 		User user = userService.getById(userId);
 		CharacterStats stats = characterStatsService.getByUserId(userId);
@@ -38,10 +44,15 @@ public class PlayerService {
 				stats.getPlayerName(),
 				stats.getPlayerClass().displayName(),
 				user.getProfileUrl(),
+				user.getUserIcon(),
 				level,
 				stats.getXpCurrent() == null ? 0 : stats.getXpCurrent(),
 				CharacterStatsService.xpForNextLevel(level),
-				streakOf(user));
+				stats.getGold(),
+				user.getStreakDays(),
+				user.getStreakDays(),
+				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
+				(float) userStreakService.synchronizeAccountBoost(userId));
 	}
 
 	// Quests are not stored yet: progress is computed from today's tasks and the streak.
@@ -54,10 +65,6 @@ public class PlayerService {
 				new DailyQuestDto("tasks", "Completa " + DAILY_TASKS_GOAL + " tareas hoy", "📚", "purple",
 						Math.min(completedToday, DAILY_TASKS_GOAL), DAILY_TASKS_GOAL, 30),
 				new DailyQuestDto("streak", "Mantén la racha (" + STREAK_GOAL + " días)", "🔥", "orange",
-						Math.min(streakOf(user), STREAK_GOAL), STREAK_GOAL, 25));
-	}
-
-	private static int streakOf(User user) {
-		return user.getTaskStreak() == null ? 0 : user.getTaskStreak();
+						Math.min(user.getStreakDays(), STREAK_GOAL), STREAK_GOAL, 25));
 	}
 }

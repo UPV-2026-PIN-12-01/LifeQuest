@@ -151,4 +151,5 @@ public class Task {
 	public void setActivityType(ActivityType activityType) {
 		this.activityType = activityType;
 	}
+	
 }

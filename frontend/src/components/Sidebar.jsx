@@ -3,9 +3,12 @@ import { classById } from '../utils/playerClasses.js'
 
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/chat', icon: '✨', label: 'Asistente IA' },
+  { to: '/goals', icon: '🚩', label: 'Objetivos' },
+  { to: '/friends', icon: '👥', label: 'Amigos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
 
@@ -15,24 +18,19 @@ function isSelected(to, pathname, hash) {
   return targetHash ? `#${targetHash}` === hash : !hash
 }
 
-function AccountAvatar({ profileUrl, username }) {
-  if (profileUrl) {
-    return (
-      <img
-        src={profileUrl}
-        alt=""
-        className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-      />
-    )
-  }
-
+function AccountAvatar({ profileUrl, userIcon, username }) {
   return (
     <div
       aria-hidden="true"
-      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-bold text-white"
+      className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white"
       style={{ background: 'var(--lq-violet-500)' }}
     >
-      {(username || 'A')[0].toUpperCase()}
+      {profileUrl ? (
+        <img src={profileUrl} alt="" className="block h-full w-full object-cover" />
+      ) : (
+        userIcon || (username || 'A')[0].toUpperCase()
+        
+      )}
     </div>
   )
 }
@@ -43,7 +41,11 @@ export default function Sidebar({ player, onLogout }) {
   const xp = Number(player.xp) || 0
   const xpGoal = Number(player.xpForNextLevel) || 1
   const xpPercent = Math.min(100, Math.round((xp / xpGoal) * 100))
+  const dayStreak = Number(player.dayStreak ?? player.streakDays) || 0
+  const taskStreak = Number(player.taskStreak) || 0
+  const xpBoostPercent = Math.max(0, Math.round(((Number(player.xpAccBoost) || 1) - 1) * 100))
 
+  
   return (
     <aside
       className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col lg:flex"
@@ -69,10 +71,14 @@ export default function Sidebar({ player, onLogout }) {
         style={{ background: 'rgba(109,94,252,0.22)' }}
       >
         <div className="mb-3 flex items-center gap-3">
-          <AccountAvatar profileUrl={player.profileUrl} username={player.username} />
+          <AccountAvatar
+            profileUrl={player.profileUrl}
+            userIcon={player.userIcon}
+            username={player.username}
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold leading-tight text-white">
-              {player.username || 'Aventurero'}
+              {player.username || 'Aventurero'} {player.userIcon}
             </p>
             <p className="truncate text-xs" style={{ color: 'var(--lq-violet-200)' }}>
               {playerClass.name}
@@ -96,9 +102,11 @@ export default function Sidebar({ player, onLogout }) {
             style={{ width: `${xpPercent}%`, background: 'var(--lq-gold)' }}
           />
         </div>
-        <div className="mt-3 flex gap-4 text-xs" style={{ color: 'var(--lq-violet-200)' }}>
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--lq-violet-200)' }}>
           <span>💰 {player.gold ?? 0}</span>
-          <span>🔥 {player.streakDays ?? 0} días</span>
+          <span>🔥 {dayStreak} días</span>
+          <span>✅ {taskStreak} tareas</span>
+          <span>✨ +{xpBoostPercent}% XP</span>
         </div>
       </div>
 

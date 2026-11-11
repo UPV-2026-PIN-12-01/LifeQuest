@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import ChallengeFormModal from '../components/challenges/ChallengeFormModal.jsx'
-import { claimChallenge, deleteChallenge, evaluateChallenge, getChallenges } from '../services/challenges.js'
+import {
+  claimChallenge,
+  deleteChallenge,
+  evaluateChallenge,
+  getAssignedChallengeTaskIds,
+  getChallenges,
+} from '../services/challenges.js'
 import { getTasksForWeek } from '../services/tasks.js'
 import '../styles/challenges.css'
 
 export default function ChallengesPage() {
+  const { refreshPlayer } = useOutletContext()
   const [history, setHistory] = useState(false)
   const [challenges, setChallenges] = useState([])
   const [activeCount, setActiveCount] = useState(0)
@@ -41,7 +49,12 @@ export default function ChallengesPage() {
     setShowForm(true)
     setTasksLoading(true)
     try {
-      setTasks(await getTasksForWeek(new Date()))
+      const [weekTasks, assignedTaskIds] = await Promise.all([
+        getTasksForWeek(new Date()),
+        getAssignedChallengeTaskIds(),
+      ])
+      const assignedTaskIdSet = new Set(assignedTaskIds.map(String))
+      setTasks(weekTasks.filter((task) => !assignedTaskIdSet.has(String(task.id))))
     } catch (error) {
       setLoadError(error)
     } finally {
@@ -55,6 +68,7 @@ export default function ChallengesPage() {
     try {
       const claimedChallenge = await claimChallenge(challenge.id)
       setRewardToast({ xp: claimedChallenge.xp, gold: claimedChallenge.gold })
+      await refreshPlayer()
       setRefreshVersion((version) => version + 1)
     } catch (error) {
       setLoadError(error)

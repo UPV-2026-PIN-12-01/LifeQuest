@@ -8,7 +8,12 @@ import WeekGrid from '../components/home/WeekGrid.jsx'
 import WeekHeader from '../components/home/WeekHeader.jsx'
 import useTaskHeartbeats from '../hooks/useTaskHeartbeats.js'
 import { getDailyQuests } from '../services/player.js'
-import { getCachedTasksForWeek, getTasksForWeek, setCachedTasksForWeek } from '../services/tasks.js'
+import {
+  getCachedTasksForWeek,
+  getTaskTestingMode,
+  getTasksForWeek,
+  setCachedTasksForWeek,
+} from '../services/tasks.js'
 import { addDays, startOfWeek, toIsoDate, weekRangeLabel } from '../utils/week.js'
 import '../styles/home.css'
 
@@ -25,14 +30,19 @@ export default function HomePage() {
   })
   const [quests, setQuests] = useState([])
   const [loadError, setLoadError] = useState(null)
+  const [questsError, setQuestsError] = useState(null)
+  const [testingModeError, setTestingModeError] = useState(null)
+  const [testingMode, setTestingMode] = useState(false)
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
   const [tasksVersion, setTasksVersion] = useState(0)
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
-    if (loadError?.status === 401) navigate('/login', { replace: true })
-  }, [loadError, navigate])
+    if ([loadError, questsError, testingModeError].some((error) => error?.status === 401)) {
+      navigate('/login', { replace: true })
+    }
+  }, [loadError, questsError, testingModeError, navigate])
 
   const weekStart = addDays(startOfWeek(new Date()), weekOffset * 7)
   const weekKey = weekStart.getTime()
@@ -45,6 +55,7 @@ export default function HomePage() {
     done: completedTasks.length,
     total: tasks.length,
     xp: completedTasks.reduce((sum, task) => sum + task.xp, 0),
+    gold: completedTasks.reduce((sum, task) => sum + task.gold, 0),
   }
 
   useEffect(() => {
@@ -52,8 +63,25 @@ export default function HomePage() {
     getDailyQuests().then((dailyQuests) => {
       if (cancelled) return
       setQuests(dailyQuests)
+      setQuestsError(null)
     }).catch((error) => {
-      if (!cancelled) setLoadError(error)
+      if (!cancelled) setQuestsError(error)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    getTaskTestingMode().then(({ enabled }) => {
+      if (!cancelled) {
+        setTestingMode(enabled)
+        setTestingModeError(null)
+      }
+    }).catch((error) => {
+      if (error.status === 404) return
+      if (!cancelled) setTestingModeError(error)
     })
     return () => {
       cancelled = true
@@ -67,6 +95,7 @@ export default function HomePage() {
       if (!cancelled) {
         setTaskData({ weekKey, tasks: weekTasks })
         setCachedTasksForWeek(requestedWeekStart, weekTasks)
+        setLoadError(null)
       }
     }).catch((error) => {
       if (!cancelled) setLoadError(error)
@@ -98,6 +127,7 @@ export default function HomePage() {
         <TaskTable
           id="tasks"
           tasks={tasks}
+          testingMode={testingMode}
           onTaskChanged={(changed) => {
             setTaskData((current) => {
               const currentTasks = current.weekKey === weekKey ? current.tasks : cachedTasks ?? []
@@ -106,14 +136,29 @@ export default function HomePage() {
               return { weekKey, tasks: next }
             })
             refreshPlayer()
+            getDailyQuests().then((dailyQuests) => {
+              setQuests(dailyQuests)
+              setQuestsError(null)
+            }).catch(setQuestsError)
           }}
         />
       </div>
+      {testingModeError && (
+        <p className="home-error" role="alert">
+          No se pudo comprobar el modo de pruebas local.
+        </p>
+      )}
+      {questsError && (
+        <p className="home-error" role="alert">
+          No se pudieron cargar los desafíos diarios. Inténtalo de nuevo más tarde.
+        </p>
+      )}
       {quests.length > 0 && <DailyQuests quests={quests} />}
       {editor && (
         <TaskFormModal
           task={editor.task}
           defaultDate={toIsoDate(new Date())}
+          player={player}
           onClose={() => setEditor(null)}
           onSaved={() => {
             setEditor(null)

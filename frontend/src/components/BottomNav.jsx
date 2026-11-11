@@ -5,8 +5,13 @@ const NAV = [
   { to: '/home#week', icon: '📅', label: 'Semana' },
   { to: '/home#tasks', icon: '✅', label: 'Tareas' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
+  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/goals', icon: '🚩', label: 'Objetivos' },
+  { to: '/friends', icon: '👥', label: 'Amigos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
+  
 ]
 export default function BottomNav() {
   const { pathname, hash } = useLocation()
@@ -16,7 +21,7 @@ export default function BottomNav() {
       aria-label="Navegación principal"
       className="fixed bottom-0 left-0 right-0 z-40 lg:hidden flex items-center justify-around px-2 py-2 border-t"
       style={{
-        background: "var(--color-sidebar)",
+        background: "var(--lq-violet-900)",
         borderColor: "rgba(99,102,241,0.3)",
       }}
     >

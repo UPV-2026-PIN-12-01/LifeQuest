@@ -138,6 +138,53 @@
   min-width: 0;
 }
 
+.user-icon-picker {
+  min-width: 0;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.user-icon-picker legend {
+  margin-bottom: 6px;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-icon-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.user-icon-option {
+  box-sizing: border-box;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.user-icon-option.is-selected {
+  border-color: var(--lq-gold);
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 0 2px var(--lq-gold);
+}
+
+.user-icon-option:focus-visible {
+  outline: 2px solid var(--lq-gold);
+  outline-offset: 2px;
+}
+
 .settings-class {
   align-self: flex-start;
   margin: 2px 0 0;
@@ -272,6 +319,7 @@
 }
 
 .profile-photo img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;

@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { createTask, deleteTask, updateTask } from '../../services/tasks.js'
-import { TASK_ACTIVITY_TYPES, TASK_COLORS, TASK_ICONS, TASK_PRIORITIES, XP_BY_PRIORITY } from '../../utils/taskOptions.js'
+import {
+  TASK_ACTIVITY_TYPES,
+  TASK_COLORS,
+  TASK_ICONS,
+  TASK_PRIORITIES,
+  activityById,
+  activityStatsLabel,
+  taskDurationMultiplier,
+  XP_BY_PRIORITY,
+} from '../../utils/taskOptions.js'
 import { addDays, toIsoDate } from '../../utils/week.js'
 
 const TITLE_MAX = 80
@@ -18,13 +27,21 @@ const SERVER_ERRORS = {
 }
 
 // Create a task when `task` is null, otherwise edit or delete it. Calls onSaved after any change.
-export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
+export default function TaskFormModal({ task, defaultDate, onClose, onSaved, player }) {
   const dialogRef = useRef(null)
   const [form, setForm] = useState(() => initialForm(task, defaultDate))
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const taskStreak = Math.min(Math.max(Number(player?.taskStreak) || 0, 0), 10)
+  const accountXpBoost = Math.min(Math.max(Number(player?.xpAccBoost) || 1, 1), 1.35)
   const isEdit = Boolean(task)
+  const durationMinutes = getDurationMinutes(form.startTime, form.endTime)
+  const durationMultiplier = taskDurationMultiplier(durationMinutes)
+  const estimatedXp = Math.round(
+    XP_BY_PRIORITY[form.priority] * durationMultiplier * accountXpBoost * (1 + taskStreak * 0.05),
+  )
+  const activity = activityById(form.activityType)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -74,6 +91,7 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
   }
 
   return (
+    
     // The native dialog closes on Escape; onClose keeps React state in sync.
     <dialog
       ref={dialogRef}
@@ -157,6 +175,9 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
               </option>
             ))}
           </select>
+          <p className="task-activity-preview" aria-live="polite">
+            <strong>{activity.label}:</strong> {activityStatsLabel(form.activityType)}
+          </p>
         </fieldset>
 
         <fieldset className="task-field">
@@ -177,6 +198,11 @@ export default function TaskFormModal({ task, defaultDate, onClose, onSaved }) {
               </label>
             ))}
           </div>
+          <p className="task-reward-note">
+            Bonus por duración: ×{durationMultiplier.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ·
+            {' '}{estimatedXp} XP estimada antes del bonus de verificación.
+            {' '}Desde 30 min aumenta progresivamente hasta ×2 a las 3 h.
+          </p>
         </fieldset>
 
         <fieldset className="task-field">
@@ -292,6 +318,15 @@ function validate(form) {
   if (end - start < MIN_DURATION_MS) return SERVER_ERRORS['Task must last at least 15 minutes']
   if (start.getTime() < Date.now() - PAST_START_GRACE_MS) return SERVER_ERRORS['Task cannot start in the past']
   return null
+}
+
+function getDurationMinutes(startTime, endTime) {
+  if (!startTime || !endTime) return 0
+  const toMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+  return Math.max(0, toMinutes(endTime) - toMinutes(startTime))
 }
 
 function requestErrorMessage(error) {

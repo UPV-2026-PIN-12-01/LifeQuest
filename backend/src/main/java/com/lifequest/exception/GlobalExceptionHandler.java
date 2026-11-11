@@ -1,7 +1,9 @@
 package com.lifequest.exception;
 
 import java.util.Map;
+import java.util.Locale;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -47,6 +49,19 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(InvalidStateException.class)
 	public ResponseEntity<Map<String, String>> invalidState(InvalidStateException ex) {
 		return error(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<Map<String, String>> dataIntegrityViolation(DataIntegrityViolationException ex) {
+		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+			if (cause.getMessage() != null
+					&& cause.getMessage().toLowerCase(Locale.ROOT)
+							.contains("player_inventory_one_equipped_item_per_slot")) {
+				return error(HttpStatus.CONFLICT,
+						"Ya hay un objeto equipado en ese espacio. Actualiza el inventario e inténtalo de nuevo.");
+			}
+		}
+		throw ex;
 	}
 
 	@ExceptionHandler(InvalidLoginException.class)

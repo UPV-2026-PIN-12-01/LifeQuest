@@ -17,9 +17,13 @@ import com.lifequest.repository.CharacterStatsRepository;
 public class CharacterStatsService {
 
 	private final CharacterStatsRepository characterStatsRepository;
+	private final UserStreakService userStreakService;
 
-	public CharacterStatsService(CharacterStatsRepository characterStatsRepository) {
+	public CharacterStatsService(
+			CharacterStatsRepository characterStatsRepository,
+			UserStreakService userStreakService) {
 		this.characterStatsRepository = characterStatsRepository;
+		this.userStreakService = userStreakService;
 	}
 
 	// XP needed to go from level to level + 1. Must match the stats_xp_rules_check CHECK in the DB,
@@ -32,10 +36,25 @@ public class CharacterStatsService {
 	// Levels up while the XP covers the next level. xpTotal is derived so it always passes
 	// stats_xp_rules_check: at level 1 it equals xpCurrent, above it is xpCurrent + L^2 + 10L.
 	@Transactional
-	public CharacterStats addXp(Long userId, long xp) {
+	public long addXp(Long userId, long xp) {
+		if (xp < 0) {
+			throw new InvalidRequestException("XP increment must be non-negative");
+		}
+		if (xp == 0) {
+			return 0;
+		}
+		long awardedXp = Math.round(xp * userStreakService.recordXpActivity(userId));
+		return addAwardedXp(userId, awardedXp);
+	}
+
+	@Transactional
+	long addAwardedXp(Long userId, long awardedXp) {
+		if (awardedXp <= 0) {
+			return 0;
+		}
 		CharacterStats stats = getByUserId(userId);
 		int level = stats.getLevel() == null ? 1 : stats.getLevel();
-		long current = (stats.getXpCurrent() == null ? 0 : stats.getXpCurrent()) + xp;
+		long current = (stats.getXpCurrent() == null ? 0 : stats.getXpCurrent()) + awardedXp;
 		while (current >= xpForNextLevel(level)) {
 			current -= xpForNextLevel(level);
 			level++;
@@ -45,6 +64,33 @@ public class CharacterStatsService {
 		stats.setLevel(level);
 		stats.setXpCurrent(current);
 		stats.setXpTotal(level == 1 ? current : current + (long) level * level + 10L * level);
+		characterStatsRepository.save(stats);
+		return awardedXp;
+	}
+
+	double recordXpActivityForTask(Long userId) {
+		return userStreakService.recordXpActivity(userId);
+	}
+
+	public double recordTaskCompletion(Long userId) {
+		return userStreakService.recordTaskCompletion(userId);
+	}
+
+	public void recordTaskMiss(Long userId) {
+		userStreakService.recordTaskMiss(userId);
+	}
+
+	@Transactional
+	public CharacterStats addGold(Long userId, long gold) {
+		if (gold < 0) {
+			throw new InvalidRequestException("Gold increment must be non-negative");
+		}
+		CharacterStats stats = getByUserId(userId);
+		try {
+			stats.setGold(Math.addExact(stats.getGold(), gold));
+		} catch (ArithmeticException ex) {
+			throw new InvalidRequestException("Gold increment exceeds the supported range");
+		}
 		return characterStatsRepository.save(stats);
 	}
 

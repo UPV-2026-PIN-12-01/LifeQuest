@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AccountStep from '../components/signup/AccountStep.jsx'
 import CharacterStep from '../components/signup/CharacterStep.jsx'
+import { CLASS_ICONS } from '../utils/playerClasses.js'
 import { login, signup } from '../services/auth.js'
 import { preloadSessionData } from '../services/player.js'
 import { saveSession } from '../services/session.js'
@@ -21,6 +22,7 @@ export default function SignupPage() {
   const [photoPreview, setPhotoPreview] = useState('')
   const [playerClass, setPlayerClass] = useState(DEFAULT_PLAYER_CLASS)
   const [playerName, setPlayerName] = useState('')
+  const [userIcon, setUserIcon] = useState(CLASS_ICONS[0])
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
@@ -155,6 +157,7 @@ export default function SignupPage() {
       formData.append('password', password)
       formData.append('playerClass', playerClass)
       formData.append('playerName', playerName.trim())
+      formData.append('userIcon', userIcon)
       if (photoFile) {
         formData.append('photo', photoFile)
       }
@@ -334,11 +337,13 @@ export default function SignupPage() {
                 <CharacterStep
                   playerClass={playerClass}
                   playerName={playerName}
+                  userIcon={userIcon}
                   error={errors.playerName}
                   formError={errors.form}
                   submitting={submitting}
                   onClassChange={handleClassChange}
                   onPlayerNameChange={handlePlayerNameChange}
+                  onUserIconChange={setUserIcon}
                   onBack={() => setStep(1)}
                   onSubmit={handleCharacterStart}
                 />

@@ -40,6 +40,11 @@ public class ChallengeController {
 		return challengeService.findForUser(userService.getIdByAuthSubject(jwt.getSubject()), history);
 	}
 
+	@GetMapping("/assigned-task-ids")
+	public List<Long> assignedTaskIds(@AuthenticationPrincipal Jwt jwt) {
+		return challengeService.findAssignedTaskIds(userService.getIdByAuthSubject(jwt.getSubject()));
+	}
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ChallengeDto create(

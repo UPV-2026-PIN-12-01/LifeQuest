@@ -1,15 +1,27 @@
 import { useId } from 'react'
 import FieldError from './FieldError.jsx'
+import UserIconPicker from '../UserIconPicker.jsx'
 import { PLAYER_CLASSES } from '../../utils/playerClasses.js'
+import warriorPortrait from '../../assets/warrior1.png'
+import archerPortrait from '../../assets/archer1.png'
+import magicianPortrait from '../../assets/magician1.png'
+
+const CLASS_PORTRAITS = {
+  Guerrero: warriorPortrait,
+  Arquero: archerPortrait,
+  Mago: magicianPortrait,
+}
 
 export default function CharacterStep({
   playerClass,
   playerName,
+  userIcon,
   error,
   formError,
   submitting,
   onClassChange,
   onPlayerNameChange,
+  onUserIconChange,
   onBack,
   onSubmit,
 }) {
@@ -56,7 +68,7 @@ export default function CharacterStep({
               >
                 <img
                   className="signup-class-portrait"
-                  src={item.image}
+                  src={CLASS_PORTRAITS[item.id]}
                   alt=""
                 />
                 <span className="signup-class-copy">
@@ -97,6 +109,12 @@ export default function CharacterStep({
         <p className="signup-hint" id={`${nameId}-hint`}>
           Este es el nombre de tu héroe dentro del juego.
         </p>
+        <UserIconPicker
+          value={userIcon}
+          onChange={onUserIconChange}
+          label="Icono del personaje"
+          disabled={submitting}
+        />
       </div>
       </div>
 

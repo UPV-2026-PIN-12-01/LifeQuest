@@ -36,16 +36,19 @@ public class UserProfileService {
 
 	private final UserService userService;
 	private final CharacterStatsService characterStatsService;
+	private final UserStreakService userStreakService;
 	private final SupabaseAuthService supabaseAuthService;
 	private final SupabaseStorageService supabaseStorageService;
 
 	public UserProfileService(
 			UserService userService,
 			CharacterStatsService characterStatsService,
+			UserStreakService userStreakService,
 			SupabaseAuthService supabaseAuthService,
 			SupabaseStorageService supabaseStorageService) {
 		this.userService = userService;
 		this.characterStatsService = characterStatsService;
+		this.userStreakService = userStreakService;
 		this.supabaseAuthService = supabaseAuthService;
 		this.supabaseStorageService = supabaseStorageService;
 	}
@@ -141,7 +144,7 @@ public class UserProfileService {
 		return password;
 	}
 
-	private static UserAccountResponse toResponse(User user, CharacterStats stats) {
+	private UserAccountResponse toResponse(User user, CharacterStats stats) {
 		return new UserAccountResponse(new UserAccountDto(
 				user.getId(),
 				user.getUsername(),
@@ -149,7 +152,11 @@ public class UserProfileService {
 				user.getUserIcon(),
 				stats.getPlayerName(),
 				stats.getPlayerClass().displayName(),
-				user.getProfileUrl()));
+				user.getProfileUrl(),
+				user.getStreakDays(),
+				user.getStreakDays(),
+				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
+				(float) userStreakService.synchronizeAccountBoost(user.getId())));
 	}
 
 	private static PhotoPayload resolvePhoto(MultipartFile photo) {

@@ -5,9 +5,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import com.lifequest.model.dto.ChallengeRequestDto;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.Challenge;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.model.entity.Task;
 import com.lifequest.repository.ChallengeRepository;
 
@@ -65,11 +68,23 @@ public class ChallengeService {
 				.toList();
 	}
 
+	@Transactional(readOnly = true)
+	public List<Long> findAssignedTaskIds(Long userId) {
+		userService.getById(userId);
+		return challengeRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+				.map(Challenge::getTaskId)
+				.filter(taskId -> taskId != null)
+				.toList();
+	}
+
 	@Transactional
 	public ChallengeDto create(Long userId, ChallengeRequestDto request) {
 		userService.getById(userId);
 		validateRequest(request);
 		Task task = taskService.findOwned(userId, request.taskId());
+		if (challengeRepository.existsByTaskId(task.getId())) {
+			throw new InvalidStateException("This task is already assigned to a challenge");
+		}
 		String difficulty = request.difficulty().trim().toUpperCase();
 		long[] reward = REWARDS.get(difficulty);
 
@@ -82,8 +97,15 @@ public class ChallengeService {
 		challenge.setDifficulty(difficulty);
 		challenge.setCompleted(false);
 		challenge.setVisibility(VISIBLE);
-		challenge.setRewardId(rewardService.create(userId, reward[0], reward[1]));
-		return toDto(challengeRepository.save(challenge));
+		challenge.setRewardId(rewardService.create(userId, reward[0], reward[1], RewardSource.CHALLENGE));
+		try {
+			return toDto(challengeRepository.saveAndFlush(challenge));
+		} catch (DataIntegrityViolationException ex) {
+			if (isTaskAssignmentConflict(ex)) {
+				throw new InvalidStateException("This task is already assigned to a challenge");
+			}
+			throw ex;
+		}
 	}
 
 	@Transactional
@@ -132,12 +154,13 @@ public class ChallengeService {
 			throw new InvalidStateException("You can claim only three challenges per day");
 		}
 		if (challenge.getRewardId() != null) {
-			Reward reward = rewardService.getById(challenge.getRewardId());
+			Reward reward = rewardService.getByIdForUpdate(challenge.getRewardId());
 			if (reward.getClaimedAt() != null) {
 				throw new InvalidStateException("Challenge reward was already claimed");
 			}
-			rewardService.claim(reward, reward.getXpReward(), now);
-			characterStatsService.addXp(userId, reward.getXpReward());
+			long awardedXp = characterStatsService.addXp(userId, reward.getXpReward());
+			rewardService.claim(reward, awardedXp, now);
+			characterStatsService.addGold(userId, reward.getGoldReward());
 		}
 		return toDto(challenge);
 	}
@@ -193,5 +216,15 @@ public class ChallengeService {
 
 	private static String normalize(String value) {
 		return value == null ? "" : value.trim();
+	}
+
+	private static boolean isTaskAssignmentConflict(DataIntegrityViolationException exception) {
+		for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+			if (cause.getMessage() != null
+					&& cause.getMessage().toLowerCase(Locale.ROOT).contains("uq_challenges_task_id")) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

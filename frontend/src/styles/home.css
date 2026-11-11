@@ -94,6 +94,7 @@
 .player-avatar-photo {
   position: relative;
   z-index: 1;
+  display: block;
   width: 58px;
   height: 58px;
   border-radius: 50%;
@@ -318,6 +319,59 @@
   font-size: 18px;
 }
 
+.task-activity-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task-activity-summary strong {
+  font-weight: 700;
+}
+
+.task-activity-summary small {
+  color: var(--lq-ink-muted);
+  font-size: 11px;
+}
+
+.task-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.task-status-badge-pending {
+  background: #e9e5f4;
+  color: #5b4b7a;
+}
+
+.task-status-badge-in_progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.task-status-badge-finished {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.task-status-badge-completed {
+  background: var(--lq-success-soft);
+  color: var(--lq-success-ink);
+}
+
+.task-status-badge-not_completed {
+  background: var(--lq-danger-soft);
+  color: var(--lq-danger);
+}
+
 .task-table-empty {
   padding: 22px 20px;
   border-top: 1px solid var(--lq-line);
@@ -392,6 +446,14 @@
 .task-modal-details dd {
   margin: 3px 0 0;
   font-weight: 700;
+}
+
+.task-modal-details dd .task-status-badge {
+  margin-top: 2px;
+}
+
+.task-modal-details .task-activity-summary small {
+  font-weight: 500;
 }
 
 .task-modal-action {
@@ -724,6 +786,18 @@
   filter: brightness(0.75);
 }
 
+.task-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.task-status-row .task-note {
+  margin: 0;
+  font-size: 9px;
+}
+
 .task-meta {
   display: flex;
   justify-content: space-between;
@@ -780,6 +854,19 @@
   background: var(--lq-danger-soft);
   color: var(--lq-danger);
   text-decoration: line-through;
+}
+
+.task-activity-preview {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--lq-violet-50);
+  color: var(--lq-ink-muted);
+  font-size: 12px;
+}
+
+.task-activity-preview strong {
+  color: var(--lq-violet-700);
 }
 
 /* Daily quests */
@@ -1083,6 +1170,13 @@
 .task-choice small {
   color: var(--lq-gold-ink);
   font-weight: 700;
+}
+
+.task-reward-note {
+  color: var(--lq-ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .task-choice input:checked + span {

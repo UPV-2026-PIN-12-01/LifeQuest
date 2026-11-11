@@ -129,7 +129,7 @@ export default function ChallengeFormModal({ tasks, loading, onClose, onCreated 
           <p className="challenge-form-empty">Cargando tus tareas programadas…</p>
         ) : tasks.length === 0 ? (
           <p className="challenge-form-empty">
-            No tienes tareas programadas esta semana. Crea una tarea antes de añadir un desafío.
+            No tienes tareas programadas disponibles esta semana. Crea una tarea nueva o elige una que no esté vinculada a otro desafío.
           </p>
         ) : (
           <>

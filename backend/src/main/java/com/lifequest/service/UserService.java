@@ -20,15 +20,26 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final CharacterStatsService characterStatsService;
+	private final UserStreakService userStreakService;
 
-	public UserService(UserRepository userRepository, CharacterStatsService characterStatsService) {
+	public UserService(
+			UserRepository userRepository,
+			CharacterStatsService characterStatsService,
+			UserStreakService userStreakService) {
 		this.userRepository = userRepository;
 		this.characterStatsService = characterStatsService;
+		this.userStreakService = userStreakService;
 	}
 
 	@Transactional(readOnly = true)
 	public User getById(Long userId) {
 		return userRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+	}
+
+	@Transactional
+	public void lockForUpdate(Long userId) {
+		userRepository.findByIdForUpdate(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 
@@ -75,6 +86,7 @@ public class UserService {
 		if (userIcon != null) {
 			user.setUserIcon(userIcon);
 		}
+		userStreakService.synchronizeAccountBoost(user);
 		try {
 			return userRepository.saveAndFlush(user);
 		} catch (DataIntegrityViolationException ex) {
@@ -112,10 +124,19 @@ public class UserService {
 
 	@Transactional
 	public User create(String username, String email, UUID innerId) {
+		return create(username, email, innerId, null);
+	}
+
+	@Transactional
+	public User create(String username, String email, UUID innerId, String userIcon) {
 		User user = new User();
 		user.setUsername(username);
 		user.setEmail(email);
 		user.setInnerId(innerId);
+		if (userIcon != null) {
+			user.setUserIcon(userIcon);
+		}
+		userStreakService.synchronizeAccountBoost(user);
 		return userRepository.save(user);
 	}
 
@@ -123,6 +144,7 @@ public class UserService {
 	public User linkCharacter(User user, CharacterStats characterStats) {
 		user.setPlayerName(characterStats.getPlayerName());
 		user.setPlayerId(characterStats.getId());
+		userStreakService.synchronizeAccountBoost(user);
 		return userRepository.save(user);
 	}
 
@@ -130,6 +152,7 @@ public class UserService {
 	public void updateProfileUrl(Long userId, String profileUrl) {
 		User user = userRepository.findById(userId).orElseThrow();
 		user.setProfileUrl(profileUrl);
+		userStreakService.synchronizeAccountBoost(user);
 		userRepository.save(user);
 	}
 }

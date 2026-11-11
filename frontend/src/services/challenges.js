@@ -5,6 +5,10 @@ export function getChallenges(history = false) {
   return getJson(playerUrl(`/challenges?${params}`))
 }
 
+export function getAssignedChallengeTaskIds() {
+  return getJson(playerUrl('/challenges/assigned-task-ids'))
+}
+
 export function createChallenge(challenge) {
   return requestJson(playerUrl('/challenges'), { method: 'POST', body: challenge })
 }

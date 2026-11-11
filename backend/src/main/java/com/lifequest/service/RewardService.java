@@ -3,6 +3,7 @@ package com.lifequest.service;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
 import com.lifequest.repository.RewardRepository;
 
 @Service
@@ -22,33 +24,36 @@ public class RewardService {
 	}
 
 	@Transactional(readOnly = true)
-	public Map<Long, Long> xpByRewardId(Collection<Long> rewardIds) {
+	public Map<Long, Reward> rewardsById(Collection<Long> rewardIds) {
 		if (rewardIds.isEmpty()) {
 			return Map.of();
 		}
 		return rewardRepository.findAllById(rewardIds).stream()
-				.collect(Collectors.toMap(Reward::getId, Reward::getXpReward));
+				.collect(Collectors.toMap(Reward::getId, reward -> reward));
 	}
 
 	@Transactional
-	public Long create(Long userId, long xp) {
-		return create(userId, xp, 0);
+	public Long create(Long userId, long xp, RewardSource source) {
+		return create(userId, xp, 0, source);
 	}
 
 	@Transactional
-	public Long create(Long userId, long xp, long gold) {
+	public Long create(Long userId, long xp, long gold, RewardSource source) {
 		Reward reward = new Reward();
 		reward.setUserId(userId);
 		reward.setXpReward(xp);
 		reward.setGoldReward(gold);
+		reward.setSource(Objects.requireNonNull(source, "Reward source is required"));
 		return rewardRepository.save(reward).getId();
 	}
 
 	@Transactional
-	public void updateXp(Long rewardId, long xp) {
-		Reward reward = rewardRepository.findById(rewardId)
+	public void updateTaskReward(Long rewardId, long xp, long gold, RewardSource source) {
+		Reward reward = rewardRepository.findByIdForUpdate(rewardId)
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 		reward.setXpReward(xp);
+		reward.setGoldReward(gold);
+		reward.setSource(Objects.requireNonNull(source, "Reward source is required"));
 	}
 
 	@Transactional(readOnly = true)
@@ -57,10 +62,17 @@ public class RewardService {
 				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
 	}
 
-	// XP already granted to the user from from (inclusive) to toExclusive, by claim time.
+	@Transactional
+	public Reward getByIdForUpdate(Long rewardId) {
+		return rewardRepository.findByIdForUpdate(rewardId)
+				.orElseThrow(() -> new ResourceNotFoundException("Reward not found"));
+	}
+
+	// XP already granted by task rewards from from (inclusive) to toExclusive, by claim time.
 	@Transactional(readOnly = true)
-	public long claimedXpBetween(Long userId, Instant from, Instant toExclusive) {
-		return rewardRepository.sumClaimedXp(userId, from, toExclusive);
+	public long claimedXpForSourceBetween(
+			Long userId, RewardSource source, Instant from, Instant toExclusive) {
+		return rewardRepository.sumClaimedXpBySource(userId, source, from, toExclusive);
 	}
 
 	@Transactional(readOnly = true)
@@ -71,9 +83,15 @@ public class RewardService {
 	// The reward keeps the XP actually granted, so the card shows what the user got.
 	@Transactional
 	public void claim(Reward reward, long grantedXp, Instant now) {
+		claim(reward, grantedXp, reward.getGoldReward(), now);
+	}
+
+	@Transactional
+	public void claim(Reward reward, long grantedXp, long grantedGold, Instant now) {
 		reward.setXpReward(grantedXp);
+		reward.setGoldReward(grantedGold);
 		reward.setClaimedAt(now);
-		rewardRepository.save(reward);
+		rewardRepository.saveAndFlush(reward);
 	}
 
 	@Transactional

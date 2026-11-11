@@ -30,6 +30,9 @@ import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.dto.TaskRequestDto;
 import com.lifequest.model.entity.Task;
 import com.lifequest.model.entity.ActivityType;
+import com.lifequest.model.entity.Reward;
+import com.lifequest.model.entity.RewardSource;
+import com.lifequest.model.entity.User;
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.repository.TaskRepository;
 import com.lifequest.repository.TaskSessionRepository;
@@ -42,13 +45,15 @@ class TaskServiceTest {
 
 	private TaskRepository taskRepository;
 	private RewardService rewardService;
+	private UserService userService;
 	private TaskService taskService;
 
 	@BeforeEach
 	void setUp() {
 		taskRepository = mock(TaskRepository.class);
 		rewardService = mock(RewardService.class);
-		UserService userService = mock(UserService.class);
+		userService = mock(UserService.class);
+		when(userService.getById(7L)).thenReturn(new User());
 		taskService = new TaskService(taskRepository, rewardService, userService, mock(TaskSessionRepository.class),
 				Clock.fixed(NOW, MADRID));
 	}
@@ -67,7 +72,7 @@ class TaskServiceTest {
 		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
 				eq(7L), any(), any()))
 				.thenReturn(List.of(task));
-		when(rewardService.xpByRewardId(anyCollection())).thenReturn(Map.of(3L, 50L));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
 
 		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
 
@@ -79,7 +84,46 @@ class TaskServiceTest {
 		assertThat(dto.endTime()).isEqualTo("01:00");
 		assertThat(dto.status()).isEqualTo("pending");
 		assertThat(dto.priority()).isEqualTo("medium");
-		assertThat(dto.xp()).isEqualTo(50L);
+		assertThat(dto.xp()).isEqualTo(58L);
+		assertThat(dto.gold()).isEqualTo(7L);
+	}
+
+	@Test
+	void pendingTaskEstimateIncludesTaskAndAccountStreakBonuses() {
+		User user = new User();
+		user.setTaskStreak(2);
+		user.setDayStreak(2);
+		user.setLastActivityDate(LocalDate.of(2026, 10, 9));
+		when(userService.getById(7L)).thenReturn(user);
+		Task task = task("PENDING", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
+		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
+				eq(7L), any(), any()))
+				.thenReturn(List.of(task));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
+
+		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
+
+		assertThat(tasks.get(0).xp()).isEqualTo(70L);
+		assertThat(tasks.get(0).gold()).isEqualTo(7L);
+	}
+
+	@Test
+	void pendingTaskEstimateDropsExpiredAccountStreakBonus() {
+		User user = new User();
+		user.setDayStreak(6);
+		user.setLastActivityDate(LocalDate.of(2026, 10, 8));
+		user.setXpAccBoost(1.3f);
+		when(userService.getById(7L)).thenReturn(user);
+		Task task = task("PENDING", "2026-10-10T22:30:00Z", "2026-10-10T23:00:00Z", 3L);
+		when(taskRepository.findByUserIdAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTime(
+				eq(7L), any(), any()))
+				.thenReturn(List.of(task));
+		when(rewardService.rewardsById(anyCollection())).thenReturn(Map.of(3L, reward(50L, 6L)));
+
+		List<TaskDto> tasks = taskService.findForUser(7L, LocalDate.parse("2026-10-05"), LocalDate.parse("2026-10-11"));
+
+		assertThat(tasks.get(0).xp()).isEqualTo(58L);
+		assertThat(tasks.get(0).gold()).isEqualTo(7L);
 	}
 
 	@Test
@@ -116,7 +160,7 @@ class TaskServiceTest {
 
 	@Test
 	void createStoresLocalTimesAsPendingWithReward() {
-		when(rewardService.create(7L, 30L)).thenReturn(9L);
+		when(rewardService.create(7L, 30L, 7L, RewardSource.TASK)).thenReturn(9L);
 		when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		TaskDto dto = taskService.create(7L, request("high", "09:00", "10:30"));
@@ -134,7 +178,9 @@ class TaskServiceTest {
 		assertThat(dto.startTime()).isEqualTo("09:00");
 		assertThat(dto.priority()).isEqualTo("high");
 		assertThat(dto.activityType()).isEqualTo(ActivityType.STUDY);
-		assertThat(dto.xp()).isEqualTo(30L);
+		assertThat(dto.xp()).isEqualTo(46L);
+		assertThat(dto.gold()).isEqualTo(10L);
+		verify(rewardService).create(7L, 30L, 7L, RewardSource.TASK);
 	}
 
 	@Test
@@ -145,7 +191,7 @@ class TaskServiceTest {
 
 		TaskDto dto = taskService.update(7L, 1L, request("low", "18:00", "19:00"));
 
-		verify(rewardService).updateXp(3L, 10L);
+		verify(rewardService).updateTaskReward(3L, 10L, 5L, RewardSource.TASK);
 		assertThat(task.getStatus()).isEqualTo("DONE");
 		assertThat(task.getPriority()).isEqualTo("LOW");
 		assertThat(dto.startTime()).isEqualTo("18:00");
@@ -214,7 +260,7 @@ class TaskServiceTest {
 
 		assertThatThrownBy(() -> taskService.update(7L, 1L, request("high", "18:00", "19:00")))
 				.isInstanceOf(InvalidStateException.class);
-		verify(rewardService, never()).updateXp(any(), anyLong());
+		verify(rewardService, never()).updateTaskReward(any(), anyLong(), anyLong(), any(RewardSource.class));
 	}
 
 	@Test
@@ -229,8 +275,16 @@ class TaskServiceTest {
 				LocalDate.parse("2026-10-12"), LocalTime.parse(start), LocalTime.parse(end), priority, ActivityType.STUDY);
 	}
 
+	private static Reward reward(long xp, long gold) {
+		Reward reward = new Reward();
+		reward.setXpReward(xp);
+		reward.setGoldReward(gold);
+		return reward;
+	}
+
 	private static Task task(String status, String start, String end, Long rewardId) {
 		Task task = new Task();
+		task.setUserId(7L);
 		task.setName("Repasar test-can-delete-later");
 		task.setDescription("test-can-delete-later");
 		task.setIcon("📘");

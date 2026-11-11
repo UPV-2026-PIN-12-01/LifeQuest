@@ -49,7 +49,7 @@ class ChallengeControllerTest {
 	@Test
 	void returnsActiveChallenges() throws Exception {
 		TaskDto task = new TaskDto(12L, "Estudiar test-can-delete-later", "", "📘", "purple",
-				"2026-10-28", "09:00", "10:30", "finished", "medium", 20, ActivityType.STUDY, null, null, false, 0);
+				"2026-10-28", "09:00", "10:30", "finished", "medium", 20, 6, ActivityType.STUDY, null, null, false, 0);
 		ChallengeDto challenge = new ChallengeDto(4L, null, "No usar solucionario", "Resolver sin soluciones",
 				"HARD", false, 12L, null, "SHOWN", "No consultar las soluciones", 75, 25, false, task);
 		when(challengeService.findForUser(7L, false)).thenReturn(List.of(challenge));
