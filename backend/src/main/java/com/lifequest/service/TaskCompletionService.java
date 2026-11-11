@@ -6,8 +6,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.lifequest.exception.InvalidStateException;
 import com.lifequest.model.dto.TaskDto;
@@ -36,6 +38,10 @@ public class TaskCompletionService {
 	private final RewardService rewardService;
 	private final CharacterStatsService characterStatsService;
 	private final Clock clock;
+
+	public boolean isTaskCompleted(Task task) {
+		return TaskService.DB_STATUS_DONE.equals(task.getStatus()) || TaskService.DB_STATUS_NOT_DONE.equals(task.getStatus());
+	}
 
 	public TaskCompletionService(TaskService taskService, TaskRepository taskRepository,
 			TaskSessionRepository taskSessionRepository, RewardService rewardService,
@@ -97,7 +103,14 @@ public class TaskCompletionService {
 	}
 
 	private TaskDto completeTask(Long userId, Long taskId, boolean skipTimingChecks) {
+		
 		Task task = skipTimingChecks ? pendingTaskForTesting(userId, taskId) : pendingTask(userId, taskId);
+		
+		//Una vez que la tarea se completa, no se puede volver a completar ni omitir. Se lanza una excepción si se intenta completar una tarea que ya ha sido respondida.
+		if (isTaskCompleted(task)) {
+    		throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta tarea ya estaba respondida.");
+		}
+		
 		Instant now = clock.instant();
 		TaskSession session = closeSession(task, now);
 		TaskVerification verification = skipTimingChecks
@@ -128,8 +141,8 @@ public class TaskCompletionService {
 			characterStatsService.addGold(userId, taskGold);
 			rewardService.claim(reward, awardedXp, taskGold, now);
 		}
-		increaseCharacterStats(userId, task);
 		task.setStatus(TaskService.DB_STATUS_DONE);
+		increaseCharacterStats(userId, task);
 		taskRepository.save(task);
 		return taskService.describe(task);
 	}
@@ -139,7 +152,7 @@ public class TaskCompletionService {
 		Task task = pendingTask(userId, taskId);
 		closeSession(task, clock.instant());
 		characterStatsService.recordTaskMiss(userId);
-		increaseCharacterStats(userId, task);
+		//Las estadísticas del personaje no se aumentan si la tarea se omite, ya que no se completó.
 		task.setStatus(TaskService.DB_STATUS_NOT_DONE);
 		taskRepository.save(task);
 		return taskService.describe(task);
@@ -199,33 +212,43 @@ public class TaskCompletionService {
 	}
 
 	private void increaseCharacterStats(long userId, Task task) {
+
 		ActivityType activityType = task.getActivityType();
 		if (activityType == null) {
 			throw new InvalidStateException("Task has no activity type");
 		}
-		switch (activityType) {
-			case EXERCISE:
-				characterStatsService.increaseCharacterStats(userId, 0, 2, 0, 1, 0);
-				break;
-			case STUDY:
-				characterStatsService.increaseCharacterStats(userId, 0, 0, 0, 0, 3);
-				break;
-			case SOCIAL:
+
+		//Solo se obtienen estadísticas si la tarea está completada, es decir, si el estado de la tarea es "done"
+		if(task.getStatus().equals(TaskService.DB_STATUS_DONE)) {
+			System.out.println("Stats: " + activityType);
+		
+			//Tabla de referencia para aumentar las estadísticas del personaje según el tipo de actividads
+			switch (activityType) {
+				case EXERCISE:
+					characterStatsService.increaseCharacterStats(userId, 0, 2, 0, 1, 0);
+					break;
+				case STUDY:
+					characterStatsService.increaseCharacterStats(userId, 0, 0, 0, 0, 3);
+					break;
+				case SOCIAL:
 				characterStatsService.increaseCharacterStats(userId, 2, 0, 1, 0, 0);
 				break;
-			case SPORTS:
-				characterStatsService.increaseCharacterStats(userId, 0, 0, 1, 2, 0);
-				break;
-			case ENTERTAINMENT:
-				characterStatsService.increaseCharacterStats(userId, 0, 0, 2, 0, 0);
-				break;
-			case WORK:
-				characterStatsService.increaseCharacterStats(userId, 1, 1, 0, 0, 1);
-				break;
-			case UNDEFINED:
-				break;
-			default:
-				throw new InvalidStateException("Unknown activity type");
+				case SPORTS:
+					characterStatsService.increaseCharacterStats(userId, 0, 0, 1, 2, 0);
+					break;
+				case ENTERTAINMENT:
+					characterStatsService.increaseCharacterStats(userId, 0, 0, 2, 0, 0);
+					break;
+				case WORK:
+					characterStatsService.increaseCharacterStats(userId, 1, 1, 0, 0, 1);
+					break;
+				case UNDEFINED:
+					break;
+				default:
+					throw new InvalidStateException("Unknown activity type");
+			}
+		} else {
+			System.out.println("No se aumentan estadísticas porque la tarea no está completada." + task.getStatus());
 		}
 	}
 }
