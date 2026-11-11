@@ -1,0 +1,450 @@
+.guide-page {
+  color-scheme: light;
+  box-sizing: border-box;
+  position: relative;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 16px;
+  height: calc(100svh - 5rem);
+  padding: 20px;
+  color: var(--lq-ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+:root:has(.guide-page) {
+  background: var(--lq-violet-50);
+}
+
+.guide-page *,
+.guide-page *::before,
+.guide-page *::after {
+  box-sizing: border-box;
+}
+
+.guide-page p,
+.guide-page h1,
+.guide-page h2,
+.guide-page h3 {
+  margin: 0;
+}
+
+.guide-page button,
+.guide-page input,
+.guide-page textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.guide-page button {
+  cursor: pointer;
+}
+
+.guide-page :focus-visible {
+  outline: 3px solid var(--lq-violet-500);
+  outline-offset: 2px;
+}
+
+.guide-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--lq-line);
+  border-radius: 16px;
+  background: var(--lq-surface);
+}
+
+.guide-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 16px 12px;
+}
+
+.guide-panel-head h1,
+.guide-panel-head h2 {
+  font-size: 15px;
+}
+
+.guide-panel-head p,
+.guide-thread span,
+.guide-proposal .meta {
+  color: var(--lq-ink-muted);
+  font-size: 12px;
+}
+
+.guide-new-chat,
+.guide-btn,
+.guide-btn-primary,
+.guide-btn-ghost {
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  background: var(--lq-surface);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-new-chat {
+  margin: 0 16px 12px;
+}
+
+.guide-btn-primary {
+  border-color: var(--lq-violet-500);
+  background: var(--lq-violet-500);
+  color: white;
+}
+
+.guide-btn-ghost {
+  background: transparent;
+  color: var(--lq-ink-muted);
+}
+
+.guide-history-list {
+  overflow: auto;
+  padding: 8px 8px 12px;
+}
+
+.guide-thread {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.guide-thread strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-thread span {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-thread.active {
+  background: var(--lq-violet-100);
+}
+
+.guide-reading {
+  border-radius: 999px;
+  background: var(--lq-violet-100);
+  padding: 4px 10px;
+  color: var(--lq-violet-700);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.guide-history-toggle {
+  display: none;
+}
+
+.guide-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 4px 16px 12px;
+}
+
+.guide-bubble {
+  max-width: 78%;
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.guide-bubble.assistant {
+  border-bottom-left-radius: 4px;
+  background: var(--lq-violet-50);
+  white-space: normal;
+}
+
+.guide-markdown > :first-child {
+  margin-top: 0;
+}
+
+.guide-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.guide-markdown p,
+.guide-markdown ul,
+.guide-markdown ol,
+.guide-markdown pre {
+  margin: 0.45em 0;
+}
+
+.guide-markdown ul,
+.guide-markdown ol {
+  padding-left: 1.25em;
+}
+
+.guide-markdown ul {
+  list-style: disc;
+}
+
+.guide-markdown ol {
+  list-style: decimal;
+}
+
+.guide-markdown li + li {
+  margin-top: 0.2em;
+}
+
+.guide-markdown strong {
+  font-weight: 700;
+}
+
+.guide-markdown h1,
+.guide-markdown h2,
+.guide-markdown h3 {
+  margin: 0.6em 0 0.25em;
+  font-size: 14px;
+}
+
+.guide-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.guide-markdown pre {
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--lq-surface);
+}
+
+.guide-markdown a {
+  color: var(--lq-violet-700);
+}
+
+.guide-bubble.user {
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+  background: var(--lq-violet-500);
+  color: white;
+}
+
+.guide-bubble.error {
+  border: 1px solid var(--lq-danger);
+  background: var(--lq-danger-soft);
+}
+
+.guide-bubble.pending {
+  color: var(--lq-ink-muted);
+}
+
+.guide-send:disabled,
+.guide-chip:disabled,
+.guide-new-chat:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.guide-proposal {
+  max-width: 460px;
+  margin-top: 12px;
+  border: 1px solid var(--lq-line);
+  border-radius: 14px;
+  background: var(--lq-surface);
+  padding: 12px;
+}
+
+.guide-proposal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guide-kind {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.guide-kind.task {
+  background: var(--lq-task-blue-soft);
+  color: var(--lq-ink);
+}
+
+.guide-kind.challenge {
+  background: var(--lq-gold-soft);
+  color: var(--lq-gold-ink);
+}
+
+.guide-xp {
+  color: var(--lq-gold-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guide-proposal h3 {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+.guide-proposal .meta {
+  font-size: 13px;
+}
+
+.guide-proposal .why {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.guide-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.guide-proposal.done {
+  border-color: transparent;
+  background: var(--lq-success-soft);
+}
+
+.guide-done-label {
+  margin-top: 8px;
+  color: var(--lq-success-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-done-label a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.guide-composer {
+  border-top: 1px solid var(--lq-line);
+  padding: 12px 16px 14px;
+}
+
+.guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.guide-chip {
+  border: 1px solid var(--lq-line);
+  border-radius: 999px;
+  background: var(--lq-violet-50);
+  padding: 6px 10px;
+  color: var(--lq-violet-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.guide-composer-row {
+  display: flex;
+  gap: 8px;
+}
+
+.guide-composer-row input {
+  flex: 1;
+  border: 1px solid var(--lq-line);
+  border-radius: 12px;
+  background: var(--lq-surface);
+  padding: 12px 14px;
+}
+
+.guide-send {
+  width: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--lq-violet-500);
+  color: white;
+  font-size: 18px;
+}
+
+.guide-edit {
+  width: min(440px, calc(100% - 32px));
+  border: 0;
+  border-radius: 16px;
+  padding: 20px;
+  color: var(--lq-ink);
+}
+
+.guide-edit::backdrop {
+  background: rgba(28, 22, 51, 0.45);
+}
+
+.guide-edit h2 {
+  margin-bottom: 14px;
+  font-size: 18px;
+}
+
+.guide-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.guide-field input,
+.guide-field textarea {
+  border: 1px solid var(--lq-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 400;
+}
+
+.guide-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (min-width: 1024px) {
+  .guide-page {
+    height: 100svh;
+  }
+}
+
+@media (max-width: 720px) {
+  .guide-page {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-history {
+    display: none;
+  }
+
+  .guide-history.open {
+    position: absolute;
+    z-index: 5;
+    top: 12px;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    width: min(280px, 86vw);
+  }
+
+  .guide-history-toggle {
+    display: inline-flex;
+  }
+
+  .guide-reading {
+    display: none;
+  }
+}

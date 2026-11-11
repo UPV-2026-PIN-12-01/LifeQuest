@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LifeQuest · Guía IA (prototipo)</title>
+  <style>
+    :root {
+      --violet-900: #2a1868;
+      --violet-800: #3b2594;
+      --violet-700: #4a2db8;
+      --violet-500: #6d5efc;
+      --violet-200: #c4b5fd;
+      --violet-100: #ede9fe;
+      --violet-50: #f4f2fb;
+      --gold: #f5b82e;
+      --gold-ink: #8a5a00;
+      --gold-soft: #fff4d6;
+      --success: #16a34a;
+      --success-soft: #dcfce7;
+      --success-ink: #15803d;
+      --ink: #1c1633;
+      --muted: #6b6485;
+      --faint: #a8a2bd;
+      --line: #e6e1f5;
+      --surface: #fff;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--violet-50);
+    }
+    button, input, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+
+    .app { display: flex; min-height: 100%; }
+
+    .sidebar {
+      width: 256px;
+      flex-shrink: 0;
+      background: var(--violet-900);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(196, 181, 253, 0.18);
+      color: white;
+      text-decoration: none;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--violet-500);
+      display: grid;
+      place-items: center;
+    }
+    .brand-name { font-size: 20px; font-weight: 700; }
+    .player {
+      margin: 16px 12px 0;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(109, 94, 252, 0.22);
+    }
+    .player-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: var(--violet-500);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+    .player-name { margin: 0; font-size: 14px; font-weight: 600; }
+    .player-meta { margin: 0; font-size: 12px; color: var(--violet-200); }
+    .xp-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--violet-200);
+      margin-bottom: 6px;
+    }
+    .xp-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .xp-fill { width: 62%; height: 100%; background: var(--gold); }
+    .player-stats { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--violet-200); }
+    .nav { padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--violet-200);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .nav a.selected { background: var(--violet-500); color: white; }
+    .nav-note {
+      margin-top: auto;
+      padding: 12px 24px 20px;
+      font-size: 12px;
+      color: rgba(196, 181, 253, 0.55);
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+      gap: 16px;
+      height: 100vh;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-head {
+      padding: 16px 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .panel-head h1, .panel-head h2 { margin: 0; font-size: 15px; }
+    .panel-head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
+    .new-chat, .btn, .btn-primary, .btn-ghost, .btn-gold {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .new-chat { margin: 0 16px 12px; }
+    .btn-primary, .btn-gold {
+      background: var(--violet-500);
+      border-color: var(--violet-500);
+      color: white;
+    }
+    .btn-gold { background: var(--gold); border-color: var(--gold); color: #3b2a00; }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .btn:hover, .new-chat:hover { border-color: var(--violet-200); }
+
+    .history { overflow: auto; padding: 0 8px 12px; }
+    .history h3 {
+      margin: 8px 8px 4px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+    .thread {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .thread strong { display: block; font-size: 13px; font-weight: 600; }
+    .thread span { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread.active { background: var(--violet-100); }
+
+    .chat { position: relative; }
+    .reading {
+      font-size: 12px;
+      color: var(--violet-700);
+      background: var(--violet-100);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 600;
+    }
+    .messages {
+      flex: 1;
+      overflow: auto;
+      padding: 4px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .bubble {
+      max-width: 78%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .bubble.assistant { background: var(--violet-50); border-bottom-left-radius: 4px; }
+    .bubble.user {
+      margin-left: auto;
+      background: var(--violet-500);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .proposal {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      max-width: 460px;
+      background: white;
+    }
+    .proposal header, .pending-item header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .kind {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+    .kind.task { background: #e3f5fd; color: #0369a1; }
+    .kind.challenge { background: var(--gold-soft); color: var(--gold-ink); }
+    .xp { font-size: 12px; font-weight: 700; color: var(--gold-ink); }
+    .proposal h3 { margin: 8px 0 2px; font-size: 15px; }
+    .proposal .meta, .pending-item .meta { margin: 0; font-size: 13px; color: var(--muted); }
+    .proposal .why { margin: 8px 0 0; font-size: 13px; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    .proposal.done { background: var(--success-soft); border-color: transparent; }
+    .done-label { margin: 8px 0 0; font-size: 13px; color: var(--success-ink); font-weight: 600; }
+
+    .composer { border-top: 1px solid var(--line); padding: 12px 16px 14px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--violet-50);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--violet-700);
+    }
+    .composer-row { display: flex; gap: 8px; }
+    .composer-row input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: white;
+    }
+    .composer-row input:focus { outline: 2px solid var(--violet-200); border-color: var(--violet-500); }
+    .send {
+      width: 44px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--violet-500);
+      color: white;
+      font-size: 18px;
+    }
+    .send:disabled { background: var(--violet-100); color: var(--faint); }
+
+    .guide-body { overflow: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .focus {
+      background: var(--violet-50);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .focus strong { display: block; font-size: 12px; color: var(--violet-700); margin-bottom: 4px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat {
+      background: var(--violet-50);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat b { display: block; font-size: 14px; }
+    .stat span { font-size: 11px; color: var(--muted); }
+    .section-label {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .pending-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .pending-item h3 { margin: 6px 0 2px; font-size: 14px; }
+    .empty-pending { margin: 0; font-size: 13px; color: var(--muted); }
+
+    .modal-back {
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 22, 51, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-back.open { display: flex; }
+    .modal {
+      width: min(440px, 100%);
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .modal h2 { margin: 0 0 14px; font-size: 18px; }
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+    .field input, .field textarea {
+      font-weight: 400;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+    @media (max-width: 1100px) {
+      .sidebar { display: none; }
+      .main { grid-template-columns: 200px minmax(0, 1fr); height: auto; min-height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#guide">
+        <span class="brand-mark" aria-hidden="true">⚔️</span>
+        <span class="brand-name">LifeQuest</span>
+      </a>
+      <div class="player">
+        <div class="player-row">
+          <div class="avatar" aria-hidden="true">A</div>
+          <div>
+            <p class="player-name">Aventurero</p>
+            <p class="player-meta">Mago</p>
+            <p class="player-meta">Nivel 4</p>
+          </div>
+        </div>
+        <div class="xp-row"><span>XP</span><span>620 / 1000</span></div>
+        <div class="xp-track"><div class="xp-fill"></div></div>
+        <div class="player-stats"><span>💰 140</span><span>🔥 4 días</span></div>
+      </div>
+      <nav class="nav" aria-label="Navegación principal">
+        <a href="#inicio">🏠 Inicio</a>
+        <a href="#personaje">⚔️ Personaje</a>
+        <a href="#ajustes">⚙️ Ajustes</a>
+        <a href="#desafios">🎯 Desafíos</a>
+        <a class="selected" href="#guide" aria-current="page">✨ Guía</a>
+      </nav>
+      <p class="nav-note">Prototipo de interfaz · sin IA conectada</p>
+    </aside>
+
+    <main class="main">
+      <section class="panel" aria-label="Historial de chats">
+        <div class="panel-head"><h2>Chats</h2></div>
+        <button class="new-chat" id="new-chat" type="button">+ Nuevo chat</button>
+        <div class="history" id="history"></div>
+      </section>
+
+      <section class="panel chat" aria-label="Conversación">
+        <div class="panel-head">
+          <div>
+            <h1>Consejero</h1>
+            <p id="thread-title">Organizar la semana</p>
+          </div>
+          <span class="reading">Semana 3–9 nov · 8 tareas · racha 4</span>
+        </div>
+        <div class="messages" id="messages"></div>
+        <form class="composer" id="composer">
+          <div class="chips">
+            <button class="chip" type="button" data-prompt="Revisa mi semana">Revisa mi semana</button>
+            <button class="chip" type="button" data-prompt="Qué hago hoy">Qué hago hoy</button>
+            <button class="chip" type="button" data-prompt="Propón un desafío">Propón un desafío</button>
+          </div>
+          <div class="composer-row">
+            <input id="draft" name="draft" placeholder="Escribe al consejero…" autocomplete="off" />
+            <button class="send" type="submit" aria-label="Enviar">↑</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-back" id="modal">
+    <form class="modal" id="edit-form">
+      <h2 id="edit-title">Editar propuesta</h2>
+      <label class="field">Título<input id="edit-name" required /></label>
+      <label class="field">Cuándo<input id="edit-when" required /></label>
+      <label class="field">Detalle<textarea id="edit-why" rows="3"></textarea></label>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="edit-cancel">Cancelar</button>
+        <button class="btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const proposals = {
+      repaso: {
+        id: "repaso",
+        kind: "task",
+        kindLabel: "Tarea",
+        xp: "+40 XP",
+        title: "Repaso de PIN",
+        when: "Viernes · 09:00–10:30",
+        why: "Sale del jueves, que ya tiene cuatro bloques seguidos.",
+        status: "pending",
+      },
+      estudio: {
+        id: "estudio",
+        kind: "challenge",
+        kindLabel: "Desafío",
+        xp: "+60 XP",
+        title: "Estudio sin pausas",
+        when: "Sobre Estudio · jueves 18:00",
+        why: "Completa la tarea respetando el tiempo establecido.",
+        status: "pending",
+      },
+    };
+
+    const threads = [
+      {
+        id: "week",
+        title: "Organizar la semana",
+        day: "Hoy",
+        preview: "Mover Repaso y un desafío de Estudio",
+        messages: [
+          { role: "assistant", text: "Hola. Esta semana vas 3 de 8, con racha de 4 días. El jueves está cargado: Estudio, Entreno, Proyecto y Repaso seguidos." },
+          { role: "user", text: "¿Puedes ayudarme a organizar mi semana?" },
+          { role: "assistant", text: "Puedo aligerar el jueves. Estos dos cambios usan tareas que ya tienes. No se guardan hasta que pulses Crear." },
+          { role: "proposal", id: "repaso" },
+          { role: "proposal", id: "estudio" },
+        ],
+      },
+      {
+        id: "today",
+        title: "Qué hago hoy",
+        day: "Hoy",
+        preview: "Empieza por Entreno para cuidar la racha",
+        messages: [
+          { role: "user", text: "¿Qué hago primero hoy?" },
+          { role: "assistant", text: "Empieza por Entreno: es corta y mantiene la racha. Estudio puede esperar a la tarde, que es cuando sueles dejar las tareas largas." },
+        ],
+      },
+      {
+        id: "yesterday",
+        title: "Desafío de lectura",
+        day: "Ayer",
+        preview: "Desafío creado sobre Lectura",
+        messages: [
+          { role: "user", text: "Quiero un desafío de la lectura de ayer." },
+          { role: "assistant", text: "Listo. Convertí Lectura en un desafío de tiempo estricto. Ya está en Desafíos." },
+        ],
+      },
+    ];
+
+    let activeId = "week";
+    let editingId = null;
+    let threadSeq = 1;
+
+    const historyEl = document.getElementById("history");
+    const messagesEl = document.getElementById("messages");
+    const threadTitle = document.getElementById("thread-title");
+    const draft = document.getElementById("draft");
+
+    function activeThread() {
+      return threads.find((thread) => thread.id === activeId);
+    }
+
+    function renderHistory() {
+      const groups = ["Hoy", "Ayer"];
+      historyEl.innerHTML = groups.map((day) => {
+        const items = threads.filter((thread) => thread.day === day);
+        if (!items.length) return "";
+        return `<h3>${day}</h3>` + items.map((thread) => `
+          <button class="thread${thread.id === activeId ? " active" : ""}" type="button" data-thread="${thread.id}">
+            <strong>${thread.title}</strong>
+            <span>${thread.preview}</span>
+          </button>
+        `).join("");
+      }).join("");
+    }
+
+    function proposalCard(proposal) {
+      if (proposal.status === "created") {
+        const where = proposal.kind === "challenge" ? "Desafíos" : "Inicio";
+        return `<article class="proposal done">
+          <header><span class="kind ${proposal.kind}">${proposal.kindLabel}</span><span class="xp">${proposal.xp}</span></header>
+          <h3>${proposal.title}</h3>
+          <p class="meta">${proposal.when}</p>
+          <p class="done-label">Creada · ver en ${where}</p>
+        </article>`;
+      }
+      if (proposal.status === "discarded") return "";
+      return `<article class="proposal">
+        <header><span class="kind ${proposal.kind}">${proposal.kindLabel}</span><span class="xp">${proposal.xp}</span></header>
+        <h3>${proposal.title}</h3>
+        <p class="meta">${proposal.when}</p>
+        <p class="why">${proposal.why}</p>
+        <div class="actions">
+          <button class="btn-primary" type="button" data-act="create" data-id="${proposal.id}">Crear</button>
+          <button class="btn" type="button" data-act="edit" data-id="${proposal.id}">Editar</button>
+          <button class="btn-ghost" type="button" data-act="discard" data-id="${proposal.id}">Descartar</button>
+        </div>
+      </article>`;
+    }
+
+    function renderMessages() {
+      const thread = activeThread();
+      threadTitle.textContent = thread.title;
+      messagesEl.innerHTML = thread.messages.map((message) => {
+        if (message.role === "proposal") return proposalCard(proposals[message.id]);
+        return `<div class="bubble ${message.role}">${message.text}</div>`;
+      }).join("");
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function render() {
+      renderHistory();
+      renderMessages();
+    }
+
+    function setStatus(id, status) {
+      proposals[id].status = status;
+      render();
+    }
+
+    historyEl.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-thread]");
+      if (!button) return;
+      activeId = button.dataset.thread;
+      render();
+    });
+
+    document.getElementById("new-chat").addEventListener("click", () => {
+      threadSeq += 1;
+      const id = "new-" + threadSeq;
+      threads.unshift({
+        id,
+        title: "Chat nuevo",
+        day: "Hoy",
+        preview: "Sin mensajes todavía",
+        messages: [
+          { role: "assistant", text: "Dime qué quieres revisar. Puedo mirar tu semana, decirte por dónde empezar hoy o proponerte un desafío sobre una tarea que ya existe." },
+        ],
+      });
+      activeId = id;
+      render();
+      draft.focus();
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-act]");
+      if (!button) return;
+      const id = button.dataset.id;
+      if (button.dataset.act === "create") setStatus(id, "created");
+      if (button.dataset.act === "discard") setStatus(id, "discarded");
+      if (button.dataset.act === "edit") openEdit(id);
+    });
+
+    function openEdit(id) {
+      const proposal = proposals[id];
+      editingId = id;
+      document.getElementById("edit-title").textContent = proposal.kind === "challenge" ? "Editar desafío" : "Editar tarea";
+      document.getElementById("edit-name").value = proposal.title;
+      document.getElementById("edit-when").value = proposal.when;
+      document.getElementById("edit-why").value = proposal.why;
+      document.getElementById("modal").classList.add("open");
+    }
+
+    document.getElementById("edit-cancel").addEventListener("click", () => {
+      document.getElementById("modal").classList.remove("open");
+    });
+
+    document.getElementById("edit-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const proposal = proposals[editingId];
+      proposal.title = document.getElementById("edit-name").value.trim();
+      proposal.when = document.getElementById("edit-when").value.trim();
+      proposal.why = document.getElementById("edit-why").value.trim();
+      document.getElementById("modal").classList.remove("open");
+      render();
+    });
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        draft.value = chip.dataset.prompt;
+        draft.focus();
+      });
+    });
+
+    document.getElementById("composer").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = draft.value.trim();
+      if (!text) return;
+      const thread = activeThread();
+      thread.messages.push({ role: "user", text });
+      thread.preview = text;
+      if (thread.title === "Chat nuevo") thread.title = text.slice(0, 32);
+      const lower = text.toLowerCase();
+      if (lower.includes("desaf")) {
+        thread.messages.push({ role: "assistant", text: "Te propongo un desafío sobre Estudio del jueves. Confírmalo y pasa a Desafíos." });
+        if (proposals.estudio.status === "discarded") proposals.estudio.status = "pending";
+        thread.messages.push({ role: "proposal", id: "estudio" });
+      } else if (lower.includes("semana") || lower.includes("tarea") || lower.includes("organizar")) {
+        thread.messages.push({ role: "assistant", text: "El jueves sigue lleno. Si mueves Repaso al viernes, el día queda en tres bloques." });
+        if (proposals.repaso.status === "discarded") proposals.repaso.status = "pending";
+        thread.messages.push({ role: "proposal", id: "repaso" });
+      } else if (lower.includes("hoy")) {
+        thread.messages.push({ role: "assistant", text: "Hoy prioriza Entreno. Es la tarea corta que mantiene la racha de 4 días. Estudio puede ir a la tarde." });
+      } else {
+        thread.messages.push({ role: "assistant", text: "Puedo proponerte cambios sobre lo que ya tienes esta semana. Prueba con “Revisa mi semana” o “Propón un desafío”." });
+      }
+      draft.value = "";
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
