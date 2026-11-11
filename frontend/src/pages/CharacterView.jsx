@@ -134,6 +134,7 @@ export default function CharacterView({
   function sell(id) {
     const item = market?.inventory.find((ownedItem) => ownedItem.id === id)
     if (!item) return
+
     const salePrice = Math.floor(item.buyPrice * 0.7)
     return applyMarketAction(
       () => sellMarketItem(id),

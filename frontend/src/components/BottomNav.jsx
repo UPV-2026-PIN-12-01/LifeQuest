@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
@@ -16,7 +17,7 @@ export default function BottomNav() {
       aria-label="Navegación principal"
       className="fixed bottom-0 left-0 right-0 z-40 lg:hidden flex items-center justify-around px-2 py-2 border-t"
       style={{
-        background: "var(--color-sidebar)",
+        background: "var(--lq-violet-900)",
         borderColor: "rgba(99,102,241,0.3)",
       }}
     >
