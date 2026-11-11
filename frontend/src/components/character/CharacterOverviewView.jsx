@@ -66,7 +66,7 @@ export default function CharacterOverviewView({
         </div>
       </div>
       <div className="lg:col-span-2 grid sm:grid-cols-2 gap-3">
-        {STAT_META.map(({ key, label, icon, color }) => {
+        {STAT_META.map(({ key, label, color , icon}) => {
           const value = Number(stats[key] ?? 0)
           return (
             <div
