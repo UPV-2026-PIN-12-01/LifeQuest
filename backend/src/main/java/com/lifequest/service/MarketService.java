@@ -61,8 +61,12 @@ public class MarketService {
 	public MarketDto buy(Long userId, String catalogId) {
 		CharacterStats character = lockCharacter(userId);
 		ToolIndexItem item = getCatalogItem(catalogId);
+		if (character.getLevel() < item.getBaseLevel()) {
+			throw new InvalidRequestException(
+					"Nivel insuficiente: necesitas nivel " + item.getBaseLevel() + ".");
+		}
 		if (character.getGold() < item.getPurchasePrice()) {
-			throw new InvalidRequestException("No tienes suficiente oro.");
+			throw new InvalidRequestException("Oro insuficiente.");
 		}
 
 		character.setGold(character.getGold() - item.getPurchasePrice());

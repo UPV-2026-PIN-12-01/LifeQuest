@@ -2,6 +2,8 @@ package com.lifequest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +45,7 @@ class MarketServiceTest {
 		character.setUserId(7L);
 		character.setPlayerName("test-can-delete-later");
 		character.setGold(500L);
+		character.setLevel(3);
 		when(characterStatsRepository.findByUserIdForUpdate(7L)).thenReturn(Optional.of(character));
 		when(characterStatsRepository.findByUserId(7L)).thenReturn(Optional.of(character));
 		when(characterStatsRepository.save(character)).thenReturn(character);
@@ -95,9 +98,29 @@ class MarketServiceTest {
 
 		assertThatThrownBy(() -> marketService.buy(7L, "sword"))
 				.isInstanceOf(InvalidRequestException.class)
-				.hasMessageContaining("No tienes suficiente oro.");
+				.hasMessageContaining("Oro insuficiente.");
 
 		assertThat(character.getGold()).isEqualTo(259L);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void buyingItemRejectsAnItemAboveTheCharacterLevelWithoutChangingBalance() {
+		assertThatThrownBy(() -> marketService.buy(7L, "bow"))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Nivel insuficiente");
+
+		assertThat(character.getGold()).isEqualTo(500L);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void buyingItemAllowsAnItemAtExactlyTheCharacterLevel() {
+		character.setGold(260L);
+
+		var market = marketService.buy(7L, "sword");
+
+		assertThat(market.gold()).isZero();
 	}
 
 	@Test
