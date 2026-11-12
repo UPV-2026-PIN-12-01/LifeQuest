@@ -138,6 +138,33 @@ class MarketServiceTest {
 	}
 
 	@Test
+	void sellingItemReturnsSeventyPercentOfThePriceAndRemovesIt() {
+		PlayerInventoryItem item = inventoryItem(103L, "armor", "Armadura", false);
+		when(inventoryRepository.findByIdAndCharacterId(103L, 70L)).thenReturn(Optional.of(item));
+		character.setGold(50L);
+
+		var market = marketService.sell(7L, 103L);
+
+		assertThat(market.gold()).isEqualTo(288L);
+		verify(inventoryRepository).delete(item);
+	}
+
+	@Test
+	void sellingAnEquippedItemIsRejectedWithoutChangingAnything() {
+		PlayerInventoryItem item = inventoryItem(103L, "armor", "Armadura", true);
+		when(inventoryRepository.findByIdAndCharacterId(103L, 70L)).thenReturn(Optional.of(item));
+		character.setGold(50L);
+
+		assertThatThrownBy(() -> marketService.sell(7L, 103L))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Desequipa el objeto antes de venderlo.");
+
+		assertThat(character.getGold()).isEqualTo(50L);
+		assertThat(item.getEquipped()).isTrue();
+		verify(inventoryRepository, never()).delete(any());
+	}
+
+	@Test
 	void equippingItemUnequipsOtherItemInTheSameSlot() {
 		PlayerInventoryItem previouslyEquipped = inventoryItem(100L, "bow", "Arma", true);
 		PlayerInventoryItem item = inventoryItem(101L, "sword", "Arma", false);

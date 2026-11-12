@@ -110,6 +110,9 @@ public class MarketService {
 	public MarketDto sell(Long userId, Long inventoryId) {
 		CharacterStats character = lockCharacter(userId);
 		PlayerInventoryItem item = getInventoryItem(inventoryId, character.getId());
+		if (Boolean.TRUE.equals(item.getEquipped())) {
+			throw new InvalidRequestException("Desequipa el objeto antes de venderlo.");
+		}
 		ToolIndexItem catalogItem = getCatalogItem(item.getCatalogId());
 		long salePrice = catalogItem.getPurchasePrice() * 7L / 10;
 		try {
