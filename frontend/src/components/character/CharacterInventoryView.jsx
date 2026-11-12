@@ -141,12 +141,20 @@ function ItemCard({
             )}
             <button
               onClick={() => setConfirmSell(true)}
-              disabled={busy}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-600"
+              disabled={busy || item.equipped}
+              title={
+                item.equipped ? "Desequipa el objeto antes de venderlo" : undefined
+              }
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Vender
             </button>
           </div>
+          {item.equipped && (
+            <p className="text-xs text-slate-400 mt-2">
+              Desequipa el objeto antes de venderlo.
+            </p>
+          )}
           {!isPotion && item.level < item.maxLevel && (
             <div className="text-xs text-slate-400 mt-2">
               <p>

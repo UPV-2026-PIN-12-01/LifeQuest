@@ -84,7 +84,7 @@ export default function CharacterOverviewView({
                     style={{ "--character-stat-color": color }}
                   >
                     {baseValue}
-                    {bonus > 1 ? ` (+${bonus})` : ""}
+                    {bonus > 0 ? ` (+${bonus})` : ""}
                   </p>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
