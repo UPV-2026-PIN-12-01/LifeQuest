@@ -258,7 +258,7 @@ public class MarketService {
 
 	private Map<String, Long> getObjectStats(Long characterId) {
 		Map<String, Long> stats = new HashMap<>();
-		for (Object[] row : inventoryRepository.sumStatsByCharacterId(characterId)) {
+		for (Object[] row : inventoryRepository.sumEquippedStatsByCharacterId(characterId)) {
 			stats.put((String) row[0], ((Number) row[1]).longValue());
 		}
 		return stats;

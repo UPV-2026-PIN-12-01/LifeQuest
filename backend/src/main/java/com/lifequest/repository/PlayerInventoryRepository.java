@@ -38,7 +38,8 @@ public interface PlayerInventoryRepository extends JpaRepository<PlayerInventory
 			FROM public.player_inventory inventory
 			CROSS JOIN LATERAL jsonb_each(inventory.stats) AS stat(key, value)
 			WHERE inventory.character_id = :characterId
+				AND inventory.equipped
 			GROUP BY stat.key
 			""", nativeQuery = true)
-	List<Object[]> sumStatsByCharacterId(@Param("characterId") Long characterId);
+	List<Object[]> sumEquippedStatsByCharacterId(@Param("characterId") Long characterId);
 }

@@ -50,7 +50,7 @@ class MarketServiceTest {
 		when(characterStatsRepository.findByUserId(7L)).thenReturn(Optional.of(character));
 		when(characterStatsRepository.save(character)).thenReturn(character);
 		when(inventoryRepository.findByCharacterIdOrderById(70L)).thenReturn(List.of());
-		when(inventoryRepository.sumStatsByCharacterId(70L)).thenReturn(List.of());
+		when(inventoryRepository.sumEquippedStatsByCharacterId(70L)).thenReturn(List.of());
 		when(toolIndexRepository.findByCatalogIdIsNotNullOrderByIdAsc()).thenReturn(List.of(sword, bow, armor));
 		when(toolIndexRepository.findByCatalogId("sword")).thenReturn(Optional.of(sword));
 		when(toolIndexRepository.findByCatalogId("armor")).thenReturn(Optional.of(armor));
@@ -68,8 +68,8 @@ class MarketServiceTest {
 	}
 
 	@Test
-	void sumsStatsFromInventoryRowsForCharacterBonuses() {
-		when(inventoryRepository.sumStatsByCharacterId(70L))
+	void sumsStatsFromEquippedItemsForCharacterBonuses() {
+		when(inventoryRepository.sumEquippedStatsByCharacterId(70L))
 				.thenReturn(List.of(new Object[] { "strength", 8L }, new Object[] { "speed", 2L }));
 
 		var market = marketService.getMarket(7L);
