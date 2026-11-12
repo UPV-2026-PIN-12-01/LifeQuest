@@ -26,10 +26,18 @@ function RarityBadge({ rarity }) {
   )
 }
 
+// Why the shop cannot sell this item now; null when it can.
+function getBuyBlocker(item, gold, level) {
+  if (level < item.level) return "Nivel insuficiente"
+  if (gold < item.buyPrice) return "Oro insuficiente"
+  return null
+}
+
 function ItemCard({
   item,
   mode,
   gold,
+  level,
   onBuy,
   onSell,
   onToggleEquip,
@@ -40,6 +48,7 @@ function ItemCard({
   const upgradeCost = item.level * item.baseUpgradePrice
   const salePrice = Math.floor(item.buyPrice * 0.7)
   const isPotion = item.category === "Poción"
+  const buyBlocker = mode === "shop" ? getBuyBlocker(item, gold, level) : null
 
   return (
     <div
@@ -92,10 +101,15 @@ function ItemCard({
           </div>
           <button
             onClick={() => onBuy(item)}
-            disabled={busy || gold < item.buyPrice}
+            disabled={busy || buyBlocker !== null}
+            title={
+              buyBlocker === "Nivel insuficiente"
+                ? `Necesitas nivel ${item.level}`
+                : undefined
+            }
             className="character-buy-button px-4 py-2 rounded-xl text-xs font-semibold text-black disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {gold < item.buyPrice ? "Oro insuficiente" : "Comprar"}
+            {buyBlocker ?? "Comprar"}
           </button>
         </div>
       ) : (
@@ -203,6 +217,7 @@ export default function CharacterInventoryView({
   market,
   marketLoading,
   gold,
+  level,
   filter,
   setFilter,
   onBuy,
@@ -214,7 +229,10 @@ export default function CharacterInventoryView({
   const items = market?.inventory ?? []
   const equipment = items.filter((item) => item.category !== "Poción")
   const potions = items.filter((item) => item.category === "Poción")
-  const shopItems = market?.shopItems ?? []
+  const [shopFilter, setShopFilter] = useState("Todos")
+  const shopItems = (market?.shopItems ?? []).filter(
+    (item) => shopFilter === "Todos" || item.category === shopFilter,
+  )
   const filtered = equipment.filter(
     (item) => filter === "Todos" || item.category === filter,
   )
@@ -357,6 +375,17 @@ export default function CharacterInventoryView({
           <p className="text-xl font-bold text-amber-300">💰 {gold}</p>
         </div>
       </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3">
+        {CATEGORY_FILTERS.map((category) => (
+          <button
+            key={category}
+            onClick={() => setShopFilter(category)}
+            className={`character-filter-button px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap${shopFilter === category ? " is-active" : ""}`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {shopItems.map((item) => (
           <ItemCard
@@ -364,6 +393,7 @@ export default function CharacterInventoryView({
             item={item}
             mode="shop"
             gold={gold}
+            level={level}
             onBuy={onBuy}
             onSell={onSell}
             onToggleEquip={onToggleEquip}

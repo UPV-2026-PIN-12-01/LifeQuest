@@ -227,6 +227,7 @@ export default function CharacterView({
           market={market}
           marketLoading={marketLoading}
           gold={currentStats.gold}
+          level={currentStats.level}
           filter={filter}
           setFilter={setFilter}
           onBuy={buy}
