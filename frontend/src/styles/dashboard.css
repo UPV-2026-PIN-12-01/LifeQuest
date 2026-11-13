@@ -212,6 +212,12 @@
   margin-bottom: 18px;
 }
 
+.dashboard-charts {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
 .dashboard-panel {
   padding: 22px;
 }
@@ -272,6 +278,10 @@
   background: var(--lq-violet-500);
 }
 
+.dashboard-chart-bar-gold {
+  background: var(--lq-gold);
+}
+
 .dashboard-chart-day {
   display: flex;
   flex-direction: column;
@@ -317,6 +327,45 @@
 
 .dashboard-streak-card strong { color: var(--lq-danger); }
 .dashboard-motivation-card strong { color: var(--lq-violet-600); }
+
+.dashboard-streak-card {
+  gap: 12px;
+}
+
+.dashboard-streak-metric {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-streak-metric + .dashboard-streak-metric {
+  border-left: 1px solid #edf0f7;
+  padding-left: 12px;
+}
+
+.dashboard-streak-metric .dashboard-highlight-icon {
+  width: 38px;
+  height: 38px;
+}
+
+.dashboard-streak-metric strong {
+  font-size: 1.15rem;
+}
+
+.dashboard-streak-label {
+  color: var(--lq-ink-muted);
+  font-size: 0.78rem;
+}
+
+.dashboard-streak-metric-task strong {
+  color: var(--lq-success);
+}
+
+.dashboard-streak-metric-task .dashboard-highlight-icon {
+  background: #e9f8ef;
+}
 
 .dashboard-empty-state {
   display: flex;

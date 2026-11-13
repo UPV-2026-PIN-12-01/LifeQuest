@@ -64,6 +64,12 @@ export default function DashboardPage() {
         .filter((task) => task.date === day.iso)
         .reduce((total, task) => total + Number(task.xp || 0), 0),
     }))
+    const goldByDay = weekDays(weekStart).map((day) => ({
+      ...day,
+      gold: completed
+        .filter((task) => task.date === day.iso)
+        .reduce((total, task) => total + Number(task.gold || 0), 0),
+    }))
 
     return {
       completed: completed.length,
@@ -71,7 +77,7 @@ export default function DashboardPage() {
       pending: pending.length,
       percentage,
       xpByDay,
-      maxXp: Math.max(...xpByDay.map((day) => day.xp), 1),
+      goldByDay,
     }
   }, [tasks, weekStart])
 
@@ -81,6 +87,7 @@ export default function DashboardPage() {
   const xpGoal = Number(player.xpForNextLevel) || 1
   const xpPercent = Math.min(100, Math.round((xp / xpGoal) * 100))
   const streak = Number(player.dayStreak ?? player.streakDays) || 0
+  const taskStreak = Number(player.taskStreak) || 0
 
   return (
     <main className="dashboard-page">
@@ -150,36 +157,32 @@ export default function DashboardPage() {
       </section>
 
       <section className="dashboard-content-grid" aria-label="Estadísticas semanales">
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-heading">
-            <h2>XP por día</h2>
-            <span>{summary.xpByDay.reduce((total, day) => total + day.xp, 0)} XP esta semana</span>
-          </div>
-          <div className="dashboard-chart" role="img" aria-label="XP obtenido cada día de la semana">
-            {summary.xpByDay.map((day) => (
-              <div className="dashboard-chart-column" key={day.iso}>
-                <span className="dashboard-chart-value">{day.xp} XP</span>
-                <div className="dashboard-chart-track">
-                  <div
-                    className="dashboard-chart-bar"
-                    style={{ height: `${Math.max(day.xp === 0 ? 0 : 8, (day.xp / summary.maxXp) * 100)}%` }}
-                  />
-                </div>
-                <span className="dashboard-chart-day">
-                  <strong>{day.name}</strong>
-                  <small>{day.date.getDate()} {day.date.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}</small>
-                </span>
-              </div>
-            ))}
-          </div>
+        <div className="dashboard-charts">
+          <WeeklyBarChart title="XP por día" days={summary.xpByDay} valueKey="xp" unit="XP" />
+          <WeeklyBarChart
+            title="Oro ganado por día"
+            days={summary.goldByDay}
+            valueKey="gold"
+            unit="🪙"
+            barClassName="dashboard-chart-bar-gold"
+          />
         </div>
 
         <div className="dashboard-side-panels">
           <div className="dashboard-highlight-card dashboard-streak-card">
-            <span className="dashboard-highlight-icon">🔥</span>
-            <div>
-              <strong>{streak} días</strong>
-              <span>Racha actual</span>
+            <div className="dashboard-streak-metric">
+              <span className="dashboard-highlight-icon" aria-hidden="true">🔥</span>
+              <div>
+                <strong>{streak} días</strong>
+                <span className="dashboard-streak-label">Racha diaria</span>
+              </div>
+            </div>
+            <div className="dashboard-streak-metric dashboard-streak-metric-task">
+              <span className="dashboard-highlight-icon" aria-hidden="true">✅</span>
+              <div>
+                <strong>{taskStreak}</strong>
+                <span className="dashboard-streak-label">Racha de tareas</span>
+              </div>
             </div>
           </div>
           <div className="dashboard-highlight-card dashboard-motivation-card">
@@ -205,6 +208,40 @@ export default function DashboardPage() {
         </section>
       )}
     </main>
+  )
+}
+
+function WeeklyBarChart({ title, days, valueKey, unit, barClassName = '' }) {
+  const total = days.reduce((sum, day) => sum + day[valueKey], 0)
+  const maxValue = Math.max(...days.map((day) => day[valueKey]), 1)
+  const valuesLabel = days.map((day) => `${day.name}: ${day[valueKey]} ${unit}`).join(', ')
+
+  return (
+    <div className="dashboard-panel">
+      <div className="dashboard-panel-heading">
+        <h2>{title}</h2>
+        <span>{total} {unit} esta semana</span>
+      </div>
+      <div className="dashboard-chart" role="img" aria-label={`${title}. ${valuesLabel}`}>
+        {days.map((day) => (
+          <div className="dashboard-chart-column" key={day.iso}>
+            <span className="dashboard-chart-value">{day[valueKey]} {unit}</span>
+            <div className="dashboard-chart-track">
+              <div
+                className={`dashboard-chart-bar ${barClassName}`}
+                style={{
+                  height: `${Math.max(day[valueKey] === 0 ? 0 : 8, (day[valueKey] / maxValue) * 100)}%`,
+                }}
+              />
+            </div>
+            <span className="dashboard-chart-day">
+              <strong>{day.name}</strong>
+              <small>{day.date.getDate()} {day.date.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
