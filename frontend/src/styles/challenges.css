@@ -208,6 +208,11 @@
   background: var(--lq-success-soft);
 }
 
+.challenge-status.is-failed {
+  color: var(--lq-danger);
+  background: var(--lq-danger-soft);
+}
+
 .challenge-description {
   margin: 22px 0;
   color: #6d7f9e;

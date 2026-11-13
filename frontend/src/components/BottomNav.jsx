@@ -1,6 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
 const NAV = [
   { to: '/home', icon: '🏠', label: 'Inicio' },
+  { to: '/chat', icon: '✨', label: 'Asistente IA' },
+  { to: '/home#week', icon: '📅', label: 'Semana' },
+  { to: '/home#tasks', icon: '✅', label: 'Tareas' },
+  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
   { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },

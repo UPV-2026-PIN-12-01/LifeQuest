@@ -148,7 +148,7 @@ public class TaskService {
 		}
 	}
 
-	Task findOwned(Long userId, Long taskId) {
+	public Task findOwned(Long userId, Long taskId) {
 		return taskRepository.findByIdAndUserId(taskId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 	}

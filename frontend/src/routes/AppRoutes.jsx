@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthenticatedLayout from '../components/AuthenticatedLayout.jsx';
 import CharacterView from '../pages/CharacterView.jsx';
 import ChallengesPage from '../pages/ChallengesPage.jsx';
+import GuidePage from '../pages/GuidePage.jsx';
 import HomePage from '../pages/HomePage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 import SignupPage from '../pages/SignupPage.jsx';
@@ -22,6 +23,8 @@ export default function AppRoutes() {
         <Route element={<RequireSession><AuthenticatedLayout /></RequireSession>}>
           <Route path="/character" element={<CharacterView />} />
           <Route path="/challenges" element={<ChallengesPage />} />
+          <Route path="/chat" element={<GuidePage />} />
+          <Route path="/guide" element={<Navigate to="/chat" replace />} />
           <Route path="/goals" element={<GoalsPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/friends/:friendUserId" element={<FriendProfilePage />} />

@@ -237,8 +237,8 @@ function ChallengeCard({ challenge, history, busy, deleting, onEvaluate, onClaim
           </p>
           <h2>{challenge.name}</h2>
         </div>
-        <span className={`challenge-status${challenge.rating !== null && challenge.completed ? ' is-completed' : ''}`}>
-          {challenge.rating === null ? 'No superado' : challenge.completed ? 'Desafío superado' : 'Activo'}
+        <span className={`challenge-status${challengeBadgeClass(challenge)}`}>
+          {challengeBadgeLabel(challenge)}
         </span>
       </div>
       <p className="challenge-description">
@@ -361,6 +361,18 @@ function difficultyLabel(difficulty) {
 
 function today() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function challengeBadgeLabel(challenge) {
+  if (!challenge.completed) return 'Activo'
+  if (challenge.rating != null) return 'Desafío superado'
+  return 'No superado'
+}
+
+function challengeBadgeClass(challenge) {
+  if (!challenge.completed) return ''
+  if (challenge.rating != null) return ' is-completed'
+  return ' is-failed'
 }
 
 function taskStatusLabel(status) {
