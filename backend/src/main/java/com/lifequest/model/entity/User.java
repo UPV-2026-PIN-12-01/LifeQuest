@@ -58,6 +58,9 @@ public class User {
 	@Column(name = "xp_acc_boost", nullable = false)
 	private Float xpAccBoost = 1.0f;
 
+	@Column(name= "max_day_streak", nullable = false)
+	private Integer maxDayStreak = 0;
+
 	public Long getId() {
 		return id;
 	}
@@ -156,5 +159,13 @@ public class User {
 
 	public int getStreakDays() {
 		return dayStreak == null ? 0 : dayStreak;
+	}
+
+	public Integer getMaxDayStreak() {
+		return maxDayStreak;
+	}
+
+	public void setMaxDayStreak(Integer maxDayStreak) {
+		this.maxDayStreak = maxDayStreak;
 	}
 }

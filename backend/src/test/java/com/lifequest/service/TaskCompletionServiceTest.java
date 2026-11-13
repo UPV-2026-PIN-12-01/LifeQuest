@@ -229,13 +229,14 @@ class TaskCompletionServiceTest {
 	}
 
 	@Test
-	void skipMarksNotDoneAndGrantsActivityStatsWithoutXp() {
+	void skipMarksNotDoneWithoutGrantingXpOrStats() {
 		TaskDto dto = serviceAt("2026-10-10T10:30:00Z").skip(7L, 1L);
 
 		assertThat(dto.status()).isEqualTo("not_completed");
 		verify(characterStatsService, never()).addAwardedXp(any(), anyLong());
 		verify(characterStatsService).recordTaskMiss(7L);
-		verify(characterStatsService).increaseCharacterStats(7L, 0, 0, 0, 0, 3);
+		verify(characterStatsService, never()).increaseCharacterStats(anyLong(), anyLong(), anyInt(), anyInt(),
+				anyInt(), anyInt());
 	}
 
 	@Test

@@ -126,7 +126,7 @@ public class UserProfileService {
 		if (!StringUtils.hasText(email)) {
 			throw new InvalidRequestException("Email is required");
 		}
-		String normalized = email.trim().toLowerCase();
+		String normalized = email.trim().toLowerCase(Locale.ROOT);
 		if (!normalized.matches(EMAIL_SHAPE)) {
 			throw new InvalidRequestException("Invalid email");
 		}

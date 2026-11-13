@@ -211,6 +211,12 @@ public class TaskService {
 		return toDto(task, rewardById, session, clock.instant(), userService.getById(task.getUserId()));
 	}
 
+	public Task lastTaskForUser(Long userId) {
+		Task task = taskRepository.findFirstByUserIdOrderByStartTimeDesc(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("No tasks found for user"));
+		return task;
+	}
+
 	private List<Task> findTasks(Long userId, LocalDate from, LocalDate to) {
 		ZoneId zone = clock.getZone();
 		Instant start = from.atStartOfDay(zone).toInstant();

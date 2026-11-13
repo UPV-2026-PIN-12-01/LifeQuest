@@ -197,11 +197,7 @@ public class FriendshipService {
 
 	// Times are HH:mm on the same day (day_task_check), so the planned length is their difference.
 	static long durationMinutes(TaskDto task) {
-		try {
-			return Math.max(0, Duration.between(LocalTime.parse(task.startTime()), LocalTime.parse(task.endTime())).toMinutes());
-		} catch (RuntimeException e) {
-			return 0;
-		}
+		return Duration.between(LocalTime.parse(task.startTime()), LocalTime.parse(task.endTime())).toMinutes();
 	}
 
 	private Friendship acceptedFriendship(Long userId, Long friendUserId) {

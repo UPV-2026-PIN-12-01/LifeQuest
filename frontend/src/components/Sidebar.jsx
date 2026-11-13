@@ -109,7 +109,7 @@ export default function Sidebar({ player, onLogout }) {
         </div>
       </div>
 
-      <nav aria-label="Navegación principal" className="mt-4 flex-1 space-y-1 overflow-y-auto px-3">
+      <nav aria-label="Navegación principal" className="mt-4 flex-1 space-y-1 overflow-y-auto px-3" style={{ scrollbarColor: 'rgba(196,181,253,0.18) transparent' }}>
         {NAV.map(({ to, icon, label }) => {
           const selected = isSelected(to, pathname, hash)
           return (
@@ -130,7 +130,7 @@ export default function Sidebar({ player, onLogout }) {
         })}
       </nav>
 
-      <div className="space-y-1 border-t px-3 pb-5 pt-3" style={{ borderColor: 'rgba(196,181,253,0.18)' }}>
+      <div className="space-y-1 border-t px-3 pb-5 pt-3" scrollbar-width="thin" style={{ borderColor: 'rgba(196,181,253,0.18)' }}>
         <button
           type="button"
           onClick={onLogout}
