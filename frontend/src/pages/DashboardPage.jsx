@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
       <section className="dashboard-content-grid" aria-label="Estadísticas semanales">
         <div className="dashboard-charts">
-          <WeeklyBarChart title="XP por día" days={summary.xpByDay} valueKey="xp" unit="XP" />
+          <WeeklyBarChart title="XP ganada por día" days={summary.xpByDay} valueKey="xp" unit="XP" />
           <WeeklyBarChart
             title="Oro ganado por día"
             days={summary.goldByDay}

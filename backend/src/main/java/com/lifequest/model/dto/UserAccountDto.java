@@ -11,5 +11,6 @@ public record UserAccountDto(
 		int streakDays,
 		int dayStreak,
 		int taskStreak,
+		int maxDayStreak,
 		float xpAccBoost) {
 }

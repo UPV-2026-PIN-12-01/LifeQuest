@@ -156,6 +156,7 @@ public class UserProfileService {
 				user.getStreakDays(),
 				user.getStreakDays(),
 				user.getTaskStreak() == null ? 0 : user.getTaskStreak(),
+				user.getMaxDayStreak() == null ? 0 : user.getMaxDayStreak(),
 				(float) userStreakService.synchronizeAccountBoost(user.getId())));
 	}
 
