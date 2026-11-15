@@ -28,6 +28,11 @@ public interface RewardRepository extends JpaRepository<Reward, Long> {
 			@Param("toExclusive") Instant toExclusive);
 
 	@Query("select count(r) from Reward r "
-			+ "where r.userId = :userId and r.claimedAt >= :from and r.claimedAt < :toExclusive")
-	long countClaimed(Long userId, Instant from, Instant toExclusive);
+			+ "where r.userId = :userId and r.source = :source "
+			+ "and r.claimedAt >= :from and r.claimedAt < :toExclusive")
+	long countClaimedBySource(
+			@Param("userId") Long userId,
+			@Param("source") RewardSource source,
+			@Param("from") Instant from,
+			@Param("toExclusive") Instant toExclusive);
 }

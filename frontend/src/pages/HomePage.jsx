@@ -36,6 +36,7 @@ export default function HomePage() {
   // null when closed, { task: null } to create, { task } to edit.
   const [editor, setEditor] = useState(null)
   const [tasksVersion, setTasksVersion] = useState(0)
+  const [achievementToast, setAchievementToast] = useState(null)
 
   // An expired or missing session sends the user back to log in.
   useEffect(() => {
@@ -129,6 +130,9 @@ export default function HomePage() {
           tasks={tasks}
           testingMode={testingMode}
           onTaskChanged={(changed) => {
+            if (changed.newlyUnlockedAchievements?.length) {
+              setAchievementToast(changed.newlyUnlockedAchievements)
+            }
             setTaskData((current) => {
               const currentTasks = current.weekKey === weekKey ? current.tasks : cachedTasks ?? []
               const next = currentTasks.map((task) => (task.id === changed.id ? changed : task))
@@ -143,6 +147,12 @@ export default function HomePage() {
           }}
         />
       </div>
+      {achievementToast && (
+        <div className="achievement-reward-toast" role="status" onClick={() => setAchievementToast(null)}>
+          <strong>¡Logro desbloqueado!</strong>
+          {achievementToast.map((name) => <span key={name}>🏆 {name}</span>)}
+        </div>
+      )}
       {testingModeError && (
         <p className="home-error" role="alert">
           No se pudo comprobar el modo de pruebas local.

@@ -1,4 +1,5 @@
 package com.lifequest.model.dto;
+import java.util.List;
 import com.lifequest.model.entity.ActivityType;
 
 // Shape matches the home calendar cards: date is yyyy-MM-dd and times are HH:mm in the app time zone.
@@ -21,5 +22,13 @@ public record TaskDto(
 		String verification,
 		String sessionStartedAt,
 		boolean sessionOpen,
-		long focusedSeconds) {
+		long focusedSeconds,
+		List<String> newlyUnlockedAchievements) {
+	public TaskDto(Long id, String title, String description, String icon, String color, String date,
+			String startTime, String endTime, String status, String priority, long xp, long gold,
+			ActivityType activityType, String verification, String sessionStartedAt, boolean sessionOpen,
+			long focusedSeconds) {
+		this(id, title, description, icon, color, date, startTime, endTime, status, priority, xp, gold,
+				activityType, verification, sessionStartedAt, sessionOpen, focusedSeconds, List.of());
+	}
 }

@@ -143,6 +143,10 @@ function invalidateAfterMutation(url) {
     invalidateCachedData('/api/players/me/challenges', '/api/players/me', '/api/character/stats')
     return
   }
+  if (path.startsWith('/api/players/me/achievements')) {
+    invalidateCachedData('/api/players/me/achievements', '/api/players/me', '/api/character/stats')
+    return
+  }
   if (path.startsWith('/api/players/me/goals')) {
     invalidateCachedData('/api/players/me/goals', '/api/players/me', '/api/character/stats')
     return

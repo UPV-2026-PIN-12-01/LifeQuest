@@ -5,6 +5,7 @@ const NAV = [
   { to: '/home#week', icon: '📅', label: 'Semana' },
   { to: '/home#tasks', icon: '✅', label: 'Tareas' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/achievements', icon: '🏆', label: 'Logros' },
   { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
   { to: '/challenges', icon: '🎯', label: 'Desafíos' },

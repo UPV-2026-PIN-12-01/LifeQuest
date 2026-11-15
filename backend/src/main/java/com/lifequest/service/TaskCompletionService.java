@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,20 +39,29 @@ public class TaskCompletionService {
 	private final RewardService rewardService;
 	private final CharacterStatsService characterStatsService;
 	private final Clock clock;
+	private final AchievementService achievementService;
 
 	public boolean isTaskCompleted(Task task) {
 		return TaskService.DB_STATUS_DONE.equals(task.getStatus()) || TaskService.DB_STATUS_NOT_DONE.equals(task.getStatus());
 	}
 
+	@Autowired
 	public TaskCompletionService(TaskService taskService, TaskRepository taskRepository,
 			TaskSessionRepository taskSessionRepository, RewardService rewardService,
-			CharacterStatsService characterStatsService, Clock clock) {
+			CharacterStatsService characterStatsService, Clock clock, AchievementService achievementService) {
 		this.taskService = taskService;
 		this.taskRepository = taskRepository;
 		this.taskSessionRepository = taskSessionRepository;
 		this.rewardService = rewardService;
 		this.characterStatsService = characterStatsService;
 		this.clock = clock;
+		this.achievementService = achievementService;
+	}
+
+	TaskCompletionService(TaskService taskService, TaskRepository taskRepository,
+			TaskSessionRepository taskSessionRepository, RewardService rewardService,
+			CharacterStatsService characterStatsService, Clock clock) {
+		this(taskService, taskRepository, taskSessionRepository, rewardService, characterStatsService, clock, null);
 	}
 
 	// Repeating it while the session is open returns the same session.
@@ -144,7 +154,15 @@ public class TaskCompletionService {
 		task.setStatus(TaskService.DB_STATUS_DONE);
 		increaseCharacterStats(userId, task);
 		taskRepository.save(task);
-		return taskService.describe(task);
+		var described = taskService.describe(task);
+		if (achievementService == null) {
+			return described;
+		}
+		var newlyUnlocked = achievementService.evaluateAndUnlock(userId);
+		return new TaskDto(described.id(), described.title(), described.description(), described.icon(), described.color(),
+				described.date(), described.startTime(), described.endTime(), described.status(), described.priority(),
+				described.xp(), described.gold(), described.activityType(), described.verification(),
+				described.sessionStartedAt(), described.sessionOpen(), described.focusedSeconds(), newlyUnlocked);
 	}
 
 	@Transactional
