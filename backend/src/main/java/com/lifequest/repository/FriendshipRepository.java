@@ -1,5 +1,6 @@
 package com.lifequest.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 			where (f.requesterId = :a and f.addresseeId = :b) or (f.requesterId = :b and f.addresseeId = :a)
 			""")
 	Optional<Friendship> findBetween(@Param("a") Long a, @Param("b") Long b);
+
+	// Every row (pending or accepted) between the user and any of the others.
+	@Query("""
+			select f from Friendship f
+			where (f.requesterId = :userId and f.addresseeId in :others)
+			or (f.addresseeId = :userId and f.requesterId in :others)
+			""")
+	List<Friendship> findBetweenUserAnd(@Param("userId") Long userId, @Param("others") Collection<Long> others);
 
 	@Query("""
 			select f from Friendship f

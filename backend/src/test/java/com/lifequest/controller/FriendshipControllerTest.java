@@ -24,6 +24,7 @@ import com.lifequest.config.SecurityConfig;
 import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.dto.FriendSummaryDto;
 import com.lifequest.model.dto.FriendsOverviewDto;
+import com.lifequest.model.dto.PlayerSuggestionDto;
 import com.lifequest.service.FriendshipService;
 import com.lifequest.service.UserService;
 
@@ -87,6 +88,17 @@ class FriendshipControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$").isArray());
 		verify(friendshipService).activityFeed(7L);
+	}
+
+	@Test
+	void searchSuggestsPlayers() throws Exception {
+		when(friendshipService.searchPlayers(7L, "her")).thenReturn(List.of(new PlayerSuggestionDto(
+				new FriendSummaryDto(8L, "Hero", "Caballero", "⚔️", null, 3), "NONE")));
+
+		mockMvc.perform(get("/api/friends/search").param("q", "her").with(jwt().jwt(token -> token.subject(AUTH_SUBJECT))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].player.playerName").value("Hero"))
+				.andExpect(jsonPath("$[0].relation").value("NONE"));
 	}
 
 	@Test

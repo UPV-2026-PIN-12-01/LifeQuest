@@ -3,6 +3,8 @@ package com.lifequest.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +19,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
 
 import com.lifequest.exception.InvalidRequestException;
 import com.lifequest.exception.InvalidStateException;
@@ -132,6 +135,44 @@ class FriendshipServiceTest {
 		assertThat(profile.completedTasks()).extracting(t -> t.durationMinutes()).containsOnly(60L);
 		assertThat(profile.player().playerName()).isEqualTo("Hero");
 		assertThat(profile.dayStreak()).isEqualTo(3);
+	}
+
+	@Test
+	void searchNeedsTwoCharacters() {
+		assertThat(service.searchPlayers(7L, " a ")).isEmpty();
+		assertThat(service.searchPlayers(7L, null)).isEmpty();
+
+		verify(statsRepository, never()).searchByPlayerName(anyString(), anyLong(), any());
+	}
+
+	@Test
+	void searchReturnsMatchesInOrderWithTheirRelation() {
+		when(statsRepository.searchByPlayerName("an", 7L, PageRequest.of(0, FriendshipService.SEARCH_LIMIT)))
+				.thenReturn(List.of(stats(8L, "Ana"), stats(9L, "Juan"), stats(10L, "Anabel"), stats(11L, "Fran")));
+		List<User> users = List.of(8L, 9L, 10L, 11L).stream().map(id -> {
+			User user = mock(User.class);
+			when(user.getId()).thenReturn(id);
+			return user;
+		}).toList();
+		when(userRepository.findAllById(List.of(8L, 9L, 10L, 11L))).thenReturn(users);
+		when(statsRepository.findByUserIdIn(List.of(8L, 9L, 10L, 11L))).thenReturn(
+				List.of(stats(8L, "Ana"), stats(9L, "Juan"), stats(10L, "Anabel"), stats(11L, "Fran")));
+		when(friendshipRepository.findBetweenUserAnd(7L, List.of(8L, 9L, 10L, 11L))).thenReturn(List.of(
+				friendship(7L, 8L, FriendshipStatus.ACCEPTED),
+				friendship(7L, 9L, FriendshipStatus.PENDING),
+				friendship(10L, 7L, FriendshipStatus.PENDING)));
+
+		var suggestions = service.searchPlayers(7L, "  AN ");
+
+		assertThat(suggestions).extracting(suggestion -> suggestion.player().playerName())
+				.containsExactly("Ana", "Juan", "Anabel", "Fran");
+		assertThat(suggestions).extracting(suggestion -> suggestion.relation())
+				.containsExactly("FRIEND", "OUTGOING", "INCOMING", "NONE");
+	}
+
+	@Test
+	void searchTreatsLikeWildcardsAsText() {
+		assertThat(FriendshipService.escapeLike("50%_a\\b")).isEqualTo("50\\%\\_a\\\\b");
 	}
 
 	@Test
