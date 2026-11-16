@@ -70,6 +70,7 @@ public class AchievementService {
 		this.clock = clock;
 	}
 
+	//Listar logros UT 621 - PA 1808
 	@Transactional
 	public List<AchievementDto> findForUser(Long userId) {
 		// Backfill achievements for progress earned before this feature was introduced.
@@ -77,8 +78,10 @@ public class AchievementService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		ProgressSnapshot snapshot = snapshot(userId, user);
+		//Logros desbloqueados
 		Map<Long, Achievement> unlocked = achievementRepository.findByUserId(userId).stream()
 				.collect(Collectors.toMap(Achievement::getIndexId, Function.identity()));
+		//Devuelve la lista de TODOS los logros, mapeando además los obtenidos por el usuario y ordenados por index
 		return indexRepository.findAll().stream()
 				.sorted((left, right) -> Integer.compare(featuredOrder(left), featuredOrder(right)))
 				.map(index -> toDto(index, unlocked.get(index.getId()), user, snapshot))
@@ -109,28 +112,37 @@ public class AchievementService {
 				.orElseThrow(() -> new ResourceNotFoundException("User not found")));
 	}
 
+	//Evaluar los logros del index y desbloquear los logros de un jugador concreto
 	@Transactional
 	public List<String> evaluateAndUnlock(Long userId) {
 		List<String> newlyUnlocked = new java.util.ArrayList<>();
 		User user = userRepository.findByIdForUpdate(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		ProgressSnapshot snapshot = snapshot(userId, user);
+		//Lista de logros del usuario
 		Map<Long, Achievement> unlocked = achievementRepository.findByUserId(userId).stream()
 				.collect(Collectors.toMap(Achievement::getIndexId, Function.identity()));
+		
+		//Filtro de guardado de logros
 		for (AchievementIndex index : indexRepository.findAll()) {
 			long target = target(index);
-			if (unlocked.containsKey(index.getId())
-					|| "unsupported".equals(requirementType(index))
-					|| target <= 0
-					|| progress(index, user, snapshot) < target) {
+			//Descartados:
+			if (unlocked.containsKey(index.getId()) //a) Ya desbloqueados (UT 621 - PA 1811)
+					|| "unsupported".equals(requirementType(index)) //b) Sin cubrir
+					|| target <= 0 //c) Sin definir
+					|| progress(index, user, snapshot) < target //d) Logro no completado (UT 621 - PA 1810)
+				) {
 				continue;
 			}
+
+			//Creando el resto de logros (los que SÍ están desbloqueados)
 			Achievement achievement = new Achievement();
 			achievement.setUserId(userId);
 			achievement.setIndexId(index.getId());
 			achievement.setRewardId(rewardService.create(userId, index.getXpReward(), index.getGoldReward(),
 					RewardSource.ARCHIVEMENT));
 			try {
+				//Guardar logro
 				achievementRepository.saveAndFlush(achievement);
 				newlyUnlocked.add(index.getName());
 			} catch (DataIntegrityViolationException exception) {
@@ -139,6 +151,7 @@ public class AchievementService {
 				}
 			}
 		}
+		//Devolvemos los recién desbloqueados UT 621 PA 1809
 		return newlyUnlocked;
 	}
 
@@ -252,6 +265,8 @@ public class AchievementService {
 		if (description.contains("racha") || description.contains("día")) return "day_streak";
 		if (description.contains("foco") || description.contains("concentr")) return "focused_tasks";
 		if (description.contains("tarea") || description.contains("misión")) return "completed_tasks";
+		if (description.contains("monstruo") || description.contains("jugador")) return "battle";
+		if (description.contains("arma") || description.contains("herramienta")) return "weapon";
 		return "unsupported";
 	}
 
