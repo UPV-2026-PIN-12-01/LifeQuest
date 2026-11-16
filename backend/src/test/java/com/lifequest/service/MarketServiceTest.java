@@ -2,6 +2,8 @@ package com.lifequest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,11 +45,12 @@ class MarketServiceTest {
 		character.setUserId(7L);
 		character.setPlayerName("test-can-delete-later");
 		character.setGold(500L);
+		character.setLevel(3);
 		when(characterStatsRepository.findByUserIdForUpdate(7L)).thenReturn(Optional.of(character));
 		when(characterStatsRepository.findByUserId(7L)).thenReturn(Optional.of(character));
 		when(characterStatsRepository.save(character)).thenReturn(character);
 		when(inventoryRepository.findByCharacterIdOrderById(70L)).thenReturn(List.of());
-		when(inventoryRepository.sumStatsByCharacterId(70L)).thenReturn(List.of());
+		when(inventoryRepository.sumEquippedStatsByCharacterId(70L)).thenReturn(List.of());
 		when(toolIndexRepository.findByCatalogIdIsNotNullOrderByIdAsc()).thenReturn(List.of(sword, bow, armor));
 		when(toolIndexRepository.findByCatalogId("sword")).thenReturn(Optional.of(sword));
 		when(toolIndexRepository.findByCatalogId("armor")).thenReturn(Optional.of(armor));
@@ -65,8 +68,8 @@ class MarketServiceTest {
 	}
 
 	@Test
-	void sumsStatsFromInventoryRowsForCharacterBonuses() {
-		when(inventoryRepository.sumStatsByCharacterId(70L))
+	void sumsStatsFromEquippedItemsForCharacterBonuses() {
+		when(inventoryRepository.sumEquippedStatsByCharacterId(70L))
 				.thenReturn(List.of(new Object[] { "strength", 8L }, new Object[] { "speed", 2L }));
 
 		var market = marketService.getMarket(7L);
@@ -95,9 +98,29 @@ class MarketServiceTest {
 
 		assertThatThrownBy(() -> marketService.buy(7L, "sword"))
 				.isInstanceOf(InvalidRequestException.class)
-				.hasMessageContaining("No tienes suficiente oro.");
+				.hasMessageContaining("Oro insuficiente.");
 
 		assertThat(character.getGold()).isEqualTo(259L);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void buyingItemRejectsAnItemAboveTheCharacterLevelWithoutChangingBalance() {
+		assertThatThrownBy(() -> marketService.buy(7L, "bow"))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Nivel insuficiente");
+
+		assertThat(character.getGold()).isEqualTo(500L);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void buyingItemAllowsAnItemAtExactlyTheCharacterLevel() {
+		character.setGold(260L);
+
+		var market = marketService.buy(7L, "sword");
+
+		assertThat(market.gold()).isZero();
 	}
 
 	@Test
@@ -112,6 +135,33 @@ class MarketServiceTest {
 		assertThat(item.getStats()).containsEntry("strength", 9).containsEntry("speed", 3);
 		assertThat(character.getGold()).isEqualTo(335L);
 		verify(inventoryRepository).save(item);
+	}
+
+	@Test
+	void sellingItemReturnsSeventyPercentOfThePriceAndRemovesIt() {
+		PlayerInventoryItem item = inventoryItem(103L, "armor", "Armadura", false);
+		when(inventoryRepository.findByIdAndCharacterId(103L, 70L)).thenReturn(Optional.of(item));
+		character.setGold(50L);
+
+		var market = marketService.sell(7L, 103L);
+
+		assertThat(market.gold()).isEqualTo(288L);
+		verify(inventoryRepository).delete(item);
+	}
+
+	@Test
+	void sellingAnEquippedItemIsRejectedWithoutChangingAnything() {
+		PlayerInventoryItem item = inventoryItem(103L, "armor", "Armadura", true);
+		when(inventoryRepository.findByIdAndCharacterId(103L, 70L)).thenReturn(Optional.of(item));
+		character.setGold(50L);
+
+		assertThatThrownBy(() -> marketService.sell(7L, 103L))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Desequipa el objeto antes de venderlo.");
+
+		assertThat(character.getGold()).isEqualTo(50L);
+		assertThat(item.getEquipped()).isTrue();
+		verify(inventoryRepository, never()).delete(any());
 	}
 
 	@Test

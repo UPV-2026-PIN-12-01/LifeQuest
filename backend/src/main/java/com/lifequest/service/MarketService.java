@@ -61,8 +61,12 @@ public class MarketService {
 	public MarketDto buy(Long userId, String catalogId) {
 		CharacterStats character = lockCharacter(userId);
 		ToolIndexItem item = getCatalogItem(catalogId);
+		if (character.getLevel() < item.getBaseLevel()) {
+			throw new InvalidRequestException(
+					"Nivel insuficiente: necesitas nivel " + item.getBaseLevel() + ".");
+		}
 		if (character.getGold() < item.getPurchasePrice()) {
-			throw new InvalidRequestException("No tienes suficiente oro.");
+			throw new InvalidRequestException("Oro insuficiente.");
 		}
 
 		character.setGold(character.getGold() - item.getPurchasePrice());
@@ -106,6 +110,9 @@ public class MarketService {
 	public MarketDto sell(Long userId, Long inventoryId) {
 		CharacterStats character = lockCharacter(userId);
 		PlayerInventoryItem item = getInventoryItem(inventoryId, character.getId());
+		if (Boolean.TRUE.equals(item.getEquipped())) {
+			throw new InvalidRequestException("Desequipa el objeto antes de venderlo.");
+		}
 		ToolIndexItem catalogItem = getCatalogItem(item.getCatalogId());
 		long salePrice = catalogItem.getPurchasePrice() * 7L / 10;
 		try {
@@ -251,7 +258,7 @@ public class MarketService {
 
 	private Map<String, Long> getObjectStats(Long characterId) {
 		Map<String, Long> stats = new HashMap<>();
-		for (Object[] row : inventoryRepository.sumStatsByCharacterId(characterId)) {
+		for (Object[] row : inventoryRepository.sumEquippedStatsByCharacterId(characterId)) {
 			stats.put((String) row[0], ((Number) row[1]).longValue());
 		}
 		return stats;
