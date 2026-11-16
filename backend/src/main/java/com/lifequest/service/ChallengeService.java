@@ -150,7 +150,8 @@ public class ChallengeService {
 		ZoneId zone = clock.getZone();
 		Instant startOfDay = LocalDate.now(clock).atStartOfDay(zone).toInstant();
 		Instant startOfNextDay = LocalDate.now(clock).plusDays(1).atStartOfDay(zone).toInstant();
-		if (rewardService.countClaimedBetween(userId, startOfDay, startOfNextDay) >= DAILY_CLAIM_LIMIT) {
+		if (rewardService.countClaimedBetween(userId, RewardSource.CHALLENGE, startOfDay, startOfNextDay)
+				>= DAILY_CLAIM_LIMIT) {
 			throw new InvalidStateException("You can claim only three challenges per day");
 		}
 		if (challenge.getRewardId() != null) {

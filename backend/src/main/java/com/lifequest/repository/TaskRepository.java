@@ -3,6 +3,8 @@ package com.lifequest.repository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,4 +20,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 	boolean existsByRewardId(Long rewardId);
 
 	Optional<Task> findFirstByUserIdOrderByStartTimeDesc(Long userId);
+
+	@Query("select task from Task task where task.userId = :userId and task.status = 'DONE'")
+	List<Task> findCompletedByUserId(@Param("userId") Long userId);
 }

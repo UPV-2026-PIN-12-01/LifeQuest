@@ -14,4 +14,6 @@ public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
 	Optional<Challenge> findByIdAndUserId(Long id, Long userId);
 
 	boolean existsByTaskId(Long taskId);
+
+	List<Challenge> findByUserIdAndCompletedTrueAndRatingIsNotNull(Long userId);
 }

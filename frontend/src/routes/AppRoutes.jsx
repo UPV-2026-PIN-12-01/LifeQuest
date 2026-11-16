@@ -10,6 +10,7 @@ import GoalsPage from '../pages/GoalsPage.jsx';
 import FriendsPage from '../pages/FriendsPage.jsx';
 import FriendProfilePage from '../pages/FriendProfilePage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
+import AchievementsPage from '../pages/AchievementsPage.jsx';
 
 import { hasSession } from '../services/session.js';
 
@@ -23,6 +24,7 @@ export default function AppRoutes() {
         <Route element={<RequireSession><AuthenticatedLayout /></RequireSession>}>
           <Route path="/character" element={<CharacterView />} />
           <Route path="/challenges" element={<ChallengesPage />} />
+          <Route path="/achievements" element={<AchievementsPage />} />
           <Route path="/chat" element={<GuidePage />} />
           <Route path="/guide" element={<Navigate to="/chat" replace />} />
           <Route path="/goals" element={<GoalsPage />} />

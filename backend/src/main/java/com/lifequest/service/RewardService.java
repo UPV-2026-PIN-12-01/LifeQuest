@@ -77,7 +77,12 @@ public class RewardService {
 
 	@Transactional(readOnly = true)
 	public long countClaimedBetween(Long userId, Instant from, Instant toExclusive) {
-		return rewardRepository.countClaimed(userId, from, toExclusive);
+		return countClaimedBetween(userId, RewardSource.CHALLENGE, from, toExclusive);
+	}
+
+	@Transactional(readOnly = true)
+	public long countClaimedBetween(Long userId, RewardSource source, Instant from, Instant toExclusive) {
+		return rewardRepository.countClaimedBySource(userId, source, from, toExclusive);
 	}
 
 	// The reward keeps the XP actually granted, so the card shows what the user got.
