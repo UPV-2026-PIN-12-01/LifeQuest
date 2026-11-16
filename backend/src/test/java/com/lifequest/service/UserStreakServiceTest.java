@@ -28,7 +28,7 @@ class UserStreakServiceTest {
 		when(repository.findByIdForUpdate(7L)).thenReturn(Optional.of(user));
 		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		double boost = service(repository, TODAY).recordXpActivity(7L);
+		double boost = service(repository, TODAY).recordXpActivity(7L, false);
 
 		assertThat(boost).isCloseTo(1.05, org.assertj.core.api.Assertions.within(0.000001));
 		assertThat(user.getDayStreak()).isEqualTo(1);
@@ -43,7 +43,7 @@ class UserStreakServiceTest {
 		when(repository.findByIdForUpdate(7L)).thenReturn(Optional.of(user));
 		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		double boost = service(repository, TODAY).recordXpActivity(7L);
+		double boost = service(repository, TODAY).recordXpActivity(7L, false	);
 
 		assertThat(boost).isCloseTo(1.35, org.assertj.core.api.Assertions.within(0.000001));
 		assertThat(user.getDayStreak()).isEqualTo(7);
@@ -58,10 +58,10 @@ class UserStreakServiceTest {
 		when(repository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 		UserStreakService service = service(repository, TODAY);
 
-		assertThat(service.recordXpActivity(7L))
+		assertThat(service.recordXpActivity(7L, false))
 				.isCloseTo(1.05, org.assertj.core.api.Assertions.within(0.000001));
 		assertThat(user.getDayStreak()).isEqualTo(1);
-		assertThat(service(repository, TODAY).recordXpActivity(7L))
+		assertThat(service(repository, TODAY).recordXpActivity(7L, false))
 				.isCloseTo(1.05, org.assertj.core.api.Assertions.within(0.000001));
 		assertThat(user.getDayStreak()).isEqualTo(1);
 	}

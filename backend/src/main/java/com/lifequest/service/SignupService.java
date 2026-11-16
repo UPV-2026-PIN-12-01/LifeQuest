@@ -65,7 +65,7 @@ public class SignupService {
 			MultipartFile photo) {
 		String trimmedUsername = requireText(username, "Username is required");
 		String resolvedPlayerName = StringUtils.hasText(playerName) ? playerName.trim() : trimmedUsername;
-		String normalizedEmail = requireText(email, "Email is required").toLowerCase();
+		String normalizedEmail = requireText(email, "Email is required").toLowerCase(Locale.ROOT);
 		if (!normalizedEmail.matches(EMAIL_SHAPE)) {
 			throw new InvalidSignupException("Invalid email");
 		}

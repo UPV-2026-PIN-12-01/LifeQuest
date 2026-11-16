@@ -10,6 +10,10 @@ import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.User;
 import com.lifequest.repository.UserRepository;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 @Service
 public class UserStreakService {
 	private static final int DAY_STREAK_BOOST_CAP = 7;
@@ -25,12 +29,21 @@ public class UserStreakService {
 	}
 
 	@Transactional
-	public double recordXpActivity(Long userId) {
+	public double recordXpActivity(Long userId, boolean hasFutureTasks) {
 		User user = lockUser(userId);
 		LocalDate today = LocalDate.now(clock);
 		int dayStreak = dayStreakForActivity(user, today);
-		if (user.getLastActivityDate() == null || today.isAfter(user.getLastActivityDate())) {
+
+		// Update last activity date and max day streak if necessary
+		if (user.getLastActivityDate() == null || ( today.isAfter(user.getLastActivityDate()) 
+			&& !today.equals(user.getLastActivityDate())
+			&& !hasFutureTasks
+			)) 
+			{
 			user.setLastActivityDate(today);
+			if (dayStreak > user.getMaxDayStreak()) {
+				user.setMaxDayStreak(dayStreak);
+			}
 		}
 
 		user.setDayStreak(dayStreak);

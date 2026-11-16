@@ -32,6 +32,7 @@ class UserProfileServiceTest {
 		when(user.getProfileUrl()).thenReturn("");
 		when(user.getStreakDays()).thenReturn(4);
 		when(user.getTaskStreak()).thenReturn(3);
+		when(user.getMaxDayStreak()).thenReturn(12);
 		when(streakService.synchronizeAccountBoost(7L)).thenReturn(1.2);
 		when(statsService.getByUserId(7L)).thenReturn(stats);
 		when(stats.getPlayerName()).thenReturn("Hero");
@@ -44,6 +45,7 @@ class UserProfileServiceTest {
 		assertThat(response.user().userIcon()).isEqualTo("⚔️");
 		assertThat(response.user().dayStreak()).isEqualTo(4);
 		assertThat(response.user().taskStreak()).isEqualTo(3);
+		assertThat(response.user().maxDayStreak()).isEqualTo(12);
 		assertThat(response.user().xpAccBoost()).isEqualTo(1.2f);
 	}
 }

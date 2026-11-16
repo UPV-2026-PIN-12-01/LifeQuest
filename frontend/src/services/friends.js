@@ -29,3 +29,8 @@ export function removeFriend(friendUserId) {
 export function getFriendFeed() {
   return requestJson('/api/friends/feed')
 }
+
+// Players whose name contains the text (2+ characters), each with { player, relation }.
+export function searchPlayers(text) {
+  return requestJson(`/api/friends/search?q=${encodeURIComponent(text)}`)
+}

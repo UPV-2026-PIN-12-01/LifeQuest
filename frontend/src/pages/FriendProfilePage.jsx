@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { getFriendProfile, removeFriend } from '../services/friends.js'
 import { activityById } from '../utils/taskOptions.js'
 import { PlayerSummary } from './FriendsPage.jsx'
@@ -24,7 +25,9 @@ export default function FriendProfilePage() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState(null)
+  const [confirmingRemove, setConfirmingRemove] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [removeError, setRemoveError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -38,11 +41,12 @@ export default function FriendProfilePage() {
 
   async function remove() {
     setRemoving(true)
+    setRemoveError(null)
     try {
       await removeFriend(friendUserId)
       navigate('/friends')
-    } catch (err) {
-      setError(err)
+    } catch {
+      setRemoveError('No se pudo eliminar al amigo. Inténtalo de nuevo.')
       setRemoving(false)
     }
   }
@@ -115,9 +119,26 @@ export default function FriendProfilePage() {
         )}
       </section>
 
-      <button type="button" className="friends-secondary-button friends-remove" onClick={remove} disabled={removing}>
-        {removing ? 'Eliminando…' : 'Eliminar amigo'}
+      <button type="button" className="friends-secondary-button friends-remove" onClick={() => setConfirmingRemove(true)}>
+        Eliminar amigo
       </button>
+
+      {confirmingRemove && (
+        <ConfirmDialog
+          title={`¿Eliminar a ${profile.player.playerName}?`}
+          message="Dejaréis de ver vuestros personajes y la actividad del otro. Tendréis que enviar una nueva solicitud para volver a ser amigos."
+          confirmLabel="Eliminar"
+          busyLabel="Eliminando…"
+          danger
+          busy={removing}
+          error={removeError}
+          onConfirm={remove}
+          onCancel={() => {
+            setConfirmingRemove(false)
+            setRemoveError(null)
+          }}
+        />
+      )}
     </main>
   )
 }

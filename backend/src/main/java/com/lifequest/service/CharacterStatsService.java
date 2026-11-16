@@ -1,5 +1,8 @@
 package com.lifequest.service;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,18 +15,25 @@ import com.lifequest.exception.ResourceNotFoundException;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.PlayerClass;
 import com.lifequest.repository.CharacterStatsRepository;
+import com.lifequest.repository.TaskRepository;
 
 @Service
 public class CharacterStatsService {
 
 	private final CharacterStatsRepository characterStatsRepository;
 	private final UserStreakService userStreakService;
+	private final TaskRepository taskRepository;
+	private final Clock clock;
 
 	public CharacterStatsService(
 			CharacterStatsRepository characterStatsRepository,
-			UserStreakService userStreakService) {
+			UserStreakService userStreakService,
+			TaskRepository taskRepository,
+			Clock clock) {
 		this.characterStatsRepository = characterStatsRepository;
 		this.userStreakService = userStreakService;
+		this.taskRepository = taskRepository;
+		this.clock = clock;
 	}
 
 	// XP needed to go from level to level + 1. Must match the stats_xp_rules_check CHECK in the DB,
@@ -43,7 +53,7 @@ public class CharacterStatsService {
 		if (xp == 0) {
 			return 0;
 		}
-		long awardedXp = Math.round(xp * userStreakService.recordXpActivity(userId));
+		long awardedXp = Math.round(xp * userStreakService.recordXpActivity(userId, false));
 		return addAwardedXp(userId, awardedXp);
 	}
 
@@ -68,8 +78,13 @@ public class CharacterStatsService {
 		return awardedXp;
 	}
 
-	double recordXpActivityForTask(Long userId) {
-		return userStreakService.recordXpActivity(userId);
+	public double recordXpActivityForTask(Long userId) {
+		LocalDate today = LocalDate.now(clock);
+		var startOfToday = today.atStartOfDay(clock.getZone()).toInstant();
+		boolean hasFutureTasks = taskRepository.findFirstByUserIdOrderByStartTimeDesc(userId)
+				.map(task -> !task.getEndTime().isBefore(startOfToday))
+				.orElse(false);
+		return userStreakService.recordXpActivity(userId, hasFutureTasks);
 	}
 
 	public double recordTaskCompletion(Long userId) {

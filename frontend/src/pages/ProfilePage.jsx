@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [playerClass, setPlayerClass] = useState('')
   const [streakDays, setStreakDays] = useState(0)
   const [taskStreak, setTaskStreak] = useState(0)
+  const [maxStreak, setMaxStreak] = useState(0)
   const [xpAccBoost, setXpAccBoost] = useState(1)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -59,6 +60,7 @@ export default function ProfilePage() {
         setStreakDays(Number(user.dayStreak ?? user.streakDays) || 0)
         setTaskStreak(Number(user.taskStreak) || 0)
         setXpAccBoost(Number(user.xpAccBoost) || 1)
+        setMaxStreak(Number(user.maxDayStreak) || 0)
         setEmail(user.email ?? '')
         setProfileUrl(user.profileUrl ?? '')
         setUserIcon(user.userIcon || '⚔️')
@@ -247,6 +249,8 @@ export default function ProfilePage() {
                     {playerClass && (
                       <p className="settings-class">
                         {playerClass} · Racha diaria: {streakDays} días · Tareas seguidas: {taskStreak} · Bonus XP: +{Math.max(0, Math.round((xpAccBoost - 1) * 100))}%
+                        <br />
+                        Mayor racha: {maxStreak} días
                       </p>
                     )}
                     {errors.name && (

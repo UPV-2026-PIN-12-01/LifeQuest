@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +20,7 @@ import com.lifequest.model.dto.FriendActivityDto;
 import com.lifequest.model.dto.FriendProfileDto;
 import com.lifequest.model.dto.FriendRequestDto;
 import com.lifequest.model.dto.FriendsOverviewDto;
+import com.lifequest.model.dto.PlayerSuggestionDto;
 import com.lifequest.service.FriendshipService;
 import com.lifequest.service.UserService;
 
@@ -57,6 +59,11 @@ public class FriendshipController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteRequest(@AuthenticationPrincipal Jwt jwt, @PathVariable Long requestId) {
 		friendshipService.deleteRequest(userId(jwt), requestId);
+	}
+
+	@GetMapping("/search")
+	public List<PlayerSuggestionDto> search(@AuthenticationPrincipal Jwt jwt, @RequestParam(name = "q", defaultValue = "") String query) {
+		return friendshipService.searchPlayers(userId(jwt), query);
 	}
 
 	@GetMapping("/feed")

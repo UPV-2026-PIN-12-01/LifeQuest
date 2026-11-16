@@ -1,0 +1,86 @@
+.player-search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.player-search input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.player-search-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid #dbe2ef;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 16px 40px rgba(32, 43, 66, 0.16);
+  list-style: none;
+}
+
+.player-search-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.player-search-option.is-active {
+  background: var(--lq-task-purple-soft);
+}
+
+.player-search-option.is-disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.player-search-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.player-search-name strong {
+  overflow: hidden;
+  color: #202b42;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-search-name mark {
+  padding: 0;
+  color: var(--lq-task-purple);
+  background: transparent;
+}
+
+.player-search-name small {
+  color: #8ca0c0;
+}
+
+.player-search-relation {
+  flex-shrink: 0;
+  color: #6d7f9e;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.player-search-note {
+  padding: 10px;
+  color: #8ca0c0;
+}
+
+@media (max-width: 480px) {
+  .player-search-relation {
+    display: none;
+  }
+}

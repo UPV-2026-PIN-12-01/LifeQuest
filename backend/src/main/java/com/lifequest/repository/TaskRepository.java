@@ -16,4 +16,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 	Optional<Task> findByIdAndUserId(Long id, Long userId);
 
 	boolean existsByRewardId(Long rewardId);
+
+	Optional<Task> findFirstByUserIdOrderByStartTimeDesc(Long userId);
 }

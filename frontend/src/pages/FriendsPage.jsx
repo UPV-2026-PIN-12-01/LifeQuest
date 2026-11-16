@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import AvatarDisplay from '../components/AvatarDisplay.jsx'
+import PlayerSearchInput from '../components/PlayerSearchInput.jsx'
 import {
   acceptFriendRequest,
   deleteFriendRequest,
@@ -116,13 +117,12 @@ export default function FriendsPage() {
       <form className="friends-add" onSubmit={submit} noValidate>
         <label htmlFor="friend-player-name">Añadir amigo por nombre de jugador</label>
         <div className="friends-add-row">
-          <input
+          <PlayerSearchInput
             id="friend-player-name"
             value={playerName}
-            onChange={(event) => setPlayerName(event.target.value)}
-            placeholder="Nombre del personaje"
+            onChange={setPlayerName}
+            placeholder="Escribe al menos 2 letras del personaje"
             maxLength={80}
-            autoComplete="off"
           />
           <button type="submit" className="challenges-primary-button" disabled={sendState.busy || !playerName.trim()}>
             {sendState.busy ? 'Enviando…' : 'Enviar solicitud'}

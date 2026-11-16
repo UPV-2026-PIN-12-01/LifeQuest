@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import com.lifequest.model.dto.FriendRequestDto;
 import com.lifequest.model.dto.FriendSummaryDto;
 import com.lifequest.model.dto.FriendTaskDto;
 import com.lifequest.model.dto.FriendsOverviewDto;
+import com.lifequest.model.dto.PlayerSuggestionDto;
 import com.lifequest.model.dto.TaskDto;
 import com.lifequest.model.entity.CharacterStats;
 import com.lifequest.model.entity.Friendship;
@@ -41,6 +44,9 @@ public class FriendshipService {
 	static final int COMPLETED_TASK_DAYS = 7;
 	static final String COMPLETED = "completed";
 	static final int FEED_LIMIT = 100;
+	static final int SEARCH_MIN_LENGTH = 2;
+	static final int SEARCH_MAX_LENGTH = 80;
+	static final int SEARCH_LIMIT = 8;
 
 	private final FriendshipRepository friendshipRepository;
 	private final UserRepository userRepository;
@@ -79,6 +85,47 @@ public class FriendshipService {
 				.toList();
 		return new FriendsOverviewDto(friends, requests(incoming, userId, summaries, true),
 				requests(outgoing, userId, summaries, false));
+	}
+
+	// Suggestions for the "add friend" box: names containing the text, ignoring case, prefix matches first.
+	// Needs SEARCH_MIN_LENGTH characters and returns at most SEARCH_LIMIT players, so it cannot list everyone.
+	@Transactional(readOnly = true)
+	public List<PlayerSuggestionDto> searchPlayers(Long userId, String text) {
+		String trimmed = text == null ? "" : text.trim();
+		if (trimmed.length() < SEARCH_MIN_LENGTH) {
+			return List.of();
+		}
+		if (trimmed.length() > SEARCH_MAX_LENGTH) {
+			trimmed = trimmed.substring(0, SEARCH_MAX_LENGTH);
+		}
+		List<Long> ids = characterStatsRepository
+				.searchByPlayerName(escapeLike(trimmed.toLowerCase(Locale.ROOT)), userId, PageRequest.of(0, SEARCH_LIMIT))
+				.stream()
+				.map(CharacterStats::getUserId)
+				.distinct()
+				.toList();
+		if (ids.isEmpty()) {
+			return List.of();
+		}
+		Map<Long, FriendSummaryDto> summaries = summaries(ids);
+		Map<Long, String> relations = friendshipRepository.findBetweenUserAnd(userId, ids).stream()
+				.collect(Collectors.toMap(f -> f.otherUserId(userId), f -> relation(f, userId), (a, b) -> a));
+		return ids.stream()
+				.filter(summaries::containsKey)
+				.map(id -> new PlayerSuggestionDto(summaries.get(id), relations.getOrDefault(id, "NONE")))
+				.toList();
+	}
+
+	private static String relation(Friendship friendship, Long userId) {
+		if (friendship.getStatus() == FriendshipStatus.ACCEPTED) {
+			return "FRIEND";
+		}
+		return userId.equals(friendship.getRequesterId()) ? "OUTGOING" : "INCOMING";
+	}
+
+	// So that % and _ typed by the user are matched literally.
+	static String escapeLike(String text) {
+		return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
 	}
 
 	// If the other player had already asked you, sending a request back accepts theirs.
@@ -197,11 +244,7 @@ public class FriendshipService {
 
 	// Times are HH:mm on the same day (day_task_check), so the planned length is their difference.
 	static long durationMinutes(TaskDto task) {
-		try {
-			return Math.max(0, Duration.between(LocalTime.parse(task.startTime()), LocalTime.parse(task.endTime())).toMinutes());
-		} catch (RuntimeException e) {
-			return 0;
-		}
+		return Duration.between(LocalTime.parse(task.startTime()), LocalTime.parse(task.endTime())).toMinutes();
 	}
 
 	private Friendship acceptedFriendship(Long userId, Long friendUserId) {
