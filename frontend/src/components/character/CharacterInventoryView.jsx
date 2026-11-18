@@ -33,6 +33,14 @@ function getBuyBlocker(item, gold, level) {
   return null
 }
 
+// Why this item cannot be upgraded now; null when it can.
+function getUpgradeBlocker(item, gold, level) {
+  if (item.upgradeCost == null) return "Nivel máximo"
+  if (item.level >= level) return "Nivel insuficiente"
+  if (gold < item.upgradeCost) return "Oro insuficiente"
+  return null
+}
+
 function ItemCard({
   item,
   mode,
@@ -50,6 +58,8 @@ function ItemCard({
   const salePrice = Math.floor(item.buyPrice * 0.7)
   const isPotion = item.category === "Poción"
   const buyBlocker = mode === "shop" ? getBuyBlocker(item, gold, level) : null
+  const upgradeBlocker =
+    mode === "inventory" && !isPotion ? getUpgradeBlocker(item, gold, level) : null
 
   return (
     <div
@@ -131,12 +141,17 @@ function ItemCard({
                 </button>
                 <button
                   onClick={() => onUpgrade(item.id)}
-                  disabled={
-                    busy || upgradeCost == null || gold < upgradeCost
+                  disabled={busy || upgradeBlocker !== null}
+                  title={
+                    upgradeBlocker === "Nivel insuficiente"
+                      ? `Tu personaje necesita nivel ${item.level + 1}`
+                      : undefined
                   }
-                  className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40"
+                  className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {upgradeCost == null ? "Nivel máximo" : `Mejorar · ${upgradeCost}`}
+                  {upgradeBlocker === "Nivel máximo"
+                    ? upgradeBlocker
+                    : `${upgradeBlocker ?? "Mejorar"} · ${upgradeCost}`}
                 </button>
               </>
             )}
@@ -154,6 +169,11 @@ function ItemCard({
           {item.equipped && (
             <p className="text-xs text-slate-400 mt-2">
               Desequipa el objeto antes de venderlo.
+            </p>
+          )}
+          {upgradeBlocker === "Nivel insuficiente" && (
+            <p className="text-xs text-amber-600 mt-2">
+              Sube tu personaje a nivel {item.level + 1} para mejorar este objeto.
             </p>
           )}
           {!isPotion && item.nextLevelStats && (
@@ -326,6 +346,7 @@ export default function CharacterInventoryView({
                 item={item}
                 mode="inventory"
                 gold={gold}
+                level={level}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}
@@ -354,6 +375,7 @@ export default function CharacterInventoryView({
                 item={item}
                 mode="inventory"
                 gold={gold}
+                level={level}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}

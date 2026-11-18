@@ -142,6 +142,11 @@ public class MarketService {
 		if (item.getLevel() >= catalogItem.getMaxLevel()) {
 			throw new InvalidRequestException("El objeto ya ha alcanzado su nivel máximo.");
 		}
+		if (item.getLevel() >= character.getLevel()) {
+			throw new InvalidRequestException(
+					"Nivel insuficiente: sube tu personaje a nivel " + (item.getLevel() + 1)
+							+ " para mejorar este objeto.");
+		}
 		long cost = upgradeCost(item.getLevel(), catalogItem.getBaseUpgradePrice());
 		if (character.getGold() < cost) {
 			throw new InvalidRequestException("No tienes suficiente oro.");

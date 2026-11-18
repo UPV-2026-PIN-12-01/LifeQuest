@@ -128,6 +128,7 @@ class MarketServiceTest {
 		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
 		item.setStats(Map.of("strength", 8, "speed", 2));
 		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+		character.setLevel(4);
 
 		marketService.upgrade(7L, 102L);
 
@@ -143,6 +144,7 @@ class MarketServiceTest {
 		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
 		item.setStats(Map.of("strength", 8, "speed", 2));
 		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+		character.setLevel(4);
 
 		marketService.upgrade(7L, 102L);
 
@@ -157,6 +159,7 @@ class MarketServiceTest {
 		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
 		item.setStats(Map.of("strength", Integer.MAX_VALUE));
 		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+		character.setLevel(4);
 
 		assertThatThrownBy(() -> marketService.upgrade(7L, 102L))
 				.isInstanceOf(InvalidRequestException.class)
@@ -180,6 +183,22 @@ class MarketServiceTest {
 	}
 
 	@Test
+	void upgradingItemRejectsAnItemAtTheCharacterLevelWithoutChangingAnything() {
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		item.setStats(Map.of("strength", 8));
+		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+
+		assertThatThrownBy(() -> marketService.upgrade(7L, 102L))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Nivel insuficiente: sube tu personaje a nivel 4");
+
+		assertThat(character.getGold()).isEqualTo(500L);
+		assertThat(item.getLevel()).isEqualTo(3);
+		assertThat(item.getStats()).containsEntry("strength", 8);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
 	void upgradeCostGrowsExponentiallyFromTheBasePrice() {
 		assertThat(MarketService.upgradeCost(1, 55)).isEqualTo(55L);
 		assertThat(MarketService.upgradeCost(2, 55)).isEqualTo(83L);
@@ -197,6 +216,7 @@ class MarketServiceTest {
 		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
 		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
 		character.setGold(123L);
+		character.setLevel(4);
 
 		assertThatThrownBy(() -> marketService.upgrade(7L, 102L))
 				.isInstanceOf(InvalidRequestException.class)
