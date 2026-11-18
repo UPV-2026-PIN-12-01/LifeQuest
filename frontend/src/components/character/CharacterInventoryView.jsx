@@ -156,17 +156,24 @@ function ItemCard({
               Desequipa el objeto antes de venderlo.
             </p>
           )}
-          {!isPotion && item.level < item.maxLevel && (
+          {!isPotion && item.nextLevelStats && (
             <div className="text-xs text-slate-400 mt-2">
               <p>
                 Nivel {item.level} → {item.level + 1}
               </p>
-              {item.stats.map((stat) => (
-                <p key={stat}>
-                  {stat} →{" "}
-                  {stat.replace(/(\d+)/, (value) => String(Number(value) + 1))}
-                </p>
-              ))}
+              {item.stats.map((stat, index) => {
+                const next = item.nextLevelStats?.[index]
+                return (
+                  <p key={stat}>
+                    {next && next !== stat ? `${stat} → ${next}` : stat}
+                  </p>
+                )
+              })}
+              {item.nextLevelStats
+                ?.slice(item.stats.length)
+                .map((stat) => (
+                  <p key={stat}>Nuevo: {stat}</p>
+                ))}
             </div>
           )}
         </>

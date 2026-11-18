@@ -138,6 +138,48 @@ class MarketServiceTest {
 	}
 
 	@Test
+	void upgradingItemAppliesPerStatBuffsFromTheCatalog() {
+		ReflectionTestUtils.setField(sword, "upgradeStatsBuff", Map.of("strength", 2, "speed", 1, "hp", 4));
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		item.setStats(Map.of("strength", 8, "speed", 2));
+		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+
+		marketService.upgrade(7L, 102L);
+
+		assertThat(item.getStats())
+				.containsEntry("strength", 10)
+				.containsEntry("speed", 3)
+				.containsEntry("hp", 4);
+	}
+
+	@Test
+	void upgradingItemRejectsStatsThatWouldOverflow() {
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		item.setStats(Map.of("strength", Integer.MAX_VALUE));
+		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+
+		assertThatThrownBy(() -> marketService.upgrade(7L, 102L))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("Las estadísticas superan el límite permitido.");
+
+		assertThat(character.getGold()).isEqualTo(500L);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void inventoryPreviewsTheStatsOfTheNextLevel() {
+		ReflectionTestUtils.setField(sword, "upgradeStatsBuff", Map.of("strength", 2));
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		item.setStats(Map.of("strength", 8));
+		when(inventoryRepository.findByCharacterIdOrderById(70L)).thenReturn(List.of(item));
+
+		var market = marketService.getMarket(7L);
+
+		assertThat(market.inventory().get(0).stats()).containsExactly("Fuerza +8");
+		assertThat(market.inventory().get(0).nextLevelStats()).containsExactly("Fuerza +10");
+	}
+
+	@Test
 	void upgradeCostGrowsExponentiallyFromTheBasePrice() {
 		assertThat(MarketService.upgradeCost(1, 55)).isEqualTo(55L);
 		assertThat(MarketService.upgradeCost(2, 55)).isEqualTo(83L);

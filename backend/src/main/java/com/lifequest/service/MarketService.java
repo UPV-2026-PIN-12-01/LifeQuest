@@ -146,9 +146,10 @@ public class MarketService {
 		if (character.getGold() < cost) {
 			throw new InvalidRequestException("No tienes suficiente oro.");
 		}
+		Map<String, Integer> upgradedStats = increaseStats(item.getStats(), catalogItem);
 		character.setGold(character.getGold() - cost);
 		item.setLevel(item.getLevel() + 1);
-		item.setStats(increaseStats(item.getStats(), catalogItem.getUpgradeStatBuffs()));
+		item.setStats(upgradedStats);
 		characterStatsRepository.save(character);
 		inventoryRepository.save(item);
 		return getMarket(userId);
@@ -220,6 +221,7 @@ public class MarketService {
 				item.getBaseUpgradePrice(),
 				nextUpgradeCost(item.getBaseLevel(), item),
 				getDisplayStats(item.getBaseStatsBuff(), item),
+				null,
 				item.getHeal(),
 				item.getStaminaRestore(),
 				item.getPurchasePrice(),
@@ -241,6 +243,7 @@ public class MarketService {
 				catalogItem.getBaseUpgradePrice(),
 				nextUpgradeCost(item.getLevel(), catalogItem),
 				getDisplayStats(item.getStats(), catalogItem),
+				getNextLevelStats(item, catalogItem),
 				catalogItem.getHeal(),
 				catalogItem.getStaminaRestore(),
 				catalogItem.getPurchasePrice(),
@@ -262,10 +265,36 @@ public class MarketService {
 		return displayStats;
 	}
 
-	private Map<String, Integer> increaseStats(Map<String, Integer> currentStats, Integer increment) {
-		Map<String, Integer> updatedStats = new HashMap<>(currentStats);
+	private List<String> getNextLevelStats(PlayerInventoryItem item, ToolIndexItem catalogItem) {
+		if (nextUpgradeCost(item.getLevel(), catalogItem) == null) {
+			return null;
+		}
 		try {
-			updatedStats.replaceAll((stat, value) -> Math.addExact(value, increment));
+			return getDisplayStats(increaseStats(item.getStats(), catalogItem), catalogItem);
+		} catch (InvalidRequestException ex) {
+			return null;
+		}
+	}
+
+	// Per-stat buffs from the catalog; falls back to the old single integer on every current stat.
+	private Map<String, Integer> getUpgradeBuffs(Map<String, Integer> currentStats, ToolIndexItem catalogItem) {
+		Map<String, Integer> buffs = catalogItem.getUpgradeStatsBuff();
+		if (buffs != null && !buffs.isEmpty()) {
+			return buffs;
+		}
+		Integer increment = catalogItem.getUpgradeStatBuffs();
+		Map<String, Integer> fallback = new LinkedHashMap<>();
+		if (increment != null) {
+			currentStats.keySet().forEach(stat -> fallback.put(stat, increment));
+		}
+		return fallback;
+	}
+
+	private Map<String, Integer> increaseStats(Map<String, Integer> currentStats, ToolIndexItem catalogItem) {
+		Map<String, Integer> updatedStats = new LinkedHashMap<>(currentStats);
+		try {
+			getUpgradeBuffs(currentStats, catalogItem)
+					.forEach((stat, increment) -> updatedStats.merge(stat, increment, Math::addExact));
 		} catch (ArithmeticException ex) {
 			throw new InvalidRequestException("Las estadísticas superan el límite permitido.");
 		}
