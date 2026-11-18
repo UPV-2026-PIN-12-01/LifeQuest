@@ -30,6 +30,7 @@ public class MarketService {
 			"knowledge", "Conocimiento",
 			"speed", "Velocidad",
 			"stamina", "Estamina");
+	private static final double UPGRADE_COST_GROWTH = 1.5;
 	private final CharacterStatsRepository characterStatsRepository;
 	private final PlayerInventoryRepository inventoryRepository;
 	private final ToolIndexRepository toolIndexRepository;
@@ -141,7 +142,7 @@ public class MarketService {
 		if (item.getLevel() >= catalogItem.getMaxLevel()) {
 			throw new InvalidRequestException("El objeto ya ha alcanzado su nivel máximo.");
 		}
-		long cost = item.getLevel() * (long) catalogItem.getBaseUpgradePrice();
+		long cost = upgradeCost(item.getLevel(), catalogItem.getBaseUpgradePrice());
 		if (character.getGold() < cost) {
 			throw new InvalidRequestException("No tienes suficiente oro.");
 		}
@@ -151,6 +152,19 @@ public class MarketService {
 		characterStatsRepository.save(character);
 		inventoryRepository.save(item);
 		return getMarket(userId);
+	}
+
+	// Gold to go from `level` to `level + 1`: base × 1.5^(level − 1), rounded.
+	// Math.round saturates at Long.MAX_VALUE, so huge levels just become unaffordable.
+	static long upgradeCost(int level, int baseUpgradePrice) {
+		return Math.round(baseUpgradePrice * Math.pow(UPGRADE_COST_GROWTH, level - 1));
+	}
+
+	private Long nextUpgradeCost(int level, ToolIndexItem catalogItem) {
+		if (isPotion(catalogItem) || level >= catalogItem.getMaxLevel()) {
+			return null;
+		}
+		return upgradeCost(level, catalogItem.getBaseUpgradePrice());
 	}
 
 	private CharacterStats getCharacter(Long userId) {
@@ -204,6 +218,7 @@ public class MarketService {
 				item.getBaseLevel(),
 				item.getMaxLevel(),
 				item.getBaseUpgradePrice(),
+				nextUpgradeCost(item.getBaseLevel(), item),
 				getDisplayStats(item.getBaseStatsBuff(), item),
 				item.getHeal(),
 				item.getStaminaRestore(),
@@ -224,6 +239,7 @@ public class MarketService {
 				item.getLevel(),
 				catalogItem.getMaxLevel(),
 				catalogItem.getBaseUpgradePrice(),
+				nextUpgradeCost(item.getLevel(), catalogItem),
 				getDisplayStats(item.getStats(), catalogItem),
 				catalogItem.getHeal(),
 				catalogItem.getStaminaRestore(),

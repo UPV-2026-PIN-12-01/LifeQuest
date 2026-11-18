@@ -133,8 +133,46 @@ class MarketServiceTest {
 
 		assertThat(item.getLevel()).isEqualTo(4);
 		assertThat(item.getStats()).containsEntry("strength", 9).containsEntry("speed", 3);
-		assertThat(character.getGold()).isEqualTo(335L);
+		assertThat(character.getGold()).isEqualTo(376L);
 		verify(inventoryRepository).save(item);
+	}
+
+	@Test
+	void upgradeCostGrowsExponentiallyFromTheBasePrice() {
+		assertThat(MarketService.upgradeCost(1, 55)).isEqualTo(55L);
+		assertThat(MarketService.upgradeCost(2, 55)).isEqualTo(83L);
+		assertThat(MarketService.upgradeCost(3, 55)).isEqualTo(124L);
+		assertThat(MarketService.upgradeCost(10, 55)).isEqualTo(2114L);
+	}
+
+	@Test
+	void upgradeCostSaturatesInsteadOfOverflowingAtHighLevels() {
+		assertThat(MarketService.upgradeCost(200, 55)).isEqualTo(Long.MAX_VALUE);
+	}
+
+	@Test
+	void upgradingItemRejectsInsufficientGoldForTheExponentialCost() {
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		when(inventoryRepository.findByIdAndCharacterId(102L, 70L)).thenReturn(Optional.of(item));
+		character.setGold(123L);
+
+		assertThatThrownBy(() -> marketService.upgrade(7L, 102L))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessageContaining("No tienes suficiente oro.");
+
+		assertThat(character.getGold()).isEqualTo(123L);
+		assertThat(item.getLevel()).isEqualTo(3);
+		verify(inventoryRepository, never()).save(any());
+	}
+
+	@Test
+	void inventoryShowsTheServerUpgradeCost() {
+		PlayerInventoryItem item = inventoryItem(102L, "sword", "Arma", false);
+		when(inventoryRepository.findByCharacterIdOrderById(70L)).thenReturn(List.of(item));
+
+		var market = marketService.getMarket(7L);
+
+		assertThat(market.inventory().get(0).upgradeCost()).isEqualTo(124L);
 	}
 
 	@Test

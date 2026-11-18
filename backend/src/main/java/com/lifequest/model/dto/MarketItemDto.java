@@ -12,6 +12,7 @@ public record MarketItemDto(
 		int level,
 		int maxLevel,
 		int baseUpgradePrice,
+		Long upgradeCost,
 		List<String> stats,
 		Integer heal,
 		Integer staminaRestore,

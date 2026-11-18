@@ -45,7 +45,8 @@ function ItemCard({
   busy,
 }) {
   const [confirmSell, setConfirmSell] = useState(false)
-  const upgradeCost = item.level * item.baseUpgradePrice
+  // The server computes the cost (base × 1.5^(level − 1)); null at max level.
+  const upgradeCost = item.upgradeCost
   const salePrice = Math.floor(item.buyPrice * 0.7)
   const isPotion = item.category === "Poción"
   const buyBlocker = mode === "shop" ? getBuyBlocker(item, gold, level) : null
@@ -131,11 +132,11 @@ function ItemCard({
                 <button
                   onClick={() => onUpgrade(item.id)}
                   disabled={
-                    busy || gold < upgradeCost || item.level >= item.maxLevel
+                    busy || upgradeCost == null || gold < upgradeCost
                   }
                   className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40"
                 >
-                  Mejorar · {upgradeCost}
+                  {upgradeCost == null ? "Nivel máximo" : `Mejorar · ${upgradeCost}`}
                 </button>
               </>
             )}

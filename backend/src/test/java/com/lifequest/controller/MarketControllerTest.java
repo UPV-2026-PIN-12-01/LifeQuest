@@ -52,7 +52,7 @@ class MarketControllerTest {
 	void returnsCatalogInventoryAndBalanceForTheLoggedInPlayer() throws Exception {
 		when(marketService.getMarket(7L)).thenReturn(new MarketDto(
 				List.of(new MarketItemDto("sword", "sword", "Espada del Alba", "⚔️", "Arma",
-						"Rare", 3, 100, 55, List.of("Fuerza +8"), null, null, 260, false, 1)),
+						"Rare", 3, 100, 55, 124L, List.of("Fuerza +8"), null, null, 260, false, 1)),
 				List.of(), Map.of("strength", 8L), 500L));
 
 		mockMvc.perform(get("/api/players/me/market")
