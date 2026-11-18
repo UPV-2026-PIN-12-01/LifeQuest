@@ -51,6 +51,11 @@ public class ToolIndexItem {
 	@Column(name = "base_stats_buff", columnDefinition = "jsonb")
 	private Map<String, Integer> baseStatsBuff;
 
+	// Per-stat gain on each upgrade; when empty, upgradeStatBuffs applies to every stat.
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "upgrade_stats_buff", columnDefinition = "jsonb")
+	private Map<String, Integer> upgradeStatsBuff;
+
 	private Integer heal;
 
 	@Column(name = "stamina_restore")
@@ -102,6 +107,10 @@ public class ToolIndexItem {
 
 	public Map<String, Integer> getBaseStatsBuff() {
 		return baseStatsBuff;
+	}
+
+	public Map<String, Integer> getUpgradeStatsBuff() {
+		return upgradeStatsBuff;
 	}
 
 	public Integer getHeal() {

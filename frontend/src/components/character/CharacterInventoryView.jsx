@@ -33,6 +33,14 @@ function getBuyBlocker(item, gold, level) {
   return null
 }
 
+// Why this item cannot be upgraded now; null when it can.
+function getUpgradeBlocker(item, gold, level) {
+  if (item.upgradeCost == null) return "Nivel máximo"
+  if (item.level >= level) return "Nivel insuficiente"
+  if (gold < item.upgradeCost) return "Oro insuficiente"
+  return null
+}
+
 function ItemCard({
   item,
   mode,
@@ -45,10 +53,13 @@ function ItemCard({
   busy,
 }) {
   const [confirmSell, setConfirmSell] = useState(false)
-  const upgradeCost = item.level * item.baseUpgradePrice
+  // The server computes the cost (base × 1.5^(level − 1)); null at max level.
+  const upgradeCost = item.upgradeCost
   const salePrice = Math.floor(item.buyPrice * 0.7)
   const isPotion = item.category === "Poción"
   const buyBlocker = mode === "shop" ? getBuyBlocker(item, gold, level) : null
+  const upgradeBlocker =
+    mode === "inventory" && !isPotion ? getUpgradeBlocker(item, gold, level) : null
 
   return (
     <div
@@ -130,12 +141,17 @@ function ItemCard({
                 </button>
                 <button
                   onClick={() => onUpgrade(item.id)}
-                  disabled={
-                    busy || gold < upgradeCost || item.level >= item.maxLevel
+                  disabled={busy || upgradeBlocker !== null}
+                  title={
+                    upgradeBlocker === "Nivel insuficiente"
+                      ? `Tu personaje necesita nivel ${item.level + 1}`
+                      : undefined
                   }
-                  className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40"
+                  className="character-upgrade-button flex-1 px-3 py-2 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Mejorar · {upgradeCost}
+                  {upgradeBlocker === "Nivel máximo"
+                    ? upgradeBlocker
+                    : `${upgradeBlocker ?? "Mejorar"} · ${upgradeCost}`}
                 </button>
               </>
             )}
@@ -155,17 +171,29 @@ function ItemCard({
               Desequipa el objeto antes de venderlo.
             </p>
           )}
-          {!isPotion && item.level < item.maxLevel && (
+          {upgradeBlocker === "Nivel insuficiente" && (
+            <p className="text-xs text-amber-600 mt-2">
+              Sube tu personaje a nivel {item.level + 1} para mejorar este objeto.
+            </p>
+          )}
+          {!isPotion && item.nextLevelStats && (
             <div className="text-xs text-slate-400 mt-2">
               <p>
                 Nivel {item.level} → {item.level + 1}
               </p>
-              {item.stats.map((stat) => (
-                <p key={stat}>
-                  {stat} →{" "}
-                  {stat.replace(/(\d+)/, (value) => String(Number(value) + 1))}
-                </p>
-              ))}
+              {item.stats.map((stat, index) => {
+                const next = item.nextLevelStats?.[index]
+                return (
+                  <p key={stat}>
+                    {next && next !== stat ? `${stat} → ${next}` : stat}
+                  </p>
+                )
+              })}
+              {item.nextLevelStats
+                ?.slice(item.stats.length)
+                .map((stat) => (
+                  <p key={stat}>Nuevo: {stat}</p>
+                ))}
             </div>
           )}
         </>
@@ -318,6 +346,7 @@ export default function CharacterInventoryView({
                 item={item}
                 mode="inventory"
                 gold={gold}
+                level={level}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}
@@ -346,6 +375,7 @@ export default function CharacterInventoryView({
                 item={item}
                 mode="inventory"
                 gold={gold}
+                level={level}
                 onBuy={onBuy}
                 onSell={onSell}
                 onToggleEquip={onToggleEquip}
