@@ -30,6 +30,7 @@ public class MarketService {
 			"knowledge", "Conocimiento",
 			"speed", "Velocidad",
 			"stamina", "Estamina");
+	private static final double UPGRADE_COST_GROWTH = 1.5;
 	private final CharacterStatsRepository characterStatsRepository;
 	private final PlayerInventoryRepository inventoryRepository;
 	private final ToolIndexRepository toolIndexRepository;
@@ -141,16 +142,35 @@ public class MarketService {
 		if (item.getLevel() >= catalogItem.getMaxLevel()) {
 			throw new InvalidRequestException("El objeto ya ha alcanzado su nivel máximo.");
 		}
-		long cost = item.getLevel() * (long) catalogItem.getBaseUpgradePrice();
+		if (item.getLevel() >= character.getLevel()) {
+			throw new InvalidRequestException(
+					"Nivel insuficiente: sube tu personaje a nivel " + (item.getLevel() + 1)
+							+ " para mejorar este objeto.");
+		}
+		long cost = upgradeCost(item.getLevel(), catalogItem.getBaseUpgradePrice());
 		if (character.getGold() < cost) {
 			throw new InvalidRequestException("No tienes suficiente oro.");
 		}
+		Map<String, Integer> upgradedStats = increaseStats(item.getStats(), catalogItem);
 		character.setGold(character.getGold() - cost);
 		item.setLevel(item.getLevel() + 1);
-		item.setStats(increaseStats(item.getStats(), catalogItem.getUpgradeStatBuffs()));
+		item.setStats(upgradedStats);
 		characterStatsRepository.save(character);
 		inventoryRepository.save(item);
 		return getMarket(userId);
+	}
+
+	// Gold to go from `level` to `level + 1`: base × 1.5^(level − 1), rounded.
+	// Math.round saturates at Long.MAX_VALUE, so huge levels just become unaffordable.
+	static long upgradeCost(int level, int baseUpgradePrice) {
+		return Math.round(baseUpgradePrice * Math.pow(UPGRADE_COST_GROWTH, level - 1));
+	}
+
+	private Long nextUpgradeCost(int level, ToolIndexItem catalogItem) {
+		if (isPotion(catalogItem) || level >= catalogItem.getMaxLevel()) {
+			return null;
+		}
+		return upgradeCost(level, catalogItem.getBaseUpgradePrice());
 	}
 
 	private CharacterStats getCharacter(Long userId) {
@@ -204,7 +224,9 @@ public class MarketService {
 				item.getBaseLevel(),
 				item.getMaxLevel(),
 				item.getBaseUpgradePrice(),
+				nextUpgradeCost(item.getBaseLevel(), item),
 				getDisplayStats(item.getBaseStatsBuff(), item),
+				null,
 				item.getHeal(),
 				item.getStaminaRestore(),
 				item.getPurchasePrice(),
@@ -224,7 +246,9 @@ public class MarketService {
 				item.getLevel(),
 				catalogItem.getMaxLevel(),
 				catalogItem.getBaseUpgradePrice(),
+				nextUpgradeCost(item.getLevel(), catalogItem),
 				getDisplayStats(item.getStats(), catalogItem),
+				getNextLevelStats(item, catalogItem),
 				catalogItem.getHeal(),
 				catalogItem.getStaminaRestore(),
 				catalogItem.getPurchasePrice(),
@@ -246,10 +270,36 @@ public class MarketService {
 		return displayStats;
 	}
 
-	private Map<String, Integer> increaseStats(Map<String, Integer> currentStats, Integer increment) {
-		Map<String, Integer> updatedStats = new HashMap<>(currentStats);
+	private List<String> getNextLevelStats(PlayerInventoryItem item, ToolIndexItem catalogItem) {
+		if (nextUpgradeCost(item.getLevel(), catalogItem) == null) {
+			return null;
+		}
 		try {
-			updatedStats.replaceAll((stat, value) -> Math.addExact(value, increment));
+			return getDisplayStats(increaseStats(item.getStats(), catalogItem), catalogItem);
+		} catch (InvalidRequestException ex) {
+			return null;
+		}
+	}
+
+	// Per-stat buffs from the catalog; falls back to the old single integer on every current stat.
+	private Map<String, Integer> getUpgradeBuffs(Map<String, Integer> currentStats, ToolIndexItem catalogItem) {
+		Map<String, Integer> buffs = catalogItem.getUpgradeStatsBuff();
+		if (buffs != null && !buffs.isEmpty()) {
+			return buffs;
+		}
+		Integer increment = catalogItem.getUpgradeStatBuffs();
+		Map<String, Integer> fallback = new LinkedHashMap<>();
+		if (increment != null) {
+			currentStats.keySet().forEach(stat -> fallback.put(stat, increment));
+		}
+		return fallback;
+	}
+
+	private Map<String, Integer> increaseStats(Map<String, Integer> currentStats, ToolIndexItem catalogItem) {
+		Map<String, Integer> updatedStats = new LinkedHashMap<>(currentStats);
+		try {
+			getUpgradeBuffs(currentStats, catalogItem)
+					.forEach((stat, increment) -> updatedStats.merge(stat, increment, Math::addExact));
 		} catch (ArithmeticException ex) {
 			throw new InvalidRequestException("Las estadísticas superan el límite permitido.");
 		}
