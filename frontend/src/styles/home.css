@@ -232,14 +232,17 @@
   border: 1px solid var(--lq-line);
   border-radius: 18px;
   background: var(--lq-surface);
+  width: 1100px;
 }
 
 .task-table-panel {
-  scroll-margin-top: 16px;
+  scroll-margin-top: 16x;
   overflow: hidden;
   border: 1px solid var(--lq-line);
   border-radius: 18px;
   background: var(--lq-surface);
+  width: 1000px;
+  margin-left: 300px;
 }
 
 .task-table-heading {

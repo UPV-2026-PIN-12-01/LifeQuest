@@ -239,4 +239,7 @@ public class GoalService {
 
 	private record WeekWindow(Instant start, Instant end) {
 	}
+
+	
+	     
 }
