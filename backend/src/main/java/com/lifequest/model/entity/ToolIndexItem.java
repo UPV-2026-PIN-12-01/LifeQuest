@@ -47,7 +47,7 @@ public class ToolIndexItem {
 	@Column(name = "upgrade_stat_buffs")
 	private Integer upgradeStatBuffs;
 
-	@JdbcTypeCode(SqlTypes.JSON)
+	@JdbcTypeCode(SqlTypes.JSON) //Using hibernate 6
 	@Column(name = "base_stats_buff", columnDefinition = "jsonb")
 	private Map<String, Integer> baseStatsBuff;
 

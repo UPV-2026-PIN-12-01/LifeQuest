@@ -41,7 +41,7 @@ public class ChatProposal {
 	@Column(nullable = false)
 	private String why;
 
-	@JdbcTypeCode(SqlTypes.JSON)
+	@JdbcTypeCode(SqlTypes.JSON) //Using hibernate 6
 	@Column(nullable = false)
 	private String payload;
 

@@ -53,7 +53,7 @@ public class CharacterStats {
 	@Column(name = "gold", nullable = false)
 	private Long gold = 0L;
 
-	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
+	@JdbcTypeCode(SqlTypes.NAMED_ENUM) //Using hibernate 6
 	@Column(name = "class", nullable = false)
 	private PlayerClass playerClass = PlayerClass.knight;
 

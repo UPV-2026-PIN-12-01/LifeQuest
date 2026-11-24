@@ -38,7 +38,7 @@ public class PlayerInventoryItem {
 	@Column(nullable = false)
 	private Boolean equipped;
 
-	@JdbcTypeCode(SqlTypes.JSON)
+	@JdbcTypeCode(SqlTypes.JSON) // Using hibernate 6
 	@Column(nullable = false, columnDefinition = "jsonb")
 	private Map<String, Integer> stats;
 
