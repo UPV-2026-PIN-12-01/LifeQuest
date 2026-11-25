@@ -10,6 +10,7 @@ const NAV = [
   { to: '/chat', icon: '✨', label: 'Asistente IA' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
   { to: '/friends', icon: '👥', label: 'Amigos' },
+  { to: '/battle', icon: '🐉', label: 'Combate'},
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },
 ]
 

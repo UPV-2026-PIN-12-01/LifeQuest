@@ -42,6 +42,9 @@ public class Task {
 	@Column(name = "task_reward_id")
 	private Long rewardId;
 
+	@Column(name= "group_id")
+	private Long groupId;
+
 	// status and priority are Postgres enums, so writes cast the text value.
 	@Column(nullable = false)
 	@ColumnTransformer(write = "?::public.task_status")
@@ -117,6 +120,14 @@ public class Task {
 
 	public void setRewardId(Long rewardId) {
 		this.rewardId = rewardId;
+	}
+
+	public Long getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(Long groupId) {
+		this.groupId = groupId;
 	}
 
 	public String getStatus() {

@@ -30,7 +30,7 @@ button {
   font-size: 16px;
   padding: 8px 14px;
   border-radius: 6px;
-  color: var(--accent);
+  color: aliceblue;
   background: var(--accent-bg);
   border: 2px solid transparent;
   cursor: pointer;

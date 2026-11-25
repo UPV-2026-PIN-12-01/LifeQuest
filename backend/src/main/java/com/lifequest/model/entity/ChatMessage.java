@@ -9,6 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+// ⚠️ ALTA CONFIDENCIALIDAD / SEGURIDAD: 
+// Esta clase almacena el texto plano introducido directamente por los usuarios. 
+// Puede contener datos PII altamente sensibles, secretos comerciales o información médica.
+// Prohibido volcar esta entidad completa en logs del sistema (nivel INFO/WARN) o en auditorías externas.
+
 @Entity
 @Table(name = "chat_messages")
 public class ChatMessage {
@@ -23,6 +28,7 @@ public class ChatMessage {
 	@Column(nullable = false)
 	private String role;
 
+	// 🔒 Petición del usuario en bruto. No asumir NUNCA que el contenido está saneado o libre de datos confidenciales.
 	@Column(nullable = false)
 	private String content;
 

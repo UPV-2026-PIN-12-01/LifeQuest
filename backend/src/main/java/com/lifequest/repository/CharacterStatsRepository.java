@@ -24,7 +24,7 @@ public interface CharacterStatsRepository extends JpaRepository<CharacterStats, 
 
 	Optional<CharacterStats> findByPlayerNameIgnoreCase(String playerName);
 
-	// Players whose name contains the (already LIKE-escaped) text, those starting with it first, then shortest.
+	// Players whose name contains the (already LIKE-escaped) text, those starting with it first, then shortest. <- Usado para buscar usuarios como amigos
 	@Query("""
 			select stats from CharacterStats stats
 			where stats.userId is not null and stats.userId <> :excludedUserId
