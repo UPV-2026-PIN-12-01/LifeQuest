@@ -11,6 +11,7 @@ import FriendsPage from '../pages/FriendsPage.jsx';
 import FriendProfilePage from '../pages/FriendProfilePage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
 import AchievementsPage from '../pages/AchievementsPage.jsx';
+import BattleDemo from '../pages/BattleDemo.jsx';
 
 import { hasSession } from '../services/session.js';
 
@@ -33,6 +34,7 @@ export default function AppRoutes() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/settings" element={<ProfilePage />} />
+          <Route path="/battle" element={<BattleDemo />} />
         </Route>
         <Route path="/profile" element={<Navigate to="/settings" replace />} />
       </Routes>
