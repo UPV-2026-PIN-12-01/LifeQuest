@@ -4,13 +4,15 @@ public class Command {
     public CommandType type;
     public int priority;
     public int speed;
-    public Fighter fighter;
+    public Fighter source;
+    public Fighter target;
 
-    public Command(CommandType type, int priority, int speed){
+    public Command(CommandType type, int priority, int speed, Fighter source, Fighter target){
         this.type = type;
         this.priority = priority;
         this.speed = speed;
-
+        this.source = source;
+        this.target = target;
     }
 
     public CommandType getType() {
@@ -25,6 +27,10 @@ public class Command {
         return speed;
     }
 
+    public Fighter getTarget() {
+        return this.target;
+    }
+
     public void setType(CommandType type) {
         this.type = type;
     }
@@ -36,4 +42,9 @@ public class Command {
     public void setSpeed(int speed) {
         this.speed = speed;
     }
+
+    public void setTarget(Fighter target) {
+        this.target = target;
+    }
+
 }
