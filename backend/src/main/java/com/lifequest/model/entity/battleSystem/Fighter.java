@@ -19,6 +19,8 @@ public class Fighter {
         this.wisdom = wisdom;
     }
 
+    public Fighter(){}
+
     public Long getHp(){
         return this.hp;
     }

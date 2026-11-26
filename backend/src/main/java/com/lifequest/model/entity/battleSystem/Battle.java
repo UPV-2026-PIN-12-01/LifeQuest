@@ -6,6 +6,12 @@ public class Battle {
     public int nOfCommandsToStart;
     public int turn;
 
+    public Battle(Party partyA, Party partyB){
+        this.partyA=partyA;
+        this.partyB=partyB;
+        nOfCommandsToStart = partyA.getPlayerMembers().size() + partyB.getPlayerMembers().size();
+    }
+
     public int getTurn(){
         return this.turn;
     }

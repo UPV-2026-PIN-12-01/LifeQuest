@@ -2,18 +2,18 @@ package com.lifequest.model.entity.battleSystem;
 
 public class Boss extends Monster {
 
-    public String bossPassive;
+    protected String bossPassive;
 
-    public Boss(int id, String name, Long hp, int strength, int stamina, int speed, int wisdom, int roar, String passive){
+    public Boss(int id, String name, Long hp, int strength, int stamina, int speed, int wisdom, int roar, String passive) {
         super(id, name, hp, strength, stamina, speed, wisdom, roar);
-        this.bossPassive = passive;
+        this.bossPassive = passive != null ? passive : "";
     }
 
-    public String getPassive(){
+    public String getBossPassive() {
         return this.bossPassive;
     }
 
-    public void setPassive(String passive){
-        this.bossPassive = passive;
+    public void setBossPassive(String bossPassive) {
+        this.bossPassive = bossPassive != null ? bossPassive : "";
     }
 }

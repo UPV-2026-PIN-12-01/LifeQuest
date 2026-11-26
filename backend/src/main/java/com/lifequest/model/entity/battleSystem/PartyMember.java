@@ -1,10 +1,14 @@
 package com.lifequest.model.entity.battleSystem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PartyMember {
     private int memberId;
     private Fighter fighter;
     private Command command;
     private Long ActualHp;
+    private String fighterType;
     private int ActualStamina;
     private double critExtraDamage;
     private double dmgBuff;
@@ -13,6 +17,14 @@ public class PartyMember {
     public PartyMember(Fighter fighter){
         this.memberId = fighter.id;
         this.fighter=fighter;
+    }
+
+    public String getFighterType(){
+        return this.fighterType;
+    }
+
+    public void setFighterType(String type){
+        this.fighterType = type;
     }
 
     public Fighter getFighter() {
@@ -63,7 +75,15 @@ public class PartyMember {
         return this.dmgBuff;
     }
 
+    public void setDmgBuff(double dmgBuff){
+        this.dmgBuff=dmgBuff;
+    }
+
     public double getDmgReduction(){
         return this.dmgReduction;
+    }
+    
+    public void setDmgReduction(double dmgReduction){
+        this.dmgReduction=dmgReduction;
     }
 }

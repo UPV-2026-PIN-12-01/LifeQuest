@@ -20,4 +20,10 @@ public class Party {
     public void removeMember(PartyMember id){
         this.members.remove(id);
     }
+
+    public List<Player> getPlayerMembers(){
+        return this.getMembers().stream()
+                    .filter(members -> members.getFighterType()=="Player")
+                    .map(members -> (Player) members.getFighter()).toList();
+    }
 }
