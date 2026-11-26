@@ -5,4 +5,19 @@ import java.util.List;
 public class Party {
     public List<PartyMember> members;
 
+    public Party(List<PartyMember> members){
+        this.members = members;
+    }
+
+    public List<PartyMember> getMembers(){
+        return this.members;
+    }
+
+    public void addMember(PartyMember member){
+        this.members.add(member);
+    }
+
+    public void removeMember(PartyMember id){
+        this.members.remove(id);
+    }
 }

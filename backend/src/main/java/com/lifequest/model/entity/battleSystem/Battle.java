@@ -21,4 +21,22 @@ public class Battle {
     public void setnOfCommandsToStart(int nCommands){
         this.nOfCommandsToStart = nCommands;
     }
+
+    public Party getPartyA(){
+        return this.partyA;
+    }
+
+    public void setPartyA(Party partyA){
+        this.partyA = partyA;
+    }
+
+    public Party getPartyB(){
+        return this.partyB;
+    }
+
+    public void setPartyB(Party partyB){
+        this.partyB = partyB;
+    }
+
+
 }

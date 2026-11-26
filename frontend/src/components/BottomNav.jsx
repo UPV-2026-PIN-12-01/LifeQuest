@@ -8,7 +8,7 @@ const NAV = [
   { to: '/achievements', icon: '🏆', label: 'Logros' },
   { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/character', icon: '⚔️', label: 'Personaje' },
-  { to: '/challenges', icon: '🎯', label: 'Desafíos' },
+  { to: '/battle', icon: '🐉', label: 'Desafíos' },
   { to: '/goals', icon: '🚩', label: 'Objetivos' },
   { to: '/friends', icon: '👥', label: 'Amigos' },
   { to: '/settings', icon: '⚙️', label: 'Ajustes' },

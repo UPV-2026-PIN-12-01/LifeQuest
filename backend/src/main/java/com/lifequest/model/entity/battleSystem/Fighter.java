@@ -1,13 +1,17 @@
 package com.lifequest.model.entity.battleSystem;
 
 public class Fighter {
+    protected int id;
+    protected String name;
     protected Long hp;
     protected int strength;
     protected int stamina;
     protected int speed;
     protected int wisdom;
 
-    public Fighter(Long hp, int strength, int stamina, int speed, int wisdom){
+    public Fighter(int id, String name, Long hp, int strength, int stamina, int speed, int wisdom){
+        this.id =id;
+        this.name = name;
         this.hp = hp;
         this.strength = strength;
         this.stamina = stamina;
@@ -53,5 +57,18 @@ public class Fighter {
 
     public void setWisdom(int wisdom){
         this.wisdom=wisdom;
+    }
+
+    public int getFighterId(){
+        return this.id;
+    }
+
+    public void setFighterId(int id){
+        this.id = id;
+    }
+
+    @Override
+    public String toString(){
+        return this.name;
     }
 }

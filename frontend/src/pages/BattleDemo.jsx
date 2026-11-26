@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom'
 import { ENEMIES } from "../data"
 import warriorImg from "../assets/warrior1.png"
-import { requestJson } from "../services/http"
+import { getJson, requestJson } from "../services/http"
 const LOG_COLORS = {
   attack: "text-slate-700",
   damage: "text-rose-600",
@@ -73,7 +73,6 @@ function CombatStats({ strength, speed, intelligence, rivalIntelligence }) {
   )
 }
 export default function Combat({
-  stats ={hp:500, strength:200, stamina:10, speed:999, knowledge:10},
   playerName,
   inventory = [{category:"poción", quantity:5}],
   onUsePotion,
@@ -85,6 +84,7 @@ export default function Combat({
   const [showPotions, setShowPotions] = useState(false)
   const [monsterAvailable, setMonsterAvailable] = useState(true)
   const [bossAvailable, setBossAvailable] = useState(true)
+  const [stats, setStats] = useState(null)
   const logId = useRef(0)
   const rewarded = useRef(false)
   const potions = useMemo(
@@ -92,7 +92,30 @@ export default function Combat({
       inventory.filter((i) => i.category === "Poción" && (i.quantity ?? 0) > 0),
     [inventory],
   )
-  const playerIntelligence = stats.knowledge
+
+  useEffect(() => {
+    let cancelled = false
+  
+    getJson("/api/character/stats")
+        .then((data) => {
+          if (!cancelled) {
+            setStats({
+            ...data,
+          })
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setStatsError(error.message)
+          console.log("No se pudieron cargar")
+      })
+  
+    return () => {
+        cancelled = true
+    }
+  }, [])
+
+  const playerIntelligence = stats?.wisdom ?? 0;
+
   function addLogs(entries) {
     setLogs((current) => [
       ...current,
@@ -136,12 +159,14 @@ export default function Combat({
     })
   }
   function performAttack(attacker) {
+    playerIntelligence 
     setBattle((current) => {
       if (!current || current.status !== "active" || current.turn !== attacker)
         return current
       const isPlayer = attacker === "player"
       const attackerName = isPlayer ? playerName : current.enemy.name
       const defenderName = isPlayer ? current.enemy.name : playerName
+      console.log(stats);
       const strength = isPlayer ? stats.strength : current.enemy.strength
       const intelligence = isPlayer
         ? playerIntelligence
@@ -229,7 +254,9 @@ export default function Combat({
     if (!battle || battle.status === "active" || rewarded.current) return
     rewarded.current = true
     if (battle.status === "victory")
+      //Completar
       console.log(battle.enemy.goldReward);
+      
     if (battle.enemy.kind === "monster") setMonsterAvailable(false)
     else setBossAvailable(false)
   }, [battle?.status])
